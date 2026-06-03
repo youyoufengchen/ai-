@@ -109,6 +109,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Mi
 <script src="/frontend/core/WebcamMotionCapture.js"></script>
 <!-- 自研组件 -->
 <script src="/frontend/components/glass-case.js"></script>
+<!-- 音效管理器 — 音效/音乐统一加载、语义检索、播放 -->
+<script src="/frontend/core/AudioManager.js"></script>
 <!-- 骨骼节点特效管理器 — 粒子/光效挂载到骨骼节点自动跟随 -->
 <script src="/frontend/core/BoneEffectManager.js"></script>
 <script src="/frontend/core/action-executor.js"></script>
@@ -1093,6 +1095,12 @@ function connectWS() {
   ws = new WebSocket('ws://' + location.hostname + ':8765');
   ws.onopen = () => {
     console.log('[LiveScene] WS connected');
+    // 初始化 AudioManager（加载音效库）
+    if (window.AudioManager && !window.AudioManager._loaded) {
+      window.AudioManager.init('/config/sound_catalog.json').then(() => {
+        console.log('[AudioManager] 音效库加载完成');
+      });
+    }
     // 初始化 ActionFlowExecutor
     if (!actionFlowExecutor && window.ActionFlowExecutor) {
       // highlightShelf: 高亮货架位（调用focusShelf实现）
@@ -1284,6 +1292,47 @@ function handleWSMessage(msg) {
         actionFlowExecutor.interruptCurrent(msg.reason || 'backend');
       }
       break;
+
+    // === 音效/音乐消息处理 ===
+    case 'play_sound':
+      if (window.AudioManager) {
+        if (msg.sound_id) {
+          window.AudioManager.play(msg.sound_id, {
+            volume: msg.volume, loop: msg.loop
+          });
+        } else if (msg.query) {
+          window.AudioManager.searchAndPlay(msg.query, {
+            category: msg.category, emotion: msg.emotion
+          });
+        }
+      }
+      break;
+    case 'stop_sound':
+      if (window.AudioManager) {
+        if (msg.sound_id) window.AudioManager.stop(msg.sound_id);
+        else if (msg.category) window.AudioManager.stopCategory(msg.category);
+        else window.AudioManager.stopAll();
+      }
+      break;
+    case 'play_music':
+      if (window.AudioManager) {
+        if (msg.sound_id) {
+          window.AudioManager.play(msg.sound_id, { loop: true });
+        } else if (msg.query) {
+          window.AudioManager.searchAndPlay(msg.query, { category: 'music' }, { loop: true });
+        }
+      }
+      break;
+    case 'play_singing':
+      if (window.AudioManager) {
+        if (msg.sound_id) {
+          window.AudioManager.play(msg.sound_id);
+        } else if (msg.query) {
+          window.AudioManager.searchAndPlay(msg.query, { category: 'singing' });
+        }
+      }
+      break;
+
     case 'switch_camera': {
       const cm = window.CameraManager;
       if (!cm) break;

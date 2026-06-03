@@ -512,6 +512,98 @@
       "enabled": true,
       "_draft": false,
       "committed_at": "2026-06-02T02:56:10.364050Z"
+    },
+
+    {
+      "id": "celebrate_1",
+      "file": "情绪反应/庆祝/Celebrate1.glb",
+      "skeleton_type": "humanoid",
+      "description": "双手举起庆祝动作",
+      "triggers": ["庆祝", "太棒了", "成功", "欢呼", "下单成功", "大礼物"],
+      "category": "情绪反应",
+      "emotion": "happy",
+      "duration": 1.8,
+      "tags": ["celebrate", "happy", "cheer"],
+      "enabled": true,
+      "_source": "CC0 — J-Beardmore/FreeMotionPack1"
+    },
+    {
+      "id": "celebrate_2",
+      "file": "情绪反应/庆祝/Celebrate2.glb",
+      "skeleton_type": "humanoid",
+      "description": "兴奋跳跃庆祝",
+      "triggers": ["庆祝跳跃", "太开心了", "兴奋", "大卖了"],
+      "category": "情绪反应",
+      "emotion": "happy",
+      "duration": 3.0,
+      "tags": ["celebrate", "jump", "excited"],
+      "enabled": true,
+      "_source": "CC0 — J-Beardmore/FreeMotionPack1"
+    },
+    {
+      "id": "celebrate_3",
+      "file": "情绪反应/庆祝/Celebrate3.glb",
+      "skeleton_type": "humanoid",
+      "description": "双拳握紧庆祝",
+      "triggers": ["赢了", "完美", "成交"],
+      "category": "情绪反应",
+      "emotion": "happy",
+      "duration": 1.8,
+      "tags": ["celebrate", "fist", "victory"],
+      "enabled": true,
+      "_source": "CC0 — J-Beardmore/FreeMotionPack1"
+    },
+    {
+      "id": "nod_yes",
+      "file": "情绪反应/点头/NodYes.glb",
+      "skeleton_type": "humanoid",
+      "description": "点头表示同意",
+      "triggers": ["点头", "同意", "嗯", "是的", "好的", "可以"],
+      "category": "情绪反应",
+      "emotion": "neutral",
+      "duration": 1.3,
+      "tags": ["nod", "yes", "agree"],
+      "enabled": true,
+      "_source": "CC0 — J-Beardmore/FreeMotionPack1"
+    },
+    {
+      "id": "shake_head_no",
+      "file": "情绪反应/摇头/ShakeHeadNo.glb",
+      "skeleton_type": "humanoid",
+      "description": "摇头表示不同意",
+      "triggers": ["摇头", "不行", "不要", "拒绝", "不同意"],
+      "category": "情绪反应",
+      "emotion": "neutral",
+      "duration": 1.9,
+      "tags": ["shake", "no", "disagree", "refuse"],
+      "enabled": true,
+      "_source": "CC0 — J-Beardmore/FreeMotionPack1"
+    },
+    {
+      "id": "thumbs_up",
+      "file": "情绪反应/竖大拇指/ThumbsUp.glb",
+      "skeleton_type": "humanoid",
+      "description": "竖大拇指赞扬",
+      "triggers": ["竖大拇指", "赞", "点赞", "好评", "太棒了", "厉害"],
+      "category": "情绪反应",
+      "emotion": "happy",
+      "duration": 2.7,
+      "tags": ["thumbs_up", "like", "praise", "approve"],
+      "enabled": true,
+      "_source": "CC0 — J-Beardmore/FreeMotionPack1"
+    },
+    {
+      "id": "come_here",
+      "file": "情绪反应/招手/ComeHere.glb",
+      "skeleton_type": "humanoid",
+      "description": "招手示意过来",
+      "triggers": ["招手", "过来", "来", "快来看", "欢迎来"],
+      "category": "情绪反应",
+      "emotion": "happy",
+      "duration": 2.9,
+      "tags": ["come_here", "wave", "beckon", "welcome"],
+      "enabled": true,
+      "_source": "CC0 — J-Beardmore/FreeMotionPack1"
     }
   ]
 }

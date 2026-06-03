@@ -35,6 +35,8 @@ assets/uploads/
 cache/
 *.mp3
 *.wav
+# 但保留音效资源目录（AudioManager需要的音效文件）
+!assets/sounds/**/*.mp3
 output/
 temp/
 tmp/
