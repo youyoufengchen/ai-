@@ -354,13 +354,21 @@ class ActionFlowExecutor {
   }
 
   _executeSound(action) {
-    const file = action.params?.file;
-    if (!file) return;
-    this._playSound(file, action.params?.volume || 0.8);
+    const { sound_id, file, volume, loop } = action.params || {};
+    if (sound_id && window.AudioManager) {
+      window.AudioManager.play(sound_id, { volume: volume || 0.8, loop: !!loop });
+    } else if (file) {
+      this._playSound(file, volume || 0.8);
+    }
   }
 
   _playSound(url, volume = 0.8) {
     if (!url) return;
+    // 优先使用 AudioManager（支持并发控制和音量分层）
+    if (window.AudioManager) {
+      window.AudioManager.searchAndPlay(url, {}, { volume });
+      return;
+    }
     try {
       const audio = new Audio(url);
       audio.volume = Math.min(Math.max(volume, 0), 1);

@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from modules.action_retriever import ActionRetriever
+from modules.sound_retriever import SoundRetriever
 
 logger = logging.getLogger("ai_action_planner")
 
@@ -465,9 +466,11 @@ class AIActionPlanner:
         self.scene_context = SceneContext(cfg)
         catalog_path = Path("config/action_catalog.json")
         self.retriever = ActionRetriever(str(catalog_path))
+        self.sound_retriever = SoundRetriever("config/sound_catalog.json")
         self.actor_registry = ActorRegistry()
         logger.info(f"[ActionPlanner] Retriever ready, mode={self.retriever.mode}, "
-                    f"{len(self.retriever.actions)} actions loaded")
+                    f"{len(self.retriever.actions)} actions, "
+                    f"{len(self.sound_retriever.sounds)} sounds loaded")
         
     async def plan_for_dialogue(
         self, 
@@ -572,18 +575,18 @@ class AIActionPlanner:
 
 请返回JSON格式：
 {{
-    "intent_type": "意图类型(product_present/greeting/thanks/chat/goodbye/fetch/special_skill/transformation)",
+    "intent_type": "意图类型(product_present/greeting/thanks/chat/goodbye/fetch/special_skill/transformation/singing/dance)",
     "target_products": ["提到的商品名称关键词"],
-    "actions_implied": ["walk", "grab", "present", "turn", "greet", "snap_fingers", "transform"],
+    "actions_implied": ["walk", "grab", "present", "turn", "greet", "snap_fingers", "transform", "sing", "dance"],
     "emotion": "happy/sad/surprised/neutral/excited/thanks/cute/angry/mysterious/embarrassed",
     "key_phrases": ["关键动作短语"],
     "location_references": ["位置指代:货架/这边/那里"],
     "needs_fetch": true/false,
     "needs_present": true/false,
-    "special_skill_hint": "snap_fingers_fire或transform_fox_partial或null"
+    "special_skill_hint": "snap_fingers_fire或transform_fox_partial或singing_happy_tune或bgm_dance_folk或null"
 }}
 
-识别规则：弹手指/响指/火苗→special_skill(hint:snap_fingers_fire)；变身/狐化→transformation(hint:transform_fox_partial)；其他→对应意图。
+识别规则：弹手指/响指/火苗→special_skill(hint:snap_fingers_fire)；变身/狐化→transformation(hint:transform_fox_partial)；唱歌/哼歌/来首歌→singing；跳舞/跳个舞/舞蹈→dance；其他→对应意图。
 只返回JSON，不要其他文字。"""
 
         try:
@@ -646,6 +649,10 @@ class AIActionPlanner:
         elif any(w in reply_lower for w in ["变身", "变成狐狸", "露出耳朵", "九尾", "狐化", "兽耳"]):
             intent = "transformation"
             skill_hint = "transform_fox_partial"
+        elif any(w in reply_lower for w in ["唱歌", "唱首", "来首歌", "哼歌", "唱一个", "哼一曲"]):
+            intent = "singing"
+        elif any(w in reply_lower for w in ["跳舞", "跳个舞", "舞蹈", "来段舞", "起舞"]):
+            intent = "dance"
 
         needs_fetch = any(w in reply_lower for w in ["拿", "取", "给你", "介绍", "看看"])
         needs_present = needs_fetch or any(w in reply_lower for w in ["展示", "看", "这"])
@@ -803,8 +810,94 @@ class AIActionPlanner:
                 target_form = "fox_full"
             return self._plan_transformation("bao_qing_host", target_form, start_time=0.0)
 
+        if intent == "singing":
+            return self._plan_singing(parsed, audio_duration)
+
+        if intent == "dance":
+            return self._plan_dance(parsed, audio_duration)
+
         # 默认：待机
         return self._build_sequence_from_template("chat", audio_duration)
+
+    def _plan_singing(
+        self,
+        parsed: "ParsedIntent",
+        audio_duration: Optional[float] = None,
+    ) -> List[PlannedAction]:
+        """规划唱歌动作：语义检索歌曲 + idle动画"""
+        query = " ".join(parsed.key_phrases) if parsed.key_phrases else "唱歌"
+        emotion = parsed.emotion or "happy"
+        sound = self.sound_retriever.search(
+            query, top_k=1, category_filter="singing",
+            emotion_filter=emotion if emotion != "neutral" else None
+        )
+        if not sound:
+            sound = self.sound_retriever.search("唱歌", top_k=1, category_filter="singing")
+        sound_entry = sound[0] if sound else None
+        dur = float(sound_entry["duration_s"]) if sound_entry else 20.0
+        actions = []
+        if sound_entry:
+            actions.append(PlannedAction(
+                id=f"singing_{sound_entry['id']}",
+                type=ActionType.SOUND.value,
+                action_id=sound_entry["id"],
+                actor_id="bao_qing_host",
+                params={"sound_id": sound_entry["id"], "volume": 0.8},
+                start_time=0.0, duration=dur,
+                wait_for_complete=False,
+            ))
+        actions.append(self._make_action(
+            "singing_idle", "idle", 0.0, max(dur, audio_duration or dur),
+            loop=True, wait_for_complete=True, can_interrupt=True,
+        ))
+        return actions
+
+    def _plan_dance(
+        self,
+        parsed: "ParsedIntent",
+        audio_duration: Optional[float] = None,
+    ) -> List[PlannedAction]:
+        """规划跳舞动作：语义检索舞曲BGM + dance动画"""
+        query = " ".join(parsed.key_phrases) if parsed.key_phrases else "跳舞"
+        music = self.sound_retriever.search(
+            query, top_k=1, category_filter="music"
+        )
+        music_entry = music[0] if music else None
+        dur = float(music_entry["duration_s"]) if music_entry else 30.0
+
+        actions = []
+        if music_entry:
+            actions.append(PlannedAction(
+                id=f"dance_bgm_{music_entry['id']}",
+                type=ActionType.SOUND.value,
+                action_id=music_entry["id"],
+                actor_id="bao_qing_host",
+                params={"sound_id": music_entry["id"], "volume": 0.6, "loop": True},
+                start_time=0.0, duration=dur,
+                wait_for_complete=False,
+            ))
+
+        # 检索舞蹈动画
+        dance_anims = self.retriever.search("跳舞 舞蹈 dance", top_k=1)
+        if dance_anims:
+            anim = dance_anims[0]
+            actions.append(PlannedAction(
+                id="dance_anim",
+                type=ActionType.ANIMATION.value,
+                action_id=anim["id"],
+                actor_id="bao_qing_host",
+                params={"file_path": self._get_file_path(anim["id"]),
+                        "loop": True},
+                start_time=0.0,
+                duration=max(dur, audio_duration or dur),
+                wait_for_complete=True,
+            ))
+        else:
+            actions.append(self._make_action(
+                "dance_idle", "idle", 0.0, max(dur, audio_duration or dur),
+                loop=True, wait_for_complete=True, can_interrupt=True,
+            ))
+        return actions
 
     def _plan_special_skill(
         self,
@@ -1181,21 +1274,41 @@ class AIActionPlanner:
         """
         将情绪音效注入ActionPlan首位作为独立SOUND动作，与TTS台词并行播放。
         这是"撒娇时发出娇嗔声/生气时低吼"的实现入口。
+
+        检索策略：
+        1. 优先从 actors.json emotion_sound_map 精确查找
+        2. 降级到 SoundRetriever 语义检索（TF-IDF/向量匹配）
         """
+        # 策略1: actors.json 精确配置
         snd_cfg = self.actor_registry.get_emotion_sounds(actor_id, emotion)
-        if not snd_cfg:
-            return
-        file_on_enter = snd_cfg.get("on_enter")
-        if file_on_enter:
+        if snd_cfg:
+            file_on_enter = snd_cfg.get("on_enter")
+            if file_on_enter:
+                plan.actions.insert(0, PlannedAction(
+                    id=f"emosnd_{actor_id}_{emotion}",
+                    type=ActionType.SOUND.value,
+                    action_id=f"emotion_sound_{emotion}",
+                    actor_id=actor_id,
+                    params={"sound_id": file_on_enter, "volume": 0.6},
+                    start_time=0.0, duration=1.0,
+                    wait_for_complete=False,
+                ))
+                return
+
+        # 策略2: SoundRetriever 语义检索
+        current_form = self.actor_registry.get_current_form(actor_id)
+        sound = self.sound_retriever.search_emotion(emotion, form=current_form)
+        if sound:
             plan.actions.insert(0, PlannedAction(
                 id=f"emosnd_{actor_id}_{emotion}",
                 type=ActionType.SOUND.value,
-                action_id=f"emotion_sound_{emotion}",
+                action_id=sound["id"],
                 actor_id=actor_id,
-                params={"file": file_on_enter, "volume": 0.6},
-                start_time=0.0, duration=1.0,
+                params={"sound_id": sound["id"], "volume": 0.6},
+                start_time=0.0, duration=sound.get("duration_s", 1.0),
                 wait_for_complete=False,
             ))
+            logger.debug(f"[ActionPlanner] Emotion sound: {emotion} → {sound['id']}")
     
     def _calculate_walk_duration(
         self, 
