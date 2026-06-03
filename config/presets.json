@@ -1,0 +1,322 @@
+{
+  "categories": [
+    {
+      "id": "welcome",
+      "label": "欢迎词",
+      "mode": "random",
+      "lines": [
+        "客官来啦，快进来坐坐~",
+        "欢迎新朋友，宝青坊今日茶香四溢~",
+        "客官大驾光临，蓬荜生辉~",
+        "（掩唇轻笑）客官好呀~此茶香如芝兰，韵似山泉，单盒168，买两盒更划算呢~",
+        "（掩唇轻笑）莫急莫急~单盒168，两盒300，三盒420，客官随意挑选呢~",
+        "（掩唇轻笑）客官谬赞，怕是醉翁之意不在酒，在乎凤凰单丛呢~",
+        "欢迎各位客官光临宝青坊~"
+      ]
+    },
+    {
+      "id": "welcome_vip",
+      "label": "VIP欢迎",
+      "mode": "random",
+      "lines": [
+        "贵客临门，坊主有失远迎~",
+        "这位客官气质不凡，必是懂茶之人~",
+        "欢迎VIP客官，坊主为您备了好茶~"
+      ]
+    },
+    {
+      "id": "thanks",
+      "label": "感谢词",
+      "mode": "random",
+      "lines": [
+        "谢谢各位客官的点赞和关注~",
+        "客官们太热情了，坊主感激不尽~",
+        "感谢大家的支持，宝青坊因你们而精彩~",
+        "多谢客官捧场，这份情意坊主记下了~",
+        "（掩唇浅笑）客官问得这般含糊，倒叫小店猜不透心思呢~此茶单盒168文便是~"
+      ]
+    },
+    {
+      "id": "thanks_gift",
+      "label": "感谢礼物",
+      "mode": "random",
+      "lines": [
+        "感谢客官的礼物，坊主倍感荣幸~",
+        "客官破费了，这份心意坊主记下了~",
+        "哇，好大的礼物，坊主都不好意思了呢~"
+      ]
+    },
+    {
+      "id": "thanks_follow",
+      "label": "感谢关注",
+      "mode": "random",
+      "lines": [
+        "感谢客官关注，以后常来喝茶~",
+        "关注了就是一家人，坊主给您备着好茶~",
+        "新来的客官关注了？坊主送您个么么哒~"
+      ]
+    },
+    {
+      "id": "recommend",
+      "label": "推荐词",
+      "mode": "sequence",
+      "lines": [
+        "坊主划划重点，这款茶是本坊镇坊之宝~",
+        "这款茶客官一定要试试，回头客都说好~",
+        "今日主推这款，性价比极高，错过可惜~",
+        "坊主亲测，这款茶香气持久，回甘绵长~",
+        {
+          "text": "（掩唇浅笑）客官若爱古韵，这凤凰单丛正合心意。单盒168文，三盒更得山野之气呢~",
+          "voice_id": "female-shaonv",
+          "style_id": "classical",
+          "character_id": "bao_qing",
+          "emotion": "happy",
+          "mp3_filename": "",
+          "saved_at": 1779555076.2179072
+        },
+        {
+          "text": "（掩唇浅笑）小娘子来得巧~凤凰单丛150g一盒，单盒168文，两盒300文更佳呢！",
+          "voice_id": "female-shaonv",
+          "style_id": "classical",
+          "character_id": "bao_qing",
+          "emotion": "happy",
+          "mp3_filename": "",
+          "saved_at": 1779555076.2179072
+        }
+      ]
+    },
+    {
+      "id": "product_intro",
+      "label": "产品介绍",
+      "mode": "sequence",
+      "lines": [
+        "这款凤凰单丛产自潮州凤凰山，海拔千米云雾缭绕~",
+        "古法炭焙工艺，十二道工序匠心制作~",
+        "茶汤金黄透亮，兰花香馥郁持久~",
+        {
+          "text": "（掩唇浅笑）客官问得这般含糊，倒叫小店猜不透心思呢~此茶单盒168文便是~",
+          "voice_id": "female-shaonv",
+          "style_id": "classical",
+          "character_id": "bao_qing",
+          "emotion": "happy",
+          "mp3_filename": "",
+          "saved_at": 1779560928.7094421
+        }
+      ]
+    },
+    {
+      "id": "product_feature",
+      "label": "产品卖点",
+      "mode": "random",
+      "lines": [
+        "回甘持久，七泡有余香~",
+        "入口顺滑，喉韵悠长~",
+        "提神醒脑，消食解腻，养生佳品~"
+      ]
+    },
+    {
+      "id": "price",
+      "label": "价格说明",
+      "mode": "random",
+      "lines": [
+        "单盒168文，性价比之选~",
+        "两盒300文更划算，省36文~",
+        "三盒420文，囤货好时机~",
+        "这品质这价格，错过等一年~"
+      ]
+    },
+    {
+      "id": "guide",
+      "label": "下单引导",
+      "mode": "fixed",
+      "lines": [
+        "客官点击下方小黄车即可拍下~"
+      ]
+    },
+    {
+      "id": "guide_cart",
+      "label": "购物车引导",
+      "mode": "random",
+      "lines": [
+        "加入购物车，慢慢挑不着急~",
+        "先加购，凑满减更划算~",
+        "购物车里的宝贝等您带走呢~"
+      ]
+    },
+    {
+      "id": "guide_coupon",
+      "label": "优惠券提醒",
+      "mode": "random",
+      "lines": [
+        "记得领优惠券再下单哦~",
+        "新客有专属优惠券，别忘啦~",
+        "满减券叠加更划算，快去领~"
+      ]
+    },
+    {
+      "id": "interaction",
+      "label": "互动话术",
+      "mode": "random",
+      "lines": [
+        "新来的客官扣个1，坊主认识一下~",
+        "喝过凤凰单丛的扣个666~",
+        "客官们想听坊主讲哪方面，评论区告诉人家~"
+      ]
+    },
+    {
+      "id": "qa",
+      "label": "问答回复",
+      "mode": "random",
+      "lines": [
+        "客官问得好，这款茶适合日常品饮~",
+        "保质期两年，密封保存即可~",
+        "建议95度水冲泡，3-5秒出汤~"
+      ]
+    },
+    {
+      "id": "joke",
+      "label": "幽默调侃",
+      "mode": "random",
+      "lines": [
+        "坊主这茶不喝会后悔，喝了更后悔——后悔没多买~",
+        "客官再不下单，坊主就要饿瘦啦~",
+        "这茶好喝到坊主想私藏，但不敢~",
+        {
+          "text": "（掩唇轻笑）莫急莫急~单盒168，两盒300，三盒420，客官随意挑选呢~",
+          "voice_id": "female-shaonv",
+          "style_id": "classical",
+          "character_id": "bao_qing",
+          "emotion": "happy",
+          "mp3_filename": "",
+          "saved_at": 1779560928.7094421
+        }
+      ]
+    },
+    {
+      "id": "story",
+      "label": "故事讲述",
+      "mode": "sequence",
+      "lines": [
+        "传说凤凰单丛是南宋末年由凤凰山民发现并栽培~",
+        "乾隆皇帝南巡时曾品尝，赞不绝口~",
+        "每一片茶叶都承载着千年的茶文化~"
+      ]
+    },
+    {
+      "id": "emotion_happy",
+      "label": "开心氛围",
+      "mode": "random",
+      "lines": [
+        "今天天气好，坊主心情更好~",
+        "看到这么多客官，坊主开心得想跳舞~",
+        "啦啦啦~今天又是元气满满的一天~"
+      ]
+    },
+    {
+      "id": "urgency",
+      "label": "催单 urgency",
+      "mode": "random",
+      "lines": [
+        "库存不多啦，手慢无~",
+        "最后10单，抢完下架~",
+        "坊主数着倒计时呢，客官快点~"
+      ]
+    },
+    {
+      "id": "farewell",
+      "label": "告别话术",
+      "mode": "random",
+      "lines": [
+        "客官慢走，欢迎再来~",
+        "记得常回来看看坊主哦~",
+        "下次来给您泡更好的茶~"
+      ]
+    },
+    {
+      "id": "chat",
+      "label": "闲聊",
+      "mode": "random",
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "id": "event_gift_tiny",
+      "label": "❤️ 小心心/爱心",
+      "mode": "random",
+      "event_type": "gift_tiny",
+      "system": true,
+      "lines": [
+        "谢谢{username}客官的小心心，坊主收到啦~",
+        "（微微颔首）{username}客官的{gift_name}坊主看到了，谢谢哦~",
+        "哎呀～{username}客官送{gift_name}，坊主好开心呀~",
+        "多谢{username}客官，你的喜爱就是坊主最大的动力~"
+      ]
+    },
+    {
+      "id": "event_gift_small",
+      "label": "💝 普通礼物",
+      "mode": "random",
+      "event_type": "gift_small",
+      "system": true,
+      "lines": [
+        "谢谢{username}客官的{gift_name}，礼轻情意重，坊主心领了~",
+        "（微微颔首）{username}客官有心啦，这份温暖坊主记下了~",
+        "哎呀，{username}客官送{gift_name}啦！坊主开心得很呢~",
+        "多谢{username}客官的{gift_name}，你们的喜爱就是坊主最大的动力~"
+      ]
+    },
+    {
+      "id": "event_gift_big",
+      "label": "🎁 大额礼物",
+      "mode": "random",
+      "event_type": "gift_big",
+      "system": true,
+      "lines": [
+        "（惊喜捂脸）哎呀！{username}客官出手如此大方，坊主这厢受宠若惊，深深谢过~",
+        "（拱手作揖）多谢{username}客官的{gift_name}！如此厚礼，坊主感激涕零~",
+        "（扇风轻摇）{username}客官豪气干云！这份情谊坊主铭记于心~",
+        "（掩唇轻笑）{username}客官这般体贴，直叫坊主心里暖洋洋的，千恩万谢~"
+      ]
+    },
+    {
+      "id": "event_gift_super",
+      "label": "� 超级礼物",
+      "mode": "random",
+      "event_type": "gift_super",
+      "system": true,
+      "lines": [
+        "（激动颤声）天！{username}客官！！坊主从未见过如此大礼，{gift_name}！坊主无以为报，唯有此生铭记~",
+        "（惊呼起身）哎呀呀！{username}客官送来{gift_name}！坊主今日有幸，感激涕零，三生有幸~",
+        "（捂心颤抖）{username}客官……这……这{gift_name}……坊主说不出话来了，唯有深深一拜~",
+        "（声音哽咽）{username}客官！坊主不知说什么好，就知道……坊主会记住你一辈子的~"
+      ]
+    },
+    {
+      "id": "event_order",
+      "label": "🛒 下单感谢",
+      "mode": "random",
+      "event_type": "order_placed",
+      "system": true,
+      "lines": [
+        "（掩唇轻笑）{username}客官好眼光！{sku_name}必让您满意，坊主保证品质~",
+        "感谢{username}客官下单{sku_name}！两日内发货，回头记得给个好评哦~",
+        "（微微颔首）{username}客官选得好！{sku_name}是本坊主推，绝不让您失望~",
+        "哎呀！{username}客官出手了！{sku_name}这就给您备好，感谢信任~"
+      ]
+    },
+    {
+      "id": "event_user_enter",
+      "label": "👋 入场欢迎",
+      "mode": "random",
+      "event_type": "user_enter",
+      "system": true,
+      "lines": [
+        "欢迎{username}客官驾临宝青坊~今日茶香正浓，快坐下喝杯茶~",
+        "（掩唇轻笑）{username}客官来啦！坊主这厢有礼了~",
+        "{username}客官大驾光临，蓬荜生辉~有缘人请进~",
+        "哎，{username}客官！坊主早就备好好茶等您了~"
+      ]
+    }
+  ]
+}

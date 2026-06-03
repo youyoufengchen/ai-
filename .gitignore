@@ -1,0 +1,68 @@
+# ===== 敏感配置（绝不上传 Git）=====
+.env
+config/secrets.json
+config/llm_configs.json
+
+# Python 虚拟环境（体积巨大，不上传）
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 模型文件（大文件，不上传）
+models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.pkl
+*.onnx
+
+# 素材大文件
+assets/scenes/
+assets/videos/
+assets/uploads/
+*.exr
+*.hdr
+
+# 缓存与临时文件
+cache/
+*.mp3
+*.wav
+output/
+temp/
+tmp/
+
+# 日志
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.aider*
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 第三方嵌套仓库（不上传）
+tools/4D-Humans/
+tools/motionbert_repo/
+tools/mocap_anything_service/mocap_repo/
+
+# 调试日志文件
+load_hmr2_log*.txt
+load_hmr2_log*.md
+mediapipe_check.txt
+pip_*.txt
+pkl_test.txt
+pl_*.txt

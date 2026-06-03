@@ -1,0 +1,37 @@
+﻿python.exe : Lightning automatically upgraded your loaded checkpoint from v1.8.1 to v2.6.5. To apply the upgrade to your files permanently, run `python -m pytorch_lightning.utilities.upgrade_checkpoint C:\Users\71082
+\.cache\4DHumans\logs\train\multiruns\hmr2\0\checkpoints\epoch=35-step=1000000.ckpt`
+所在位置 行:1 字符: 34
++ ... NGL_PLATFORM = 'glfw'; & "D:\新建文件夹 (2)\.venv\Scripts\python.exe" -c "
++                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Lightning autom...p=1000000.ckpt`:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Traceback (most recent call last):
+  File "<string>", line 9, in <module>
+  File "D:\新建文件夹 (2)\tools\4D-Humans\hmr2\models\__init__.py", line 85, in load_hmr2
+    model = HMR2.load_from_checkpoint(checkpoint_path, strict=False, cfg=model_cfg, weights_only=False, init_renderer=False)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹 (2)\.venv\Lib\site-packages\pytorch_lightning\utilities\model_helpers.py", line 130, in wrapper
+    return self.method(cls_type, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹 (2)\.venv\Lib\site-packages\pytorch_lightning\core\module.py", line 1796, in load_from_checkpoint
+    loaded = _load_from_checkpoint(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹 (2)\.venv\Lib\site-packages\pytorch_lightning\core\saving.py", line 93, in _load_from_checkpoint
+    model = _load_state(cls, checkpoint, strict=strict, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹 (2)\.venv\Lib\site-packages\pytorch_lightning\core\saving.py", line 167, in _load_state
+    obj = instantiator(cls, _cls_kwargs) if instantiator else cls(**_cls_kwargs)
+                                                              ^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹 (2)\tools\4D-Humans\hmr2\models\hmr2.py", line 52, in __init__
+    self.smpl = SMPL(**smpl_cfg)
+                ^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹 (2)\tools\4D-Humans\hmr2\models\smpl_wrapper.py", line 18, in __init__
+    super(SMPL, self).__init__(*args, **kwargs)
+  File "D:\新建文件夹 (2)\.venv\Lib\site-packages\smplx\body_models.py", line 400, in __init__
+    super(SMPLLayer, self).__init__(
+  File "D:\新建文件夹 (2)\.venv\Lib\site-packages\smplx\body_models.py", line 137, in __init__
+    data_struct = Struct(**pickle.load(smpl_file,
+                           ^^^^^^^^^^^^^^^^^^^^^^
+MemoryError
+Loading model...

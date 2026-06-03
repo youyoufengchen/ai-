@@ -1,0 +1,267 @@
+{
+  "_comment": "商品物理属性数据库 - 用于自动选择抓取和展示动作",
+  "version": "1.0",
+  "last_updated": "2024-01-15",
+  
+  "size_categories": {
+    "tiny": {
+      "display_name": "极小",
+      "max_dimension": 0.05,
+      "weight_range": [0, 0.1],
+      "grab_strategy": "pinch",
+      "present_strategy": "close_up",
+      "examples": ["戒指", "耳环", "小徽章"]
+    },
+    "small": {
+      "display_name": "小件",
+      "max_dimension": 0.15,
+      "weight_range": [0.1, 0.5],
+      "grab_strategy": "onehand_palm",
+      "present_strategy": "single_hand_show",
+      "examples": ["手机", "手表", "小饰品"]
+    },
+    "medium": {
+      "display_name": "中等",
+      "max_dimension": 0.3,
+      "weight_range": [0.5, 2.0],
+      "grab_strategy": "onehand_grip",
+      "present_strategy": "two_hand_rotate",
+      "examples": ["篮球", "礼盒", "平板"]
+    },
+    "medium_box": {
+      "display_name": "中等盒装",
+      "max_dimension": 0.4,
+      "weight_range": [0.5, 3.0],
+      "grab_strategy": "twohand_carry",
+      "present_strategy": "hold_at_chest",
+      "shape": "box",
+      "examples": ["茶叶礼盒", "鞋盒", "礼品盒"]
+    },
+    "large": {
+      "display_name": "大件",
+      "max_dimension": 0.8,
+      "weight_range": [2.0, 10.0],
+      "grab_strategy": "twohand_lift",
+      "present_strategy": "place_and_point",
+      "examples": ["大礼盒", "行李箱", "画框"]
+    },
+    "heavy": {
+      "display_name": "重物",
+      "max_dimension": 1.0,
+      "weight_range": [10.0, 50.0],
+      "grab_strategy": "both_arms_hug",
+      "present_strategy": "place_only",
+      "requires_assistance": true,
+      "examples": ["大箱子", "家电", "大盆栽"]
+    }
+  },
+  
+  "shape_types": {
+    "sphere": {
+      "display_name": "球形",
+      "grab_points": ["equator_grip", "pole_pinch"],
+      "rolling": true,
+      "exclusive_actions": ["bounce", "roll", "toss"]
+    },
+    "box": {
+      "display_name": "盒形",
+      "grab_points": ["side_grip", "bottom_support", "top_handle"],
+      "rolling": false,
+      "stable_on": ["flat_side"]
+    },
+    "cylinder": {
+      "display_name": "圆柱形",
+      "grab_points": ["side_grip", "top_pinch"],
+      "rolling": true,
+      "can_stack": true
+    },
+    "irregular": {
+      "display_name": "不规则",
+      "grab_points": ["main_body_grip", "handle"],
+      "requires_analysis": true
+    },
+    "flat": {
+      "display_name": "扁平",
+      "grab_points": ["edge_grip", "surface_pinch"],
+      "can_flip": true
+    }
+  },
+  
+  "grab_strategies": {
+    "pinch": {
+      "display_name": "捏取",
+      "hand_count": 1,
+      "finger_count": 2,
+      "animations": ["grab_pinch", "grab_finger_thumb"],
+      "suitable_for": ["tiny", "small"]
+    },
+    "onehand_palm": {
+      "display_name": "单手掌托",
+      "hand_count": 1,
+      "finger_count": 5,
+      "animations": ["grab_palm_up", "grab_palm_down"],
+      "suitable_for": ["small"]
+    },
+    "onehand_grip": {
+      "display_name": "单手握持",
+      "hand_count": 1,
+      "finger_count": 5,
+      "animations": ["grab_box_side", "grab_sphere"],
+      "suitable_for": ["medium", "small"]
+    },
+    "twohand_carry": {
+      "display_name": "双手捧持",
+      "hand_count": 2,
+      "finger_count": 10,
+      "animations": ["grab_twohand_box", "carry_at_chest"],
+      "suitable_for": ["medium", "medium_box"]
+    },
+    "twohand_lift": {
+      "display_name": "双手托举",
+      "hand_count": 2,
+      "finger_count": 10,
+      "animations": ["lift_heavy", "carry_overhead"],
+      "suitable_for": ["large", "medium_box"]
+    },
+    "both_arms_hug": {
+      "display_name": "双臂环抱",
+      "hand_count": 2,
+      "arm_count": 2,
+      "animations": ["hug_carry", "heavy_lift"],
+      "suitable_for": ["heavy", "large"]
+    }
+  },
+  
+  "products": {
+    "tea_001": {
+      "name": "西湖龙井礼盒",
+      "size_category": "medium_box",
+      "shape": "box",
+      "dimensions": {
+        "length": 0.25,
+        "width": 0.15,
+        "height": 0.08
+      },
+      "weight": 0.5,
+      "fragile": true,
+      "has_handle": false,
+      "preferred_grab": "twohand_carry",
+      "preferred_present": "present_box_flat",
+      "special_actions": ["open_box", "show_layers"]
+    },
+    
+    "tea_002": {
+      "name": "铁观音罐装",
+      "size_category": "small",
+      "shape": "cylinder",
+      "dimensions": {
+        "diameter": 0.08,
+        "height": 0.12
+      },
+      "weight": 0.2,
+      "fragile": true,
+      "has_lid": true,
+      "preferred_grab": "onehand_grip",
+      "preferred_present": "present_rotate",
+      "special_actions": ["open_lid", "show_content"]
+    },
+    
+    "basketball_001": {
+      "name": "专业篮球",
+      "size_category": "medium",
+      "shape": "sphere",
+      "dimensions": {
+        "diameter": 0.24
+      },
+      "weight": 0.6,
+      "bouncy": true,
+      "requires_two_hands": true,
+      "preferred_grab": "twohand_carry",
+      "preferred_present": "present_bounce",
+      "special_actions": ["bounce", "spin_on_finger", "pass"]
+    },
+    
+    "perfume_001": {
+      "name": "经典香水",
+      "size_category": "small",
+      "shape": "irregular",
+      "dimensions": {
+        "length": 0.05,
+        "width": 0.03,
+        "height": 0.12
+      },
+      "weight": 0.1,
+      "fragile": true,
+      "has_spray": true,
+      "preferred_grab": "onehand_grip",
+      "preferred_present": "present_close_to_face",
+      "special_actions": ["spray_demo", "waft_scent"]
+    },
+    
+    "watch_001": {
+      "name": "机械手表",
+      "size_category": "small",
+      "shape": "flat",
+      "dimensions": {
+        "diameter": 0.04,
+        "thickness": 0.01
+      },
+      "weight": 0.08,
+      "has_strap": true,
+      "preferred_grab": "pinch",
+      "preferred_present": "present_rotate",
+      "special_actions": ["wear_on_wrist", "show_detail"]
+    },
+    
+    "tea_set_001": {
+      "name": "茶具套装",
+      "size_category": "large",
+      "shape": "box",
+      "dimensions": {
+        "length": 0.4,
+        "width": 0.3,
+        "height": 0.15
+      },
+      "weight": 3.0,
+      "fragile": true,
+      "contains_multiple": true,
+      "preferred_grab": "twohand_lift",
+      "preferred_present": "place_and_open",
+      "special_actions": ["open_box", "take_out_items", "arrange_display"]
+    }
+  },
+  
+  "shelf_heights": {
+    "floor": {
+      "display_name": "地面",
+      "height_range": [0, 0.3],
+      "reach_action": "reach_bend_down",
+      "gaze_action": "look_down"
+    },
+    "low": {
+      "display_name": "低层",
+      "height_range": [0.3, 0.8],
+      "reach_action": "reach_low",
+      "gaze_action": "look_down_slight"
+    },
+    "mid": {
+      "display_name": "中层",
+      "height_range": [0.8, 1.5],
+      "reach_action": "reach_mid",
+      "gaze_action": "look_straight"
+    },
+    "high": {
+      "display_name": "高层",
+      "height_range": [1.5, 2.0],
+      "reach_action": "reach_high",
+      "gaze_action": "look_up"
+    },
+    "very_high": {
+      "display_name": "顶层",
+      "height_range": [2.0, 3.0],
+      "reach_action": "reach_use_stool",
+      "alternative_actions": ["reach_jump", "fly_up"],
+      "gaze_action": "look_up_high"
+    }
+  }
+}

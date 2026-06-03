@@ -1,0 +1,52 @@
+{
+  "_comment": "角色骨骼注册表。每个NPC角色注册一次骨骼类型和映射表，运行时自动匹配可用动作库。",
+  "version": "1.0",
+
+  "characters": {
+
+    "npc_01": {
+      "display_name": "NPC 01 (VRM)",
+      "file": "assets/角色/npc_01.vrm",
+      "format": "vrm",
+      "skeleton_type": "humanoid",
+      "source_rig": "vrm",
+      "retarget_map": "mixamo_to_vrm",
+      "has_blendshapes": true,
+      "has_spring_bone": true,
+      "has_viseme": true,
+      "vrm_expressions": ["happy", "angry", "sad", "surprised", "relaxed", "neutral"],
+      "vrm_visemes": ["aa", "ih", "ou", "ee", "oh"],
+      "notes": "主力VRM角色，支持表情/口型/物理"
+    },
+
+    "x_bot_mixamo": {
+      "display_name": "X Bot (Mixamo)",
+      "file": "assets/角色/X Bot.glb",
+      "format": "glb",
+      "skeleton_type": "humanoid",
+      "source_rig": "mixamo",
+      "retarget_map": "mixamo_to_vrm",
+      "has_blendshapes": false,
+      "has_spring_bone": false,
+      "has_viseme": false,
+      "notes": "当前默认测试角色，无表情/口型/物理支持，后续迁移至VRM"
+    }
+
+  },
+
+  "_vrm_template": {
+    "_comment": "VRM角色注册模板，找到VRM资源后按此格式添加",
+    "display_name": "角色显示名",
+    "file": "assets/角色/xxx.vrm",
+    "format": "vrm",
+    "skeleton_type": "humanoid",
+    "source_rig": "vrm",
+    "retarget_map": "mixamo_to_vrm",
+    "has_blendshapes": true,
+    "has_spring_bone": true,
+    "has_viseme": true,
+    "vrm_expressions": ["happy", "angry", "sad", "surprised", "relaxed", "neutral"],
+    "vrm_visemes": ["aa", "ih", "ou", "ee", "oh"],
+    "notes": ""
+  }
+}

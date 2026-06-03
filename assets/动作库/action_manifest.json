@@ -1,0 +1,136 @@
+{
+  "version": "1.0",
+  "last_scan": "2026-05-29T19:28:39.047944",
+  "actions": {
+    "交互动作_取物动作_取中间": {
+      "display_name": "取中间",
+      "category": "交互动作/取物动作/取中间",
+      "variants": [
+        {
+          "id": "Pick Fruit (2)",
+          "file_path": "交互动作/取物动作/取中间/Pick Fruit (2).glb",
+          "description": "Pick Fruit (2)",
+          "path": "交互动作/取物动作/取中间/Pick Fruit (2).glb"
+        }
+      ]
+    },
+    "交互动作_取物动作_取低处": {
+      "display_name": "取低处",
+      "category": "交互动作/取物动作/取低处",
+      "variants": [
+        {
+          "id": "Pick Fruit",
+          "file_path": "交互动作/取物动作/取低处/Pick Fruit.glb",
+          "description": "Pick Fruit",
+          "path": "交互动作/取物动作/取低处/Pick Fruit.glb"
+        }
+      ]
+    },
+    "交互动作_取物动作_取高处": {
+      "display_name": "取高处",
+      "category": "交互动作/取物动作/取高处",
+      "variants": [
+        {
+          "id": "Pick Fruit (1)",
+          "file_path": "交互动作/取物动作/取高处/Pick Fruit (1).glb",
+          "description": "Pick Fruit (1)",
+          "path": "交互动作/取物动作/取高处/Pick Fruit (1).glb"
+        }
+      ]
+    },
+    "交互动作_取物动作_弯腰取": {
+      "display_name": "弯腰取",
+      "category": "交互动作/取物动作/弯腰取",
+      "variants": [
+        {
+          "id": "Kettlebell Swing",
+          "file_path": "交互动作/取物动作/弯腰取/Kettlebell Swing.glb",
+          "description": "Kettlebell Swing",
+          "path": "交互动作/取物动作/弯腰取/Kettlebell Swing.glb"
+        }
+      ]
+    },
+    "交互动作_递接动作_放下物品": {
+      "display_name": "放下物品",
+      "category": "交互动作/递接动作/放下物品",
+      "variants": [
+        {
+          "id": "Shaking Hands 1",
+          "file_path": "交互动作/递接动作/放下物品/Shaking Hands 1.glb",
+          "description": "Shaking Hands 1",
+          "path": "交互动作/递接动作/放下物品/Shaking Hands 1.glb"
+        },
+        {
+          "id": "Standing Greeting",
+          "file_path": "交互动作/递接动作/放下物品/Standing Greeting.glb",
+          "description": "Standing Greeting",
+          "path": "交互动作/递接动作/放下物品/Standing Greeting.glb"
+        }
+      ]
+    },
+    "基础姿态_弯腰": {
+      "display_name": "弯腰",
+      "category": "基础姿态/弯腰",
+      "variants": [
+        {
+          "id": "Kettlebell Swing",
+          "file_path": "基础姿态/弯腰/Kettlebell Swing.glb",
+          "description": "Kettlebell Swing",
+          "path": "基础姿态/弯腰/Kettlebell Swing.glb"
+        }
+      ]
+    },
+    "基础姿态_idle_stand": {
+      "display_name": "直立站立",
+      "category": "基础姿态/直立站立",
+      "variants": [
+        {
+          "id": "Standing Arguing",
+          "file_path": "基础姿态/直立站立/Standing Arguing.glb",
+          "description": "Standing Arguing",
+          "path": "基础姿态/直立站立/Standing Arguing.glb"
+        }
+      ]
+    },
+    "基础姿态_蹲下": {
+      "display_name": "蹲下",
+      "category": "基础姿态/蹲下",
+      "variants": [
+        {
+          "id": "Gathering Objects",
+          "file_path": "基础姿态/蹲下/Gathering Objects.glb",
+          "description": "Gathering Objects",
+          "path": "基础姿态/蹲下/Gathering Objects.glb"
+        }
+      ]
+    },
+    "情绪反应_打招呼": {
+      "display_name": "打招呼",
+      "category": "情绪反应/打招呼",
+      "variants": [
+        {
+          "id": "Standing Greeting (1)",
+          "file_path": "情绪反应/打招呼/Standing Greeting (1).glb",
+          "description": "Standing Greeting (1)",
+          "path": "情绪反应/打招呼/Standing Greeting (1).glb"
+        }
+      ]
+    },
+    "移动动作_walk_walk_normal": {
+      "display_name": "正常走路",
+      "category": "移动动作/走路/正常走路",
+      "variants": [
+        {
+          "id": "Walking",
+          "file_path": "移动动作/走路/正常走路/Walking.glb",
+          "description": "Walking",
+          "path": "移动动作/走路/正常走路/Walking.glb"
+        }
+      ]
+    }
+  },
+  "stats": {
+    "total_actions": 10,
+    "total_variants": 11
+  }
+}

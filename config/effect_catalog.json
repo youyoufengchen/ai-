@@ -1,0 +1,237 @@
+{
+  "_comment": "特效库 — 粒子系统、WebM透明视频、骨骼绑定光效的注册表。特效由前端ActionExecutor负责播放。",
+  "version": "1.0",
+
+  "_effect_type_reference": {
+    "particle":      "Three.js粒子系统（JSON参数驱动，运行时生成）",
+    "webm_overlay":  "WebM透明视频，叠加在3D画面上方（CSS层）",
+    "bone_attached": "绑定到指定骨骼节点的粒子/光效，跟随骨骼运动",
+    "screen_flash":  "全屏闪光/色调叠加（切换场景、技能爆发瞬间）",
+    "ui_particle":   "UI层粒子，不在3D空间内（如金币雨、心形飘散）"
+  },
+
+  "effects": [
+
+    {
+      "id": "fx_fox_fire_burst",
+      "name": "狐火爆发",
+      "type": "particle",
+      "category": "变身特效",
+      "description": "变身时从角色身体中心向外爆发的蓝紫色狐火",
+      "particle_config": {
+        "count": 300,
+        "color_start": "#7B2FFF",
+        "color_end": "#00CCFF",
+        "size_start": 0.08,
+        "size_end": 0.0,
+        "speed": 3.5,
+        "lifetime_s": 1.2,
+        "spread": "sphere",
+        "spread_radius": 0.5,
+        "gravity": -0.5,
+        "origin_bone": "chest"
+      },
+      "duration_s": 1.2,
+      "loop": false,
+      "sounds": {
+        "on_start": "assets/sounds/transform/fox_fire_ignite.mp3"
+      }
+    },
+
+    {
+      "id": "fx_palm_fire",
+      "name": "手心狐火",
+      "type": "bone_attached",
+      "category": "技能特效",
+      "description": "附着在右手掌心的持续蓝色小火苗",
+      "attach_bone": "rightHand",
+      "offset": { "x": 0.0, "y": 0.05, "z": 0.0 },
+      "particle_config": {
+        "count": 40,
+        "count_per_second": 30,
+        "color_start": "#3399FF",
+        "color_end": "#FFFFFF",
+        "size_start": 0.04,
+        "size_end": 0.0,
+        "speed": 0.3,
+        "lifetime_s": 0.4,
+        "spread": "cone",
+        "spread_angle_deg": 20,
+        "gravity": 0.2
+      },
+      "duration_s": -1,
+      "loop": true,
+      "_note": "duration_s=-1表示持续播放直到主动停止（dismiss_effect调用）",
+      "sounds": {
+        "loop_while_active": "assets/sounds/ambient/fire_crackle_loop.mp3"
+      }
+    },
+
+    {
+      "id": "fx_fox_fire_aura",
+      "name": "狐火光环",
+      "type": "bone_attached",
+      "category": "形态光效",
+      "description": "半狐形态持续的蓝紫色光晕，围绕全身",
+      "attach_bone": "hips",
+      "offset": { "x": 0.0, "y": 0.8, "z": 0.0 },
+      "particle_config": {
+        "count": 80,
+        "count_per_second": 20,
+        "color_start": "#6600CC",
+        "color_end": "#0044FF",
+        "size_start": 0.05,
+        "size_end": 0.0,
+        "speed": 0.2,
+        "lifetime_s": 1.5,
+        "spread": "sphere",
+        "spread_radius": 0.6,
+        "gravity": 0.1
+      },
+      "duration_s": -1,
+      "loop": true,
+      "sounds": {
+        "loop_while_active": "assets/sounds/ambient/fox_fire_loop.mp3"
+      }
+    },
+
+    {
+      "id": "fx_human_restore",
+      "name": "人形恢复",
+      "type": "particle",
+      "category": "变身特效",
+      "description": "从狐狸形态恢复人形时的白光粒子消散",
+      "particle_config": {
+        "count": 150,
+        "color_start": "#FFFFFF",
+        "color_end": "#AADDFF",
+        "size_start": 0.06,
+        "size_end": 0.0,
+        "speed": 1.5,
+        "lifetime_s": 0.8,
+        "spread": "sphere",
+        "spread_radius": 0.4,
+        "gravity": 0.3,
+        "origin_bone": "chest"
+      },
+      "duration_s": 0.8,
+      "loop": false,
+      "sounds": {
+        "on_start": "assets/sounds/transform/human_restore.mp3"
+      }
+    },
+
+    {
+      "id": "fx_robot_materialize",
+      "name": "机器人召唤",
+      "type": "particle",
+      "category": "召唤特效",
+      "description": "机器人从空气中凝聚出现的数字粒子效果",
+      "particle_config": {
+        "count": 200,
+        "color_start": "#00FFAA",
+        "color_end": "#004466",
+        "size_start": 0.03,
+        "size_end": 0.0,
+        "speed": 2.0,
+        "lifetime_s": 1.0,
+        "spread": "inward_sphere",
+        "spread_radius": 0.8,
+        "gravity": 0.0,
+        "origin_bone": null,
+        "origin_position": "actor_spawn_point"
+      },
+      "duration_s": 1.0,
+      "loop": false,
+      "sounds": {
+        "on_start": "assets/sounds/effect/robot_summon.mp3"
+      }
+    },
+
+    {
+      "id": "fx_coin_rain",
+      "name": "金币雨",
+      "type": "ui_particle",
+      "category": "互动特效/下单",
+      "description": "观众下单时从屏幕上方落下的金币粒子",
+      "css_layer": "fx-layer",
+      "particle_config": {
+        "count": 30,
+        "sprite": "assets/ui/coin_sprite.png",
+        "size_px": 32,
+        "fall_speed_px_s": 400,
+        "spread_x_px": 1920,
+        "rotation_speed_deg_s": 180,
+        "lifetime_s": 2.0
+      },
+      "duration_s": 2.0,
+      "loop": false,
+      "trigger_event": "order_placed",
+      "sounds": {
+        "on_start": "assets/sounds/event/order_placed.mp3"
+      }
+    },
+
+    {
+      "id": "fx_heart_burst",
+      "name": "爱心爆发",
+      "type": "ui_particle",
+      "category": "互动特效/撒娇",
+      "description": "NPC撒娇时从角色位置飘出的爱心粒子",
+      "css_layer": "fx-layer",
+      "particle_config": {
+        "count": 12,
+        "sprite": "assets/ui/heart_sprite.png",
+        "size_px": 24,
+        "float_speed_px_s": 80,
+        "spread_x_px": 200,
+        "fade_out": true,
+        "lifetime_s": 1.5
+      },
+      "duration_s": 1.5,
+      "loop": false,
+      "trigger_emotion": "cute",
+      "trigger_emotion_threshold": 0.7,
+      "sounds": {
+        "on_start": null
+      }
+    },
+
+    {
+      "id": "fx_screen_flash_white",
+      "name": "白色闪光",
+      "type": "screen_flash",
+      "category": "转场特效",
+      "description": "场景切换或技能爆发时的全屏白色闪光",
+      "css_layer": "fx-layer",
+      "flash_config": {
+        "color": "#FFFFFF",
+        "peak_opacity": 0.85,
+        "flash_in_s": 0.08,
+        "flash_out_s": 0.4
+      },
+      "duration_s": 0.5,
+      "loop": false,
+      "sounds": { "on_start": null }
+    },
+
+    {
+      "id": "fx_gift_firework",
+      "name": "礼物烟花",
+      "type": "webm_overlay",
+      "category": "互动特效/礼物",
+      "description": "大额礼物触发的烟花WebM透明视频叠加",
+      "css_layer": "fx-layer",
+      "webm_file": "assets/effects/firework_overlay.webm",
+      "position": "center",
+      "scale": 1.0,
+      "duration_s": 3.0,
+      "loop": false,
+      "trigger_event": "gift_big",
+      "sounds": {
+        "on_start": "assets/sounds/event/gift_big.mp3"
+      }
+    }
+
+  ]
+}

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>大模型配置 — 宝青坊</title>
+<style>
+:root{
+  --bg:#0f0f13;--bg2:#16161d;--bg3:#1e1e28;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#e8e8f0;--text2:#a0a0b8;--text3:#606080;
+  --primary:#c09a5a;--ok:#27ae60;--warn:#e6a817;--err:#e74c3c;--blue:#4a9eff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Microsoft YaHei',sans-serif;font-size:13px;height:100vh;display:flex;flex-direction:column;}
+
+/* ─ 顶栏 ─ */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;gap:16px;}
+.topbar h1{font-size:15px;font-weight:600;color:var(--primary);}
+.nav-btn{padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--text2);cursor:pointer;font-size:12px;transition:.15s;}
+.nav-btn:hover{border-color:var(--primary);color:var(--primary);}
+
+/* ─ 主体 ─ */
+.body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px;max-width:1200px;margin:0 auto;width:100%;}
+
+/* ─ 卡片 ─ */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:20px;}
+.card h3{font-size:14px;font-weight:600;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* ─ 表单 ─ */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.form-row{display:flex;gap:12px;align-items:end;}
+.form-row .form-group{flex:1;margin-bottom:0;}
+label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+input, select, textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:8px 12px;font-size:12px;transition:.15s;}
+input:focus, select:focus, textarea:focus{outline:none;border-color:var(--primary);}
+input[type="checkbox"]{width:auto;margin-right:6px;}
+textarea{resize:vertical;min-height:80px;}
+
+/* ─ 按钮 ─ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:5px;cursor:pointer;font-size:12px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);transition:.15s;user-select:none;}
+.btn:hover{border-color:var(--primary);color:var(--primary);}
+.btn.primary{background:var(--primary);color:#000;border-color:var(--primary);font-weight:600;}
+.btn.primary:hover{opacity:.88;}
+.btn.danger{border-color:var(--err);color:var(--err);}
+.btn.danger:hover{background:var(--err);color:#fff;}
+.btn.sm{padding:4px 8px;font-size:11px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ─ 配置列表 ─ */
+.config-list{display:flex;flex-direction:column;gap:12px;}
+.config-item{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:16px;display:flex;gap:16px;align-items:start;transition:.15s;}
+.config-item:hover{border-color:var(--border2);}
+.config-item.active{border-color:var(--primary);background:rgba(192,154,90,.1);}
+.config-info{flex:1;min-width:0;}
+.config-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.config-details{font-size:11px;color:var(--text3);line-height:1.4;}
+.config-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+.status-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;}
+.status-badge.active{background:var(--ok);color:#000;}
+.status-badge.inactive{background:var(--bg);color:var(--text3);}
+
+/* ─ 模板选择 ─ */
+.template-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;}
+.template-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;cursor:pointer;transition:.15s;}
+.template-card:hover{border-color:var(--primary);}
+.template-card.selected{border-color:var(--primary);background:rgba(192,154,90,.1);}
+.template-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.template-desc{font-size:10px;color:var(--text3);line-height:1.3;}
+
+/* ─ Toast ─ */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 16px;font-size:12px;opacity:0;transition:.3s;pointer-events:none;z-index:9999;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* ─ 加载动画 ─ */
+.loading{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="topbar">
+  <h1>🤖 大模型配置</h1>
+  <div style="flex:1"></div>
+  <button class="nav-btn" onclick="window.open('/assets-manager','_blank')">📂 素材管理</button>
+  <button class="nav-btn" onclick="window.open('/editor','_blank')">🎨 编辑器</button>
+  <button class="nav-btn" onclick="window.open('/','_blank')">🏠 控制台</button>
+</div>
+
+<div class="body">
+
+<!-- 配置列表 -->
+<div class="card">
+  <h3>📋 已配置模型</h3>
+  <div class="config-list" id="config-list">
+    <div style="text-align:center;color:var(--text3);padding:40px;">加载中...</div>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:8px;">
+    <button class="btn primary" onclick="showAddConfigModal()">➕ 添加模型</button>
+    <button class="btn sm" onclick="refreshConfigs()">🔄 刷新</button>
+  </div>
+</div>
+
+<!-- 快速模板 -->
+<div class="card">
+  <h3>⚡ 快速配置模板</h3>
+  <div class="template-grid" id="template-grid">
+    <!-- 模板卡片将通过JS生成 -->
+  </div>
+</div>
+
+</div>
+
+<!-- 添加/编辑配置弹窗 -->
+<div class="modal-bg" id="config-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;align-items:center;justify-content:center;">
+<div class="modal" style="background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:24px;width:500px;max-width:96vw;max-height:90vh;overflow-y:auto;">
+  <h2 id="modal-title">➕ 添加大模型配置</h2>
+  
+  <form id="config-form" style="display:flex;flex-direction:column;gap:16px;margin-top:20px;">
+    <div class="form-group">
+      <label>配置名称 *</label>
+      <input type="text" id="config-name" placeholder="例：OpenAI-GPT4" required>
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label>模型提供商 *</label>
+        <select id="provider" onchange="updateProviderFields()" required>
+          <option value="">请选择</option>
+          <option value="openai">OpenAI</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="claude">Claude (Anthropic)</option>
+          <option value="qwen">通义千问</option>
+          <option value="glm">智谱GLM</option>
+          <option value="local">本地模型 (Ollama)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>模型名称 *</label>
+        <input type="text" id="model-name" placeholder="例：gpt-4" required>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label>API密钥 *</label>
+      <input type="password" id="api-key" placeholder="sk-..." required>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px;">密钥将被加密存储，仅本地可见</div>
+    </div>
+    
+    <div class="form-group" id="api-base-group">
+      <label>API地址（可选）</label>
+      <input type="text" id="api-base" placeholder="留空使用默认地址">
+    </div>
+    
+    <div class="form-row">
+      <div class="form-group">
+        <label>温度</label>
+        <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7">
+      </div>
+      <div class="form-group">
+        <label>最大令牌数</label>
+        <input type="number" id="max-tokens" min="1" max="8000" value="2000">
+      </div>
+      <div class="form-group">
+        <label>超时(秒)</label>
+        <input type="number" id="timeout" min="5" max="300" value="30">
+      </div>
+    </div>
+    
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button type="button" class="btn" onclick="closeConfigModal()">取消</button>
+      <button type="button" class="btn sm" onclick="testConfig()">🧪 测试</button>
+      <button type="submit" class="btn primary">保存</button>
+    </div>
+  </form>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// 全局变量
+let configs = {};
+let editingConfigId = null;
+
+// 模板定义
+const TEMPLATES = {
+  'openai-gpt4': {
+    name: 'OpenAI GPT-4',
+    desc: 'OpenAI 官方 GPT-4 模型',
+    provider: 'openai',
+    model_name: 'gpt-4',
+    api_base: '',
+    temperature: 0.7,
+    max_tokens: 2000
+  },
+  'openai-gpt3.5': {
+    name: 'OpenAI GPT-3.5',
+    desc: 'OpenAI 官方 GPT-3.5 Turbo',
+    provider: 'openai',
+    model_name: 'gpt-3.5-turbo',
+    api_base: '',
+    temperature: 0.7,
+    max_tokens: 2000
+  },
+  'deepseek-chat': {
+    name: 'DeepSeek Chat',
+    desc: 'DeepSeek 对话模型',
+    provider: 'deepseek',
+    model_name: 'deepseek-chat',
+    api_base: '',
+    temperature: 0.7,
+    max_tokens: 2000
+  },
+  'claude-sonnet': {
+    name: 'Claude Sonnet',
+    desc: 'Anthropic Claude Sonnet',
+    provider: 'claude',
+    model_name: 'claude-3-sonnet-20240229',
+    api_base: '',
+    temperature: 0.7,
+    max_tokens: 2000
+  },
+  'local-ollama': {
+    name: '本地 Ollama',
+    desc: '本地部署的 Ollama 模型',
+    provider: 'local',
+    model_name: 'llama2',
+    api_base: 'http://localhost:11434',
+    temperature: 0.7,
+    max_tokens: 2000
+  }
+};
+
+// 工具函数
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.borderColor=type==='err'?'var(--err)':type==='warn'?'var(--warn)':'var(--ok)';
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// 初始化模板
+function initTemplates(){
+  const grid=document.getElementById('template-grid');
+  grid.innerHTML=Object.entries(TEMPLATES).map(([key,tpl])=>`
+    <div class="template-card" onclick="applyTemplate('${key}')">
+      <div class="template-name">${esc(tpl.name)}</div>
+      <div class="template-desc">${esc(tpl.desc)}</div>
+    </div>
+  `).join('');
+}
+
+// 应用模板
+function applyTemplate(templateKey){
+  const tpl=TEMPLATES[templateKey];
+  if(!tpl)return;
+  
+  document.getElementById('config-name').value=tpl.name;
+  document.getElementById('provider').value=tpl.provider;
+  document.getElementById('model-name').value=tpl.model_name;
+  document.getElementById('api-base').value=tpl.api_base;
+  document.getElementById('temperature').value=tpl.temperature;
+  document.getElementById('max-tokens').value=tpl.max_tokens;
+  
+  updateProviderFields();
+  
+  // 高亮选中的模板
+  document.querySelectorAll('.template-card').forEach(card=>card.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  
+  toast('✅ 模板已应用');
+}
+
+// 更新提供商相关字段
+function updateProviderFields(){
+  const provider=document.getElementById('provider').value;
+  const apiBaseGroup=document.getElementById('api-base-group');
+  
+  if(provider==='local'){
+    apiBaseGroup.style.display='block';
+    document.getElementById('api-base').placeholder='例：http://localhost:11434';
+  }else if(provider==='openai'){
+    apiBaseGroup.style.display='block';
+    document.getElementById('api-base').placeholder='留空使用 https://api.openai.com/v1';
+  }else{
+    apiBaseGroup.style.display='block';
+    document.getElementById('api-base').placeholder='留空使用默认地址';
+  }
+}
+
+// 显示添加配置弹窗
+function showAddConfigModal(){
+  editingConfigId=null;
+  document.getElementById('modal-title').textContent='➕ 添加大模型配置';
+  document.getElementById('config-form').reset();
+  updateProviderFields();
+  document.getElementById('config-modal').style.display='flex';
+}
+
+// 显示编辑配置弹窗
+function showEditConfigModal(configId){
+  const config=configs[configId];
+  if(!config)return;
+  
+  editingConfigId=configId;
+  document.getElementById('modal-title').textContent='✏️ 编辑大模型配置';
+  
+  document.getElementById('config-name').value=configId;
+  document.getElementById('provider').value=config.provider;
+  document.getElementById('model-name').value=config.model_name;
+  document.getElementById('api-base').value=config.api_base||'';
+  document.getElementById('temperature').value=config.temperature;
+  document.getElementById('max-tokens').value=config.max_tokens;
+  document.getElementById('timeout').value=config.timeout;
+  
+  updateProviderFields();
+  document.getElementById('config-modal').style.display='flex';
+}
+
+// 关闭配置弹窗
+function closeConfigModal(){
+  document.getElementById('config-modal').style.display='none';
+  editingConfigId=null;
+}
+
+// 测试配置
+async function testConfig(){
+  const formData=getFormData();
+  if(!formData)return;
+  
+  const testBtn=event.target;
+  const originalText=testBtn.textContent;
+  testBtn.innerHTML='<span class="loading"></span> 测试中...';
+  testBtn.disabled=true;
+  
+  try{
+    const response=await fetch('/api/llm/test-config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(formData)
+    });
+    
+    const result=await response.json();
+    if(result.ok){
+      toast('✅ 配置测试成功');
+    }else{
+      toast('❌ 配置测试失败: '+(result.error||'未知错误'),'err');
+    }
+  }catch(e){
+    toast('❌ 测试请求失败: '+e.message,'err');
+  }finally{
+    testBtn.textContent=originalText;
+    testBtn.disabled=false;
+  }
+}
+
+// 获取表单数据
+function getFormData(){
+  const form=document.getElementById('config-form');
+  if(!form.checkValidity()){
+    form.reportValidity();
+    return null;
+  }
+  
+  return {
+    provider: document.getElementById('provider').value,
+    model_name: document.getElementById('model-name').value,
+    api_key: document.getElementById('api-key').value,
+    api_base: document.getElementById('api-base').value || null,
+    temperature: parseFloat(document.getElementById('temperature').value),
+    max_tokens: parseInt(document.getElementById('max-tokens').value),
+    timeout: parseInt(document.getElementById('timeout').value)
+  };
+}
+
+// 保存配置
+async function saveConfig(e){
+  e.preventDefault();
+  
+  const formData=getFormData();
+  if(!formData)return;
+  
+  const configId=document.getElementById('config-name').value;
+  const isEdit=editingConfigId!==null;
+  
+  try{
+    const response=await fetch('/api/llm/save-config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        config_id: configId,
+        config: formData,
+        is_edit: isEdit
+      })
+    });
+    
+    const result=await response.json();
+    if(result.ok){
+      toast(isEdit?'✅ 配置已更新':'✅ 配置已添加');
+      closeConfigModal();
+      refreshConfigs();
+    }else{
+      toast('❌ 保存失败: '+(result.error||'未知错误'),'err');
+    }
+  }catch(e){
+    toast('❌ 保存请求失败: '+e.message,'err');
+  }
+}
+
+// 删除配置
+async function deleteConfig(configId){
+  if(!confirm(`确认删除配置 "${configId}"？此操作不可恢复。`))return;
+  
+  try{
+    const response=await fetch('/api/llm/delete-config',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({config_id: configId})
+    });
+    
+    const result=await response.json();
+    if(result.ok){
+      toast('🗑 配置已删除');
+      refreshConfigs();
+    }else{
+      toast('❌ 删除失败: '+(result.error||'未知错误'),'err');
+    }
+  }catch(e){
+    toast('❌ 删除请求失败: '+e.message,'err');
+  }
+}
+
+// 设置激活配置
+async function setActiveConfig(configId){
+  try{
+    const response=await fetch('/api/llm/set-active',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({config_id: configId})
+    });
+    
+    const result=await response.json();
+    if(result.ok){
+      toast('✅ 已切换到: '+configId);
+      refreshConfigs();
+    }else{
+      toast('❌ 切换失败: '+(result.error||'未知错误'),'err');
+    }
+  }catch(e){
+    toast('❌ 切换请求失败: '+e.message,'err');
+  }
+}
+
+// 刷新配置列表
+async function refreshConfigs(){
+  try{
+    const response=await fetch('/api/llm/configs');
+    const result=await response.json();
+    
+    if(result.ok){
+      configs=result.configs;
+      renderConfigList();
+    }else{
+      toast('❌ 加载配置失败: '+(result.error||'未知错误'),'err');
+    }
+  }catch(e){
+    toast('❌ 加载请求失败: '+e.message,'err');
+  }
+}
+
+// 渲染配置列表
+function renderConfigList(){
+  const list=document.getElementById('config-list');
+  
+  if(!Object.keys(configs).length){
+    list.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px;">暂无配置，点击上方"添加模型"开始</div>';
+    return;
+  }
+  
+  list.innerHTML=Object.entries(configs).map(([configId, config])=>`
+    <div class="config-item ${config.is_active?'active':''}">
+      <div class="config-info">
+        <div class="config-name">${esc(configId)}</div>
+        <div class="config-details">
+          提供商: ${config.provider} | 模型: ${config.model_name}<br>
+          温度: ${config.temperature} | 最大令牌: ${config.max_tokens}<br>
+          ${config.api_base?'API地址: '+config.api_base+'<br>':''}
+        </div>
+      </div>
+      <div class="config-actions">
+        <span class="status-badge ${config.is_active?'active':'inactive'}">
+          ${config.is_active?'当前激活':'未激活'}
+        </span>
+        <div class="btn-group">
+          ${!config.is_active?`<button class="btn sm primary" onclick="setActiveConfig('${escA(configId)}')">激活</button>`:''}
+          <button class="btn sm" onclick="showEditConfigModal('${escA(configId)}')">编辑</button>
+          <button class="btn sm danger" onclick="deleteConfig('${escA(configId)}')">删除</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded',()=>{
+  initTemplates();
+  refreshConfigs();
+  
+  // 绑定表单提交
+  document.getElementById('config-form').addEventListener('submit',saveConfig);
+  
+  // 点击弹窗外部关闭
+  document.getElementById('config-modal').addEventListener('click',e=>{
+    if(e.target.id==='config-modal'){
+      closeConfigModal();
+    }
+  });
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📦 商品管理系统</title>
+<style>
+  :root{
+    --primary:#c9a55c; --primary-light:#e8d4a8; --primary-dark:#a08040;
+    --bg:#0d0d12; --panel:#15151c; --card:#1d1d26; --border:#2a2a35;
+    --text:#e8dcc8; --text-2:#888; --text-3:#666;
+    --ok:#27ae60; --warn:#f39c12; --err:#e74c3c; --info:#3498db;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--text); height:100vh; overflow:hidden;
+    display:flex; flex-direction:column; font-size:13px;
+  }
+  /* ====== 顶部栏 ====== */
+  .topbar{
+    height:48px; background:var(--panel); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; padding:0 16px; gap:12px; flex-shrink:0;
+  }
+  .topbar .title{ font-size:15px; font-weight:600; color:var(--primary);}
+  .topbar .ver{ font-size:11px; color:var(--text-2); padding:2px 6px; background:rgba(201,165,92,.15); border-radius:4px;}
+  .topbar .spacer{ flex:1; }
+
+  /* ====== 按钮 ====== */
+  .btn{
+    padding:6px 12px; border:1px solid var(--border); background:var(--card);
+    color:var(--text); border-radius:5px; cursor:pointer; font-size:12px;
+    display:inline-flex; align-items:center; gap:5px; transition:.15s;
+    font-family:inherit;
+  }
+  .btn:hover{ background:var(--primary); color:#000; border-color:var(--primary);}
+  .btn.primary{ background:var(--primary); color:#000; border-color:var(--primary);}
+  .btn.primary:hover{ background:var(--primary-light);}
+  .btn.danger{ background:var(--err); color:#fff; border-color:var(--err);}
+  .btn.danger:hover{ background:#c0392b;}
+  .btn.ok{ background:var(--ok); color:#fff; border-color:var(--ok);}
+  .btn.ok:hover{ background:#219a52;}
+  .btn.info{ background:var(--info); color:#fff; border-color:var(--info);}
+  .btn.sm{ padding:4px 8px; font-size:11px;}
+  .btn:disabled{ opacity:.45; cursor:not-allowed;}
+
+  /* ====== 主布局 ====== */
+  .main{ flex:1; display:flex; overflow:hidden;}
+  .sidebar{
+    width:280px; background:var(--panel); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .content{ flex:1; display:flex; flex-direction:column; overflow:hidden;}
+
+  /* ====== 侧边栏 ====== */
+  .sidebar-header{
+    padding:12px 16px; border-bottom:1px solid var(--border);
+  }
+  .sidebar-title{ font-size:14px; font-weight:600; color:var(--primary);}
+  .sidebar-stats{
+    display:flex; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border);
+    font-size:11px; color:var(--text-2);
+  }
+  .stat-item{ display:flex; flex-direction:column; }
+  .stat-val{ font-size:16px; font-weight:600; color:var(--text);}
+
+  /* 筛选 */
+  .filter-section{
+    padding:12px 16px; border-bottom:1px solid var(--border);
+  }
+  .filter-title{ font-size:11px; color:var(--text-3); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;}
+  .category-list{ display:flex; flex-direction:column; gap:4px;}
+  .category-item{
+    padding:8px 12px; border-radius:4px; cursor:pointer; font-size:12px;
+    display:flex; align-items:center; gap:8px; transition:.15s;
+  }
+  .category-item:hover{ background:rgba(255,255,255,.04);}
+  .category-item.active{ background:rgba(201,165,92,.15); color:var(--primary);}
+  .category-count{ margin-left:auto; font-size:10px; color:var(--text-3); background:rgba(255,255,255,.08); padding:2px 6px; border-radius:3px;}
+  .category-item.active .category-count{ color:var(--primary); background:rgba(201,165,92,.2);}
+
+  /* 搜索 */
+  .search-box{
+    padding:12px 16px; border-bottom:1px solid var(--border);
+  }
+  .search-input{
+    width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    padding:8px 12px; border-radius:4px; font-size:12px;
+  }
+  .search-input:focus{ border-color:var(--primary); outline:none;}
+
+  /* ====== 内容区 ====== */
+  .content-header{
+    padding:12px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .content-title{ font-size:14px; font-weight:600; }
+
+  /* 操作栏 */
+  .action-bar{
+    padding:12px 16px; border-bottom:1px solid var(--border);
+    display:flex; gap:8px; align-items:center; background:rgba(255,255,255,.02);
+  }
+
+  /* ====== 商品列表 ====== */
+  .product-list{
+    flex:1; overflow-y:auto; padding:12px;
+  }
+  .product-list::-webkit-scrollbar{ width:6px;}
+  .product-list::-webkit-scrollbar-track{ background:var(--bg);}
+  .product-list::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px;}
+
+  .product-item{
+    background:var(--card); border:1px solid var(--border); border-radius:8px;
+    padding:12px; margin-bottom:10px; display:flex; gap:12px; align-items:center;
+    cursor:pointer; transition:.15s;
+  }
+  .product-item:hover{ border-color:rgba(201,165,92,.4); }
+  .product-item.selected{ border-color:var(--primary); background:rgba(201,165,92,.08); }
+
+  .product-thumb{
+    width:60px; height:60px; background:var(--bg); border-radius:6px;
+    display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0;
+    overflow:hidden;
+  }
+  .product-thumb img{ width:100%; height:100%; object-fit:cover; }
+
+  .product-info{ flex:1; min-width:0; }
+  .product-id{ font-size:10px; color:var(--text-3); font-family:monospace; }
+  .product-name{ font-size:14px; font-weight:600; margin:4px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .product-meta{ font-size:11px; color:var(--text-2); display:flex; gap:12px; }
+
+  .product-tags{ display:flex; gap:4px; flex-wrap:wrap; }
+  .tag{
+    font-size:10px; padding:2px 6px; border-radius:3px; background:rgba(255,255,255,.08);
+  }
+  .tag.category{ color:var(--info); background:rgba(52,152,219,.15); }
+  .tag.shelf{ color:var(--ok); background:rgba(39,174,96,.15); }
+  .tag.price{ color:var(--primary); background:rgba(201,165,92,.15); }
+  .tag.active{ color:var(--ok); background:rgba(39,174,96,.15); }
+  .tag.inactive{ color:var(--text-3); background:rgba(255,255,255,.06); }
+
+  /* ====== 上架开关 ====== */
+  .live-toggle{
+    display:inline-flex; align-items:center; gap:6px; cursor:pointer; user-select:none;
+  }
+  .live-toggle input{ display:none; }
+  .live-toggle .knob{
+    width:36px; height:20px; border-radius:10px; background:var(--border);
+    position:relative; transition:.2s; flex-shrink:0;
+  }
+  .live-toggle .knob::after{
+    content:''; position:absolute; left:2px; top:2px; width:16px; height:16px;
+    background:#fff; border-radius:50%; transition:.2s;
+  }
+  .live-toggle input:checked + .knob{ background:var(--ok); }
+  .live-toggle input:checked + .knob::after{ left:18px; }
+
+  /* ====== AI辅助填充 ====== */
+  .ai-fill-btn{
+    width:100%; padding:8px; background:linear-gradient(135deg,rgba(52,152,219,.2),rgba(155,89,182,.2));
+    border:1px solid rgba(52,152,219,.4); color:#74b9ff; border-radius:6px;
+    cursor:pointer; font-size:12px; display:flex; align-items:center; gap:6px; justify-content:center;
+    transition:.15s;
+  }
+  .ai-fill-btn:hover{ background:linear-gradient(135deg,rgba(52,152,219,.35),rgba(155,89,182,.35)); }
+  .ai-fill-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  /* ====== 属性标签编辑 ====== */
+  .attr-grid{ display:flex; flex-direction:column; gap:6px; }
+  .attr-row{ display:flex; gap:6px; align-items:center; }
+  .attr-key{ width:90px; flex-shrink:0; }
+  .attr-val{ flex:1; }
+  .attr-del{ background:none; border:none; color:var(--text-3); cursor:pointer; font-size:14px; padding:0 4px; }
+  .attr-del:hover{ color:var(--err); }
+
+  .product-actions{ display:flex; gap:6px; flex-shrink:0; }
+
+  /* 空状态 */
+  .empty-state{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:40px;
+  }
+  .empty-icon{ font-size:48px; margin-bottom:16px; opacity:.6; }
+  .empty-text{ font-size:14px; color:var(--text-2); margin-bottom:20px; }
+
+  /* ====== 编辑面板 ====== */
+  .edit-panel{
+    width:380px; background:var(--panel); border-left:1px solid var(--border);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .edit-panel-header{
+    padding:12px 16px; border-bottom:1px solid var(--border);
+    background:rgba(201,165,92,.08);
+  }
+  .edit-panel-title{ font-size:14px; font-weight:600; color:var(--primary); }
+
+  .edit-form{
+    flex:1; overflow-y:auto; padding:16px;
+  }
+  .edit-form::-webkit-scrollbar{ width:6px;}
+  .edit-form::-webkit-scrollbar-track{ background:var(--panel);}
+  .edit-form::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px;}
+
+  .form-group{ margin-bottom:16px; }
+  .form-label{
+    display:block; font-size:11px; color:var(--text-2); margin-bottom:6px;
+    text-transform:uppercase; letter-spacing:.5px;
+  }
+  .form-input{
+    width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    padding:8px 12px; border-radius:4px; font-size:12px;
+  }
+  .form-input:focus{ border-color:var(--primary); outline:none;}
+  textarea.form-input{ min-height:80px; resize:vertical; font-family:inherit; }
+  select.form-input{ cursor:pointer; }
+
+  .form-row{ display:flex; gap:12px; }
+  .form-row .form-group{ flex:1; }
+
+  /* 文件上传 */
+  .file-upload{
+    display:flex; gap:8px; align-items:center;
+  }
+  .file-input{ flex:1; }
+  .file-btn{
+    padding:8px 12px; background:var(--card); border:1px solid var(--border);
+    border-radius:4px; cursor:pointer; font-size:12px; white-space:nowrap;
+  }
+  .file-btn:hover{ border-color:var(--primary); color:var(--primary); }
+
+  /* 预览区 */
+  .preview-area{
+    background:var(--bg); border:1px solid var(--border); border-radius:6px;
+    padding:12px; text-align:center; min-height:120px; display:flex;
+    flex-direction:column; align-items:center; justify-content:center;
+  }
+  .preview-area img{ max-width:100%; max-height:150px; border-radius:4px; }
+  .preview-placeholder{ color:var(--text-3); font-size:12px; }
+
+  /* 底部按钮 */
+  .edit-actions{
+    padding:12px 16px; border-top:1px solid var(--border);
+    display:flex; gap:8px;
+  }
+  .edit-actions .btn{ flex:1; }
+
+  /* ====== 快速创建向导 ====== */
+  .wizard-overlay{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.7); z-index:100;
+    display:none; align-items:center; justify-content:center;
+  }
+  .wizard-overlay.active{ display:flex; }
+  .wizard-box{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    width:90%; max-width:600px; max-height:90vh; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  .wizard-header{
+    padding:16px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .wizard-title{ font-size:16px; font-weight:600; color:var(--primary); }
+  .wizard-body{ flex:1; overflow-y:auto; padding:20px; }
+  .wizard-footer{
+    padding:16px 20px; border-top:1px solid var(--border);
+    display:flex; gap:8px; justify-content:flex-end;
+  }
+
+  /* 步骤指示器 */
+  .step-indicator{
+    display:flex; gap:8px; margin-bottom:20px;
+  }
+  .step{
+    flex:1; padding:8px; text-align:center; font-size:11px; color:var(--text-3);
+    background:var(--bg); border-radius:4px;
+  }
+  .step.active{ color:var(--primary); background:rgba(201,165,92,.15); }
+  .step.done{ color:var(--ok); background:rgba(39,174,96,.15); }
+
+  /* ====== 提示消息 ====== */
+  .toast{
+    position:fixed; bottom:20px; right:20px;
+    padding:12px 16px; border-radius:6px; font-size:12px;
+    background:var(--card); border:1px solid var(--border);
+    box-shadow:0 4px 16px rgba(0,0,0,.4);
+    transform:translateY(100px); opacity:0; transition:.3s;
+    z-index:200;
+  }
+  .toast.show{ transform:translateY(0); opacity:1; }
+  .toast.success{ border-color:var(--ok); color:var(--ok); }
+  .toast.error{ border-color:var(--err); color:var(--err); }
+
+  /* 货架选择 */
+  .shelf-selector{
+    max-height:150px; overflow-y:auto; border:1px solid var(--border); border-radius:4px;
+    background:var(--bg);
+  }
+  .shelf-option{
+    padding:8px 12px; font-size:12px; cursor:pointer;
+    display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border);
+  }
+  .shelf-option:last-child{ border-bottom:none; }
+  .shelf-option:hover{ background:rgba(255,255,255,.04); }
+  .shelf-option.selected{ background:rgba(201,165,92,.15); color:var(--primary); }
+  .shelf-option input{ margin:0; }
+</style>
+</head>
+<body>
+
+<!-- ====== 顶部栏 ====== -->
+<div class="topbar">
+  <div class="title">📦 商品管理系统</div>
+  <div class="ver">v1.0</div>
+  <div class="spacer"></div>
+  <button class="btn" onclick="window.location.href='/'">🏠 返回控制台</button>
+</div>
+
+<!-- ====== 主区 ====== -->
+<div class="main">
+
+  <!-- 左侧：筛选与统计 -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">📊 概览</div>
+    </div>
+    <div class="sidebar-stats">
+      <div class="stat-item">
+        <span class="stat-val" id="stat-total">0</span>
+        <span>总商品</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-categories">0</span>
+        <span>分类</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-bound">0</span>
+        <span>已上架</span>
+      </div>
+    </div>
+
+    <div class="search-box">
+      <input type="text" class="search-input" id="search-input" placeholder="🔍 搜索SKU/名称/关键词..." oninput="onSearch(this.value)">
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-title">商品分类</div>
+      <div class="category-list" id="category-list">
+        <!-- 动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 中间：商品列表 -->
+  <div class="content">
+    <div class="content-header">
+      <div class="content-title">📋 商品列表</div>
+      <div id="list-info" style="font-size:11px;color:var(--text-3);">加载中...</div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn primary" onclick="showWizard()">⚡ 快速创建</button>
+      <button class="btn ok" onclick="showAddModal()">➕ 新增商品</button>
+      <button class="btn" onclick="refreshData()">🔄 刷新</button>
+      <div style="width:1px; height:20px; background:var(--border); margin:0 8px;"></div>
+      <button class="btn" style="background:rgba(238,119,0,.15); border-color:rgba(238,119,0,.4); color:#ff9500;" onclick="showSyncModal()">
+        🔄 同步平台商品
+      </button>
+      <div class="spacer"></div>
+      <button class="btn info" onclick="manageCategories()">🏷️ 管理分类</button>
+    </div>
+
+    <div class="product-list" id="product-list">
+      <!-- 动态生成 -->
+    </div>
+  </div>
+
+  <!-- 右侧：编辑面板 -->
+  <div class="edit-panel" id="edit-panel">
+    <div class="edit-panel-header">
+      <div class="edit-panel-title">✏️ 商品编辑</div>
+    </div>
+    <div class="empty-state" id="edit-empty">
+      <div class="empty-icon">📦</div>
+      <div class="empty-text">点击左侧商品进行编辑</div>
+    </div>
+    <div class="edit-form" id="edit-form" style="display:none;">
+      <input type="hidden" id="ed-id">
+
+      <div class="form-group">
+        <label class="form-label">SKU ID</label>
+        <input type="text" class="form-input" id="ed-sku" placeholder="如：tea_001">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">商品名称</label>
+        <input type="text" class="form-input" id="ed-name" placeholder="如：西湖龙井">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <select class="form-input" id="ed-category"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">价格</label>
+          <input type="number" class="form-input" id="ed-price" placeholder="199" min="0" step="0.01">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">库存</label>
+          <input type="number" class="form-input" id="ed-stock" placeholder="100" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">状态</label>
+          <select class="form-input" id="ed-status">
+            <option value="active">上架</option>
+            <option value="inactive">下架</option>
+            <option value="out_of_stock">缺货</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">关键词（逗号分隔）</label>
+        <input type="text" class="form-input" id="ed-keywords" placeholder="茶, 绿茶, 龙井">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">商品描述</label>
+        <textarea class="form-input" id="ed-description" placeholder="商品详细介绍..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">展示图片</label>
+        <div class="preview-area" id="preview-img">
+          <div class="preview-placeholder">暂无图片</div>
+        </div>
+        <div class="file-upload" style="margin-top:8px;">
+          <input type="text" class="form-input file-input" id="ed-img" placeholder="/assets/products/...">
+          <label class="file-btn">
+            📁 上传
+            <input type="file" accept="image/*" style="display:none;" onchange="uploadFile(this,'img')">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">3D 模型（GLB）</label>
+        <div class="file-upload">
+          <input type="text" class="form-input file-input" id="ed-model" placeholder=".glb 文件路径">
+          <label class="file-btn">
+            📁 上传
+            <input type="file" accept=".glb,.gltf" style="display:none;" onchange="uploadFile(this,'model')">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">介绍视频</label>
+        <div class="file-upload">
+          <input type="text" class="form-input file-input" id="ed-video" placeholder="视频文件路径">
+          <label class="file-btn">
+            📁 上传
+            <input type="file" accept="video/*" style="display:none;" onchange="uploadFile(this,'video')">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">绑定货架</label>
+        <select class="form-input" id="ed-shelf">
+          <option value="">（暂不绑定）</option>
+        </select>
+        <div style="font-size:10px;color:var(--text-3);margin-top:4px;">
+          绑定后商品将在直播间货架展示
+        </div>
+      </div>
+
+      <!-- 分隔线 -->
+      <div style="border-top:1px solid var(--border);margin:8px 0 16px;"></div>
+
+      <!-- AI 辅助填充 -->
+      <button class="ai-fill-btn" id="ai-fill-btn" onclick="aiFillProduct()">
+        ✨ AI 辅助补全商品信息
+      </button>
+
+      <div class="form-group" style="margin-top:14px;">
+        <label class="form-label">✨ 上架状态</label>
+        <label class="live-toggle">
+          <input type="checkbox" id="ed-active">
+          <span class="knob"></span>
+          <span id="ed-active-label" style="font-size:12px;color:var(--text-2);">下架（不参与直播推介）</span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🎯 核心卖点（每行一条，3~5条）</label>
+        <textarea class="form-input" id="ed-highlights" placeholder="无农药残留&#10;产地直发&#10;采摘24小时内发货" style="min-height:90px;"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📋 商品属性</label>
+        <div class="attr-grid" id="ed-attrs"></div>
+        <button class="btn sm" style="margin-top:6px;width:100%;" onclick="addAttrRow()">+ 添加属性</button>
+      </div>
+
+      <!-- 商品来源 -->
+      <div class="form-group">
+        <label class="form-label">来源平台</label>
+        <select class="form-input" id="ed-platform">
+          <option value="">手动录入</option>
+          <option value="douyin">🎵 抖音</option>
+          <option value="taobao">🛒 淘宝/天猫</option>
+          <option value="jd">🛍 京东</option>
+          <option value="kuaishou">⚡ 快手</option>
+          <option value="jushuitan">📦 聚水潭</option>
+        </select>
+      </div>
+      <div class="form-group" id="platform-sku-group">
+        <label class="form-label">平台商品ID</label>
+        <div style="display:flex;gap:6px;">
+          <input type="text" class="form-input" id="ed-platform-sku-id" placeholder="平台侧SKU/商品ID" style="flex:1;">
+          <button class="btn sm" onclick="syncFromPlatform()" title="从平台拉取商品信息">🔄 拉取</button>
+        </div>
+      </div>
+    </div>
+    <div class="edit-actions" id="edit-actions" style="display:none;">
+      <button class="btn" onclick="closeEdit()">取消</button>
+      <button class="btn danger" onclick="deleteProduct()">删除</button>
+      <button class="btn primary" onclick="saveProduct()">💾 保存</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== 快速创建向导 ====== -->
+<div class="wizard-overlay" id="wizard" onclick="if(event.target===this)hideWizard()">
+  <div class="wizard-box" onclick="event.stopPropagation()">
+    <div class="wizard-header">
+      <div class="wizard-title">⚡ 快速创建商品</div>
+      <button class="btn sm" onclick="hideWizard()">✕</button>
+    </div>
+    <div class="wizard-body">
+      <div class="step-indicator">
+        <div class="step active" id="step-1">1. 基本信息</div>
+        <div class="step" id="step-2">2. 媒体资源</div>
+        <div class="step" id="step-3">3. 完成</div>
+      </div>
+
+      <!-- 步骤 1 -->
+      <div id="wizard-step-1">
+        <div class="form-group">
+          <label class="form-label">SKU ID *</label>
+          <input type="text" class="form-input" id="wz-sku" placeholder="如：tea_001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">商品名称 *</label>
+          <input type="text" class="form-input" id="wz-name" placeholder="如：西湖龙井">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">分类</label>
+            <select class="form-input" id="wz-category"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">价格 *</label>
+            <input type="number" class="form-input" id="wz-price" placeholder="199" min="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">关键词</label>
+          <input type="text" class="form-input" id="wz-keywords" placeholder="茶, 绿茶, 龙井">
+        </div>
+      </div>
+
+      <!-- 步骤 2 -->
+      <div id="wizard-step-2" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">展示图片</label>
+          <div class="file-upload">
+            <input type="text" class="form-input file-input" id="wz-img" placeholder="图片路径">
+            <label class="file-btn">
+              📁 上传
+              <input type="file" accept="image/*" style="display:none;" onchange="wizardUpload(this,'img')">
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">3D 模型</label>
+          <div class="file-upload">
+            <input type="text" class="form-input file-input" id="wz-model" placeholder=".glb 路径（可选）">
+            <label class="file-btn">
+              📁 上传
+              <input type="file" accept=".glb,.gltf" style="display:none;" onchange="wizardUpload(this,'model')">
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">绑定货架</label>
+          <select class="form-input" id="wz-shelf">
+            <option value="">（暂不绑定）</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 步骤 3 -->
+      <div id="wizard-step-3" style="display:none; text-align:center; padding:40px;">
+        <div style="font-size:48px; margin-bottom:16px;">✅</div>
+        <div style="font-size:16px; font-weight:600; margin-bottom:8px;">商品创建成功！</div>
+        <div style="font-size:12px; color:var(--text-2);">
+          您可以在列表中找到该商品并继续编辑
+        </div>
+      </div>
+    </div>
+    <div class="wizard-footer" id="wizard-footer">
+      <button class="btn" onclick="wizardPrev()" id="wz-btn-prev" style="display:none;">上一步</button>
+      <div style="flex:1;"></div>
+      <button class="btn" onclick="hideWizard()">取消</button>
+      <button class="btn primary" onclick="wizardNext()" id="wz-btn-next">下一步</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 平台同步弹窗 ====== -->
+<div class="wizard-overlay" id="sync-modal" onclick="if(event.target===this)hideSyncModal()">
+  <div class="wizard-box" onclick="event.stopPropagation()">
+    <div class="wizard-header">
+      <div class="wizard-title">🔄 同步平台商品</div>
+      <button class="btn sm" onclick="hideSyncModal()">✕</button>
+    </div>
+    <div class="wizard-body">
+      <div class="step-indicator">
+        <div class="step active" id="sync-step-1">1. 选择平台</div>
+        <div class="step" id="sync-step-2">2. 预览导入</div>
+        <div class="step" id="sync-step-3">3. 完成</div>
+      </div>
+
+      <!-- 步骤 1: 选择平台 -->
+      <div id="sync-panel-1">
+        <div class="form-group">
+          <label class="form-label">选择平台 *</label>
+          <div id="platform-list" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- 动态生成平台列表 -->
+            <div style="padding:20px; text-align:center; color:var(--text-3);">加载中...</div>
+          </div>
+        </div>
+
+        <div class="form-group" id="mock-mode-group">
+          <label class="form-label" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="sync-mock" style="cursor:pointer;">
+            <span>使用模拟数据测试（无需真实API配置）</span>
+          </label>
+          <div style="font-size:11px; color:var(--text-3); margin-top:4px; margin-left:24px;">
+            开启后将生成3个测试商品数据，用于体验同步流程
+          </div>
+        </div>
+
+        <div id="sync-config-panel" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">直播间ID / 房间号</label>
+            <input type="text" class="form-input" id="sync-room-id" placeholder="如：723456789">
+          </div>
+          <div style="padding:12px; background:rgba(255,193,7,.1); border:1px solid rgba(255,193,7,.3); border-radius:6px; font-size:11px; color:#ffc107;">
+            ⚠️ 确保已在 <a href="/settings" target="_blank" style="color:var(--primary);">配置中心</a> 设置好平台API密钥
+          </div>
+        </div>
+
+        <div id="sync-status" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- 步骤 2: 预览导入 -->
+      <div id="sync-panel-2" style="display:none;">
+        <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; color:var(--text-secondary);">待导入商品列表</span>
+          <span id="sync-count" style="font-size:12px; color:var(--primary); font-weight:600;">0 个商品</span>
+        </div>
+        <div id="sync-preview-list" style="max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:6px;">
+          <!-- 动态生成 -->
+        </div>
+        <div style="margin-top:12px; font-size:11px; color:var(--text-3);">
+          💡 勾选要导入的商品，系统会自动生成SKU ID（格式：平台_商品ID）
+        </div>
+      </div>
+
+      <!-- 步骤 3: 完成 -->
+      <div id="sync-panel-3" style="display:none; text-align:center; padding:40px;">
+        <div style="font-size:48px; margin-bottom:16px;">✅</div>
+        <div style="font-size:16px; font-weight:600; margin-bottom:8px;">商品同步成功！</div>
+        <div style="font-size:12px; color:var(--text-2); margin-bottom:4px;">
+          成功导入 <span id="sync-success-count" style="color:var(--ok); font-weight:600;">0</span> 个商品
+        </div>
+        <div style="font-size:11px; color:var(--text-3);">
+          已同步的商品可在列表中查看和编辑
+        </div>
+      </div>
+    </div>
+    <div class="wizard-footer" id="sync-footer">
+      <button class="btn" onclick="syncPrev()" id="sync-btn-prev" style="display:none;">上一步</button>
+      <div style="flex:1;"></div>
+      <button class="btn" onclick="hideSyncModal()">取消</button>
+      <button class="btn primary" onclick="syncNext()" id="sync-btn-next">开始同步</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 提示消息 ====== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============== 安全工具函数 ==============
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
+
+// ============== 数据状态 ==============
+let products = [];
+let categories = [];
+let shelves = [];
+let currentFilter = 'all';
+let currentSearch = '';
+let selectedProduct = null;
+let wizardStep = 1;
+let _editAttrs = [];  // [{key,val}]
+
+// 分类对应的默认属性字段
+const CATEGORY_ATTRS = {
+  fresh_fruit:  ['产地','品种','甜度','规格','保质期','是否有机'],
+  fresh_veg:    ['产地','品种','规格','采摘时间','保存方式'],
+  food_snack:   ['口味','净含量','保质期','生产厂家','主要原料','过敏原'],
+  fashion:      ['面料','尺码范围','版型','适合季节','颜色'],
+  beauty:       ['主要成分','容量','适用肤质','使用方法','保质期'],
+  digital:      ['核心参数','兼容性','质保期','产品认证','包装清单'],
+  health:       ['主要成分','适用人群','服用方法','批准文号','禁忌'],
+  default:      ['产地','规格','材质','品牌','保质期'],
+};
+
+// ============== 初始化 ==============
+async function init() {
+  await Promise.all([
+    loadProducts(),
+    loadCategories(),
+    loadShelves()
+  ]);
+  renderCategories();
+  renderProducts();
+  updateStats();
+}
+
+// ============== 数据加载 ==============
+async function loadProducts() {
+  try {
+    const r = await fetch('/api/skus');
+    const data = await r.json();
+    products = data.skus || [];
+  } catch (e) {
+    console.error('加载商品失败:', e);
+    // 使用示例数据
+    products = [
+      { id: 'tea_001', name: '西湖龙井', category: 'tea', price: 168, stock: 100, status: 'active', keywords: '茶,绿茶', shelf_id: '1号位' },
+      { id: 'tea_002', name: '铁观音', category: 'tea', price: 128, stock: 80, status: 'active', keywords: '茶,乌龙', shelf_id: '2号位' },
+      { id: 'tea_003', name: '普洱熟茶', category: 'tea', price: 258, stock: 50, status: 'active', keywords: '茶,普洱', shelf_id: '' },
+    ];
+  }
+}
+
+async function loadCategories() {
+  try {
+    const r = await fetch('/api/categories');
+    const data = await r.json();
+    categories = data.categories || [];
+  } catch (e) {
+    categories = [
+      { id: 'all', name: '全部', icon: '📋' },
+      { id: 'tea', name: '茶叶', icon: '🍵' },
+      { id: 'sports', name: '运动', icon: '⚽' },
+      { id: 'food', name: '食品', icon: '🍜' },
+    ];
+  }
+}
+
+async function loadShelves() {
+  try {
+    const r = await fetch('/api/scenes');
+    const data = await r.json();
+    // 从场景中提取货架
+    shelves = [];
+    Object.values(data.scenes || {}).forEach(scene => {
+      (scene.shelves || []).forEach(shelf => {
+        shelves.push({ id: shelf.id, name: shelf.label || shelf.id, scene: scene.name });
+      });
+    });
+  } catch (e) {
+    shelves = [
+      { id: '1号位', name: '1号位', scene: '默认场景' },
+      { id: '2号位', name: '2号位', scene: '默认场景' },
+      { id: '3号位', name: '3号位', scene: '默认场景' },
+    ];
+  }
+}
+
+// ============== 渲染 ==============
+function renderCategories() {
+  const list = document.getElementById('category-list');
+  const counts = {};
+  products.forEach(p => {
+    counts[p.category] = (counts[p.category] || 0) + 1;
+  });
+
+  list.innerHTML = categories.map(cat => `
+    <div class="category-item ${currentFilter === cat.id ? 'active' : ''}" onclick="setFilter('${cat.id}')">
+      <span>${cat.icon || '📁'}</span>
+      <span>${cat.name}</span>
+      <span class="category-count">${cat.id === 'all' ? products.length : (counts[cat.id] || 0)}</span>
+    </div>
+  `).join('');
+}
+
+function renderProducts() {
+  const list = document.getElementById('product-list');
+  const info = document.getElementById('list-info');
+
+  let filtered = products;
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(p => p.category === currentFilter);
+  }
+  if (currentSearch) {
+    const s = currentSearch.toLowerCase();
+    filtered = filtered.filter(p =>
+      (p.id || '').toLowerCase().includes(s) ||
+      (p.name || '').toLowerCase().includes(s) ||
+      (p.keywords || '').toLowerCase().includes(s)
+    );
+  }
+
+  info.textContent = `显示 ${filtered.length} / ${products.length} 个商品`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <div class="empty-text">暂无商品</div>
+        <button class="btn primary" onclick="showWizard()">⚡ 快速创建</button>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => {
+    const cat = categories.find(c => c.id === p.category) || { name: p.category, icon: '📦' };
+    const activeTag = p.is_active
+      ? `<span class="tag active">✅ 上架</span>`
+      : `<span class="tag inactive">⭕ 下架</span>`;
+    const statusColor = p.status === 'active' ? 'var(--ok)' : (p.status === 'out_of_stock' ? 'var(--err)' : 'var(--text-3)');
+
+    return `
+      <div class="product-item ${selectedProduct?.id === p.id ? 'selected' : ''}" onclick="selectProduct('${escapeAttr(p.id)}')">
+        <div class="product-thumb">
+          ${p.image ? `<img src="${escapeAttr(p.image)}" alt="">` : (cat.icon || '📦')}
+        </div>
+        <div class="product-info">
+          <div class="product-id">${escapeHtml(p.id)}</div>
+          <div class="product-name">${escapeHtml(p.name)}</div>
+          <div class="product-meta">
+            <span style="color:${statusColor}">●</span>
+            <span>¥${escapeHtml(String(p.price))}</span>
+            <span style="color:var(--text-3)">库存: ${escapeHtml(String(p.stock || 0))}</span>
+          </div>
+        </div>
+        <div class="product-tags" style="flex-direction:column;align-items:flex-end;gap:3px;">
+          <span class="tag category">${cat.icon || '📁'} ${escapeHtml(cat.name)}</span>
+          ${activeTag}
+        </div>
+        <div class="product-actions" style="flex-direction:column;gap:4px;">
+          <label class="live-toggle" onclick="event.stopPropagation()" title="${p.is_active?'点击下架':'点击上架'}">
+            <input type="checkbox" ${p.is_active ? 'checked' : ''} onchange="toggleActive('${escapeAttr(p.id)}', this.checked)">
+            <span class="knob"></span>
+          </label>
+          <button class="btn sm" onclick="event.stopPropagation(); editProduct('${escapeAttr(p.id)}')">编辑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent = products.length;
+  document.getElementById('stat-categories').textContent = categories.filter(c => c.id !== 'all').length;
+  document.getElementById('stat-bound').textContent = products.filter(p => p.is_active).length;
+}
+
+// ============== 筛选与搜索 ==============
+function setFilter(catId) {
+  currentFilter = catId;
+  renderCategories();
+  renderProducts();
+}
+
+function onSearch(value) {
+  currentSearch = value;
+  renderProducts();
+}
+
+// ============== 选择与编辑 ==============
+function selectProduct(id) {
+  selectedProduct = products.find(p => p.id === id);
+  renderProducts();
+  openEdit(selectedProduct);
+}
+
+function editProduct(id) {
+  selectProduct(id);
+}
+
+function openEdit(product) {
+  document.getElementById('edit-empty').style.display = 'none';
+  document.getElementById('edit-form').style.display = 'block';
+  document.getElementById('edit-actions').style.display = 'flex';
+
+  // 填充表单
+  document.getElementById('ed-id').value = product.id || '';
+  document.getElementById('ed-sku').value = product.id || '';
+  document.getElementById('ed-name').value = product.name || '';
+  document.getElementById('ed-price').value = product.price || 0;
+  document.getElementById('ed-stock').value = product.stock || 0;
+  document.getElementById('ed-keywords').value = product.keywords || '';
+  document.getElementById('ed-description').value = product.description || '';
+  document.getElementById('ed-img').value = product.image || '';
+  document.getElementById('ed-model').value = product.model || '';
+  document.getElementById('ed-video').value = product.video || '';
+
+  // 新增字段
+  const activeChk = document.getElementById('ed-active');
+  activeChk.checked = !!product.is_active;
+  document.getElementById('ed-active-label').textContent = product.is_active ? '上架中（参与直播推介）' : '下架（不参与直播推介）';
+  activeChk.onchange = () => {
+    document.getElementById('ed-active-label').textContent = activeChk.checked ? '上架中（参与直播推介）' : '下架（不参与直播推介）';
+  };
+
+  document.getElementById('ed-highlights').value = (product.highlights || []).join('\n');
+  document.getElementById('ed-platform').value = product.platform_source || '';
+  document.getElementById('ed-platform-sku-id').value = product.platform_sku_id || '';
+
+  // 属性区
+  _editAttrs = Object.entries(product.attributes || {}).map(([k,v]) => ({key:k,val:v}));
+  // 若属性为空，按分类预填默认字段
+  if (_editAttrs.length === 0) {
+    const defaults = CATEGORY_ATTRS[product.category] || CATEGORY_ATTRS.default;
+    _editAttrs = defaults.map(k => ({key:k, val:''}));
+  }
+  renderAttrRows();
+
+  // 更新预览
+  updateImgPreview(product.image);
+
+  // 填充下拉框
+  fillSelect('ed-category', categories.filter(c => c.id !== 'all'), product.category);
+  fillSelect('ed-shelf', [{id:'',name:'（暂不绑定）'}, ...shelves], product.shelf_id);
+  fillSelect('ed-status', [
+    {id:'active',name:'上架'},
+    {id:'inactive',name:'下架'},
+    {id:'out_of_stock',name:'缺货'}
+  ], product.status || 'active');
+}
+
+function fillSelect(id, items, value) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = items.map(i => `<option value="${escapeAttr(i.id)}">${escapeHtml(i.name || i.id)}</option>`).join('');
+  sel.value = value || '';
+}
+
+function updateImgPreview(src) {
+  const preview = document.getElementById('preview-img');
+  if (src) {
+    preview.innerHTML = `<img src="${src}" alt="商品图">`;
+  } else {
+    preview.innerHTML = `<div class="preview-placeholder">暂无图片</div>`;
+  }
+}
+
+function closeEdit() {
+  selectedProduct = null;
+  document.getElementById('edit-empty').style.display = 'flex';
+  document.getElementById('edit-form').style.display = 'none';
+  document.getElementById('edit-actions').style.display = 'none';
+  renderProducts();
+}
+
+// ============== 保存与删除 ==============
+async function saveProduct() {
+  const id = document.getElementById('ed-id').value;
+  const highlightsRaw = document.getElementById('ed-highlights').value;
+  const highlights = highlightsRaw.split('\n').map(s=>s.trim()).filter(Boolean);
+  const attributes = {};
+  _editAttrs.forEach(r => { if (r.key.trim()) attributes[r.key.trim()] = r.val; });
+  const data = {
+    id: document.getElementById('ed-sku').value,
+    name: document.getElementById('ed-name').value,
+    category: document.getElementById('ed-category').value,
+    price: parseFloat(document.getElementById('ed-price').value) || 0,
+    stock: parseInt(document.getElementById('ed-stock').value) || 0,
+    status: document.getElementById('ed-status').value,
+    keywords: document.getElementById('ed-keywords').value,
+    description: document.getElementById('ed-description').value,
+    image: document.getElementById('ed-img').value,
+    model: document.getElementById('ed-model').value,
+    video: document.getElementById('ed-video').value,
+    shelf_id: document.getElementById('ed-shelf').value,
+    is_active: document.getElementById('ed-active').checked,
+    highlights,
+    attributes,
+    platform_source: document.getElementById('ed-platform').value,
+    platform_sku_id: document.getElementById('ed-platform-sku-id').value,
+  };
+
+  try {
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/skus/${id}` : '/api/skus';
+    const r = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (r.ok) {
+      showToast('保存成功', 'success');
+      await loadProducts();
+      renderProducts();
+      updateStats();
+      closeEdit();
+    } else {
+      showToast('保存失败', 'error');
+    }
+  } catch (e) {
+    // 模拟成功
+    if (id) {
+      const idx = products.findIndex(p => p.id === id);
+      if (idx >= 0) products[idx] = { ...products[idx], ...data };
+    } else {
+      products.push(data);
+    }
+    showToast('保存成功（本地模式）', 'success');
+    renderProducts();
+    updateStats();
+    closeEdit();
+  }
+}
+
+async function deleteProduct() {
+  const id = document.getElementById('ed-id').value;
+  if (!id) return;
+  if (!confirm('确定要删除这个商品吗？')) return;
+
+  try {
+    const r = await fetch(`/api/skus/${id}`, { method: 'DELETE' });
+    if (r.ok) {
+      showToast('删除成功', 'success');
+    } else {
+      showToast('删除失败', 'error');
+    }
+  } catch (e) {
+    products = products.filter(p => p.id !== id);
+    showToast('删除成功（本地模式）', 'success');
+  }
+
+  await loadProducts();
+  renderProducts();
+  updateStats();
+  closeEdit();
+}
+
+// ============== 快速创建向导 ==============
+function showWizard() {
+  wizardStep = 1;
+  updateWizardUI();
+  fillSelect('wz-category', categories.filter(c => c.id !== 'all'), '');
+  fillSelect('wz-shelf', [{id:'',name:'（暂不绑定）'}, ...shelves], '');
+  document.getElementById('wizard').classList.add('active');
+}
+
+function hideWizard() {
+  document.getElementById('wizard').classList.remove('active');
+  // 清空表单
+  ['wz-sku','wz-name','wz-price','wz-keywords','wz-img','wz-model'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function updateWizardUI() {
+  // 步骤指示器
+  [1,2,3].forEach(i => {
+    const el = document.getElementById(`step-${i}`);
+    el.className = 'step';
+    if (i < wizardStep) el.classList.add('done');
+    else if (i === wizardStep) el.classList.add('active');
+  });
+
+  // 内容区
+  document.getElementById('wizard-step-1').style.display = wizardStep === 1 ? 'block' : 'none';
+  document.getElementById('wizard-step-2').style.display = wizardStep === 2 ? 'block' : 'none';
+  document.getElementById('wizard-step-3').style.display = wizardStep === 3 ? 'block' : 'none';
+
+  // 按钮
+  document.getElementById('wz-btn-prev').style.display = wizardStep > 1 ? 'inline-flex' : 'none';
+  document.getElementById('wz-btn-next').textContent = wizardStep === 3 ? '完成' : '下一步';
+}
+
+function wizardNext() {
+  if (wizardStep === 3) {
+    hideWizard();
+    return;
+  }
+
+  if (wizardStep === 1) {
+    // 验证
+    const sku = document.getElementById('wz-sku').value;
+    const name = document.getElementById('wz-name').value;
+    const price = document.getElementById('wz-price').value;
+    if (!sku || !name || !price) {
+      showToast('请填写必填项', 'error');
+      return;
+    }
+  }
+
+  if (wizardStep === 2) {
+    // 创建商品
+    createProductFromWizard();
+  }
+
+  wizardStep++;
+  updateWizardUI();
+}
+
+function wizardPrev() {
+  if (wizardStep > 1) {
+    wizardStep--;
+    updateWizardUI();
+  }
+}
+
+async function createProductFromWizard() {
+  const data = {
+    id: document.getElementById('wz-sku').value,
+    name: document.getElementById('wz-name').value,
+    category: document.getElementById('wz-category').value,
+    price: parseFloat(document.getElementById('wz-price').value) || 0,
+    keywords: document.getElementById('wz-keywords').value,
+    image: document.getElementById('wz-img').value,
+    model: document.getElementById('wz-model').value,
+    shelf_id: document.getElementById('wz-shelf').value,
+    stock: 100,
+    status: 'active'
+  };
+
+  try {
+    const r = await fetch('/api/skus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (r.ok) {
+      showToast('创建成功', 'success');
+    }
+  } catch (e) {
+    products.push(data);
+    showToast('创建成功（本地模式）', 'success');
+  }
+
+  await loadProducts();
+  renderProducts();
+  updateStats();
+}
+
+// ============== 文件上传 ==============
+async function uploadFile(input, type) {
+  if (!input.files?.length) return;
+  const file = input.files[0];
+  const form = new FormData();
+  form.append('file', file);
+  form.append('type', type);
+
+  try {
+    const r = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await r.json();
+    if (data.url) {
+      if (type === 'img') {
+        document.getElementById('ed-img').value = data.url;
+        updateImgPreview(data.url);
+      } else if (type === 'model') {
+        document.getElementById('ed-model').value = data.url;
+      } else if (type === 'video') {
+        document.getElementById('ed-video').value = data.url;
+      }
+      showToast('上传成功', 'success');
+    }
+  } catch (e) {
+    // 模拟上传
+    const mockUrl = `/assets/products/${file.name}`;
+    if (type === 'img') {
+      document.getElementById('ed-img').value = mockUrl;
+      updateImgPreview(mockUrl);
+    } else if (type === 'model') {
+      document.getElementById('ed-model').value = mockUrl;
+    } else if (type === 'video') {
+      document.getElementById('ed-video').value = mockUrl;
+    }
+    showToast('上传成功（模拟）', 'success');
+  }
+}
+
+function wizardUpload(input, type) {
+  uploadFile(input, type).then(() => {
+    const val = type === 'img' ? document.getElementById('ed-img').value :
+                 type === 'model' ? document.getElementById('ed-model').value : '';
+    if (type === 'img') document.getElementById('wz-img').value = val;
+    if (type === 'model') document.getElementById('wz-model').value = val;
+  });
+}
+
+// ============== 其他功能 ==============
+function refreshData() {
+  init().then(() => showToast('数据已刷新', 'success'));
+}
+
+function showAddModal() {
+  selectedProduct = null;
+  document.getElementById('edit-empty').style.display = 'none';
+  document.getElementById('edit-form').style.display = 'block';
+  document.getElementById('edit-actions').style.display = 'flex';
+
+  ['ed-id','ed-sku','ed-name','ed-price','ed-stock','ed-keywords','ed-description','ed-img','ed-model','ed-video','ed-highlights','ed-platform-sku-id'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  const activeChk = document.getElementById('ed-active');
+  activeChk.checked = true;
+  document.getElementById('ed-active-label').textContent = '上架中（参与直播推介）';
+  activeChk.onchange = () => {
+    document.getElementById('ed-active-label').textContent = activeChk.checked ? '上架中（参与直播推介）' : '下架（不参与直播推介）';
+  };
+  _editAttrs = (CATEGORY_ATTRS.default || []).map(k => ({key:k, val:''}));
+  renderAttrRows();
+  updateImgPreview('');
+
+  fillSelect('ed-category', categories.filter(c => c.id !== 'all'), '');
+  fillSelect('ed-shelf', [{id:'',name:'（暂不绑定）'}, ...shelves], '');
+  fillSelect('ed-status', [
+    {id:'active',name:'上架'},
+    {id:'inactive',name:'下架'},
+    {id:'out_of_stock',name:'缺货'}
+  ], 'active');
+  document.getElementById('ed-platform').value = '';
+}
+
+function manageCategories() {
+  alert('分类管理功能开发中...');
+}
+
+// ============== 上架/下架快速切换 ==============
+async function toggleActive(productId, active) {
+  const p = products.find(p => p.id === productId);
+  if (!p) return;
+  p.is_active = active;
+  try {
+    await fetch(`/api/skus/${productId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({...p, is_active: active})
+    });
+  } catch(e) {}
+  renderProducts();
+  updateStats();
+  showToast(active ? `✅ ${p.name} 已上架` : `⭕ ${p.name} 已下架`, 'success');
+}
+
+// ============== 属性行管理 ==============
+function renderAttrRows() {
+  const grid = document.getElementById('ed-attrs');
+  if (!grid) return;
+  grid.innerHTML = _editAttrs.map((r, i) => `
+    <div class="attr-row">
+      <input class="form-input attr-key" value="${escapeAttr(r.key)}" placeholder="属性名" oninput="_editAttrs[${i}].key=this.value">
+      <input class="form-input attr-val" value="${escapeAttr(r.val)}" placeholder="属性值" oninput="_editAttrs[${i}].val=this.value">
+      <button class="attr-del" onclick="delAttrRow(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function addAttrRow() {
+  _editAttrs.push({key:'', val:''});
+  renderAttrRows();
+}
+
+function delAttrRow(i) {
+  _editAttrs.splice(i, 1);
+  renderAttrRows();
+}
+
+// ============== 分类变更时重置属性模板 ==============
+document.addEventListener('change', e => {
+  if (e.target.id === 'ed-category') {
+    const defaults = CATEGORY_ATTRS[e.target.value] || CATEGORY_ATTRS.default;
+    if (_editAttrs.every(r => !r.val)) {
+      _editAttrs = defaults.map(k => ({key:k, val:''}));
+      renderAttrRows();
+    }
+  }
+});
+
+// ============== AI 辅助填充 ==============
+async function aiFillProduct() {
+  const name = document.getElementById('ed-name').value.trim();
+  if (!name) { showToast('请先填写商品名称', 'error'); return; }
+  const btn = document.getElementById('ai-fill-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ AI 生成中...';
+  try {
+    const attrs = {};
+    _editAttrs.forEach(r => { if (r.key) attrs[r.key] = r.val || ''; });
+    const category = document.getElementById('ed-category').value;
+    const r = await fetch('/api/product/ai-fill', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, category, attributes: attrs })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      if (data.highlights?.length) document.getElementById('ed-highlights').value = data.highlights.join('\n');
+      if (data.description) document.getElementById('ed-description').value = data.description;
+      if (data.attributes) {
+        Object.entries(data.attributes).forEach(([k,v]) => {
+          const row = _editAttrs.find(r => r.key === k);
+          if (row) row.val = v;
+          else _editAttrs.push({key:k, val:v});
+        });
+        renderAttrRows();
+      }
+      showToast('✨ AI 填充完成，请核实内容', 'success');
+    } else {
+      showToast('AI 填充失败: ' + (data.error||'未知'), 'error');
+    }
+  } catch(e) {
+    showToast('请求失败: ' + e.message, 'error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '✨ AI 辅助补全商品信息';
+}
+
+// ============== 从平台拉取商品信息 ==============
+async function syncFromPlatform() {
+  const platform = document.getElementById('ed-platform').value;
+  const skuId = document.getElementById('ed-platform-sku-id').value.trim();
+  if (!platform) { showToast('请先选择来源平台', 'error'); return; }
+  if (!skuId) { showToast('请填写平台商品ID', 'error'); return; }
+  showToast('⏳ 拉取中...', '');
+  try {
+    const r = await fetch('/api/product/platform-fetch', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ platform, sku_id: skuId })
+    });
+    const data = await r.json();
+    if (data.ok && data.product) {
+      const p = data.product;
+      if (p.name) document.getElementById('ed-name').value = p.name;
+      if (p.price) document.getElementById('ed-price').value = p.price;
+      if (p.image) { document.getElementById('ed-img').value = p.image; updateImgPreview(p.image); }
+      if (p.description) document.getElementById('ed-description').value = p.description;
+      if (p.highlights?.length) document.getElementById('ed-highlights').value = p.highlights.join('\n');
+      if (p.attributes) {
+        _editAttrs = Object.entries(p.attributes).map(([k,v]) => ({key:k,val:v}));
+        renderAttrRows();
+      }
+      showToast('✅ 拉取成功，请确认信息', 'success');
+    } else {
+      showToast('拉取失败: ' + (data.error||'未知'), 'error');
+    }
+  } catch(e) {
+    showToast('请求失败，请检查平台API配置', 'error');
+  }
+}
+
+// ============== 平台商品同步 ==============
+let syncStep = 1;
+let availablePlatforms = [];
+let syncProducts = [];
+let selectedPlatform = null;
+
+function showSyncModal() {
+  syncStep = 1;
+  syncProducts = [];
+  selectedPlatform = null;
+  updateSyncUI();
+  loadPlatforms();
+  document.getElementById('sync-modal').classList.add('active');
+}
+
+function hideSyncModal() {
+  document.getElementById('sync-modal').classList.remove('active');
+}
+
+async function loadPlatforms() {
+  try {
+    const r = await fetch('/api/platforms');
+    const data = await r.json();
+    availablePlatforms = data.platforms || [];
+    renderPlatformList();
+  } catch (e) {
+    // 使用默认平台列表
+    availablePlatforms = [
+      { id: 'douyin', name: '抖音直播', enabled: false, room_id: '' },
+      { id: 'taobao', name: '淘宝直播', enabled: false, room_id: '' },
+      { id: 'kuaishou', name: '快手直播', enabled: false, room_id: '' },
+    ];
+    renderPlatformList();
+  }
+}
+
+function renderPlatformList() {
+  const container = document.getElementById('platform-list');
+  
+  if (availablePlatforms.length === 0) {
+    container.innerHTML = `
+      <div style="padding:20px; text-align:center; color:var(--text-3);">
+        暂无可用平台，请在配置中心设置API密钥
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = availablePlatforms.map(p => `
+    <div class="platform-option ${selectedPlatform === p.id ? 'selected' : ''} ${!p.enabled ? 'disabled' : ''}"
+         onclick="selectPlatform('${p.id}')"
+         style="
+           padding:12px; border:1px solid var(--border); border-radius:6px;
+           cursor:${p.enabled ? 'pointer' : 'not-allowed'};
+           background:${selectedPlatform === p.id ? 'rgba(201,165,92,.15)' : 'var(--card)'};
+           border-color:${selectedPlatform === p.id ? 'var(--primary)' : 'var(--border)'};
+           opacity:${p.enabled ? 1 : 0.5};
+         ">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:24px;">${getPlatformIcon(p.id)}</span>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:600; color:var(--text);">${p.name}</div>
+          <div style="font-size:11px; color:var(--text-3);">
+            ${p.enabled ? `房间号: ${p.room_id || '未设置'}` : '未启用（需配置API）'}
+          </div>
+        </div>
+        ${selectedPlatform === p.id ? '<span style="color:var(--primary);">✓</span>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function getPlatformIcon(platform) {
+  const icons = {
+    'douyin': '🎵',
+    'taobao': '🛒',
+    'kuaishou': '⚡',
+    'wechat': '💬',
+    'xiaohongshu': '📕',
+    'mock': '🧪'
+  };
+  return icons[platform] || '📦';
+}
+
+function selectPlatform(platformId) {
+  const platform = availablePlatforms.find(p => p.id === platformId);
+  if (!platform || !platform.enabled) return;
+  
+  selectedPlatform = platformId;
+  renderPlatformList();
+  
+  // 显示配置面板
+  const configPanel = document.getElementById('sync-config-panel');
+  const mockGroup = document.getElementById('mock-mode-group');
+  configPanel.style.display = 'block';
+  mockGroup.style.display = 'none';
+  
+  // 填充房间号
+  if (platform.room_id) {
+    document.getElementById('sync-room-id').value = platform.room_id;
+  }
+}
+
+// 模拟模式切换
+document.getElementById('sync-mock')?.addEventListener('change', (e) => {
+  const configPanel = document.getElementById('sync-config-panel');
+  if (e.target.checked) {
+    selectedPlatform = 'mock';
+    configPanel.style.display = 'none';
+  } else {
+    selectedPlatform = null;
+    renderPlatformList();
+  }
+});
+
+async function syncNext() {
+  const btn = document.getElementById('sync-btn-next');
+  
+  if (syncStep === 1) {
+    // 验证并获取商品
+    if (!selectedPlatform) {
+      showToast('请选择平台', 'error');
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = '获取中...';
+    
+    try {
+      const useMock = document.getElementById('sync-mock').checked;
+      const roomId = document.getElementById('sync-room-id').value;
+      
+      const r = await fetch('/api/platforms/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: selectedPlatform,
+          room_id: roomId,
+          mock: useMock
+        })
+      });
+      
+      const data = await r.json();
+      
+      if (data.success) {
+        syncProducts = data.products || [];
+        renderSyncPreview();
+        syncStep = 2;
+        updateSyncUI();
+        showToast(`获取到 ${syncProducts.length} 个商品`, 'success');
+      } else {
+        showToast(data.error || '获取失败', 'error');
+      }
+    } catch (e) {
+      showToast('网络错误', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = syncStep === 3 ? '完成' : (syncStep === 2 ? '导入选中商品' : '开始同步');
+    }
+  } else if (syncStep === 2) {
+    // 导入商品
+    const checkedProducts = syncProducts.filter((p, i) => 
+      document.getElementById(`sync-check-${i}`)?.checked
+    );
+    
+    if (checkedProducts.length === 0) {
+      showToast('请至少选择一个商品', 'error');
+      return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = '导入中...';
+    
+    let successCount = 0;
+    for (const product of checkedProducts) {
+      try {
+        const r = await fetch('/api/skus', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(product)
+        });
+        if (r.ok) successCount++;
+      } catch (e) {
+        // 本地模式直接添加
+        products.push(product);
+        successCount++;
+      }
+    }
+    
+    document.getElementById('sync-success-count').textContent = successCount;
+    syncStep = 3;
+    updateSyncUI();
+    
+    await loadProducts();
+    renderProducts();
+    updateStats();
+    
+    btn.disabled = false;
+    btn.textContent = '完成';
+    showToast(`成功导入 ${successCount} 个商品`, 'success');
+  } else if (syncStep === 3) {
+    hideSyncModal();
+  }
+}
+
+function syncPrev() {
+  if (syncStep > 1) {
+    syncStep--;
+    updateSyncUI();
+  }
+}
+
+function updateSyncUI() {
+  // 更新步骤指示器
+  [1, 2, 3].forEach(i => {
+    const el = document.getElementById(`sync-step-${i}`);
+    el.className = 'step';
+    if (i < syncStep) el.classList.add('done');
+    else if (i === syncStep) el.classList.add('active');
+  });
+
+  // 显示对应面板
+  document.getElementById('sync-panel-1').style.display = syncStep === 1 ? 'block' : 'none';
+  document.getElementById('sync-panel-2').style.display = syncStep === 2 ? 'block' : 'none';
+  document.getElementById('sync-panel-3').style.display = syncStep === 3 ? 'block' : 'none';
+
+  // 更新按钮
+  document.getElementById('sync-btn-prev').style.display = syncStep > 1 ? 'inline-flex' : 'none';
+  document.getElementById('sync-btn-next').textContent = 
+    syncStep === 3 ? '完成' : (syncStep === 2 ? '导入选中商品' : '开始同步');
+}
+
+function renderSyncPreview() {
+  const container = document.getElementById('sync-preview-list');
+  document.getElementById('sync-count').textContent = `${syncProducts.length} 个商品`;
+  
+  if (syncProducts.length === 0) {
+    container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-3);">未获取到商品</div>';
+    return;
+  }
+  
+  container.innerHTML = syncProducts.map((p, i) => `
+    <div style="padding:10px 12px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center;">
+      <input type="checkbox" id="sync-check-${i}" checked style="cursor:pointer;">
+      <div style="width:40px; height:40px; background:var(--bg); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:20px;">
+        ${p.image_url ? `<img src="${p.image_url}" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : '📦'}
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(p.name)}</div>
+        <div style="font-size:11px; color:var(--text-3); display:flex; gap:12px; margin-top:2px;">
+          <span style="color:var(--primary);">¥${escapeHtml(String(p.price))}</span>
+          <span>SKU: ${escapeHtml(p.id)}</span>
+          <span>库存: ${escapeHtml(String(p.stock || '-'))}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============== 工具函数 ==============
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = 'toast ' + type;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ============== 启动 ==============
+init();
+</script>
+</body>
+</html>

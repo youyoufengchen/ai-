@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "version": "1.0",
+    "project_name": "宝青坊",
+    "current_scene": "tea_shop",
+    "current_style": "classical",
+    "current_platform": "douyin"
+  },
+  "scenes": {
+    "tea_shop": {
+      "name": "茗香阁",
+      "background": "assets/scenes/bg_tea_shop.png",
+      "shelf_layout": [
+        {
+          "id": "A1",
+          "x": 180,
+          "y": 240,
+          "default_sku": "tea_001"
+        },
+        {
+          "id": "A2",
+          "x": 380,
+          "y": 240,
+          "default_sku": "tea_002"
+        },
+        {
+          "id": "A3",
+          "x": 580,
+          "y": 240,
+          "default_sku": "tea_003"
+        },
+        {
+          "id": "B1",
+          "x": 180,
+          "y": 440,
+          "default_sku": null
+        },
+        {
+          "id": "B2",
+          "x": 380,
+          "y": 440,
+          "default_sku": null
+        },
+        {
+          "id": "B3",
+          "x": 580,
+          "y": 440,
+          "default_sku": null
+        }
+      ],
+      "host_position": {
+        "x": 960,
+        "y": 540
+      },
+      "product_display_position": {
+        "x": 1450,
+        "y": 400,
+        "width": 400,
+        "height": 300
+      }
+    }
+  },
+  "behavior": {
+    "auto_greet": {
+      "enabled": true,
+      "interval_seconds": 30,
+      "batch_size": 5
+    },
+    "auto_promote": {
+      "enabled": false,
+      "interval_seconds": 120
+    },
+    "idle_chatter": {
+      "enabled": false,
+      "interval_seconds": 60
+    }
+  },
+  "feature_flags": {
+    "enable_ai_response": true,
+    "enable_danmaku": true,
+    "enable_gift_effects": true,
+    "enable_auto_welcome": true,
+    "enable_order_response": true,
+    "enable_direct_broadcast": false
+  },
+  "event_action_map": {
+    "idle": "基础姿态/直立站立/Standing Arguing.glb",
+    "danmaku": "交互动作/取物动作/取中间/Pick Fruit (2).glb",
+    "user_enter": "交互动作/递接动作/放下物品/Shaking Hands 1.glb",
+    "gift": "情绪反应/打招呼/Standing Greeting (1).glb",
+    "order": "交互动作/取物动作/取低处/Pick Fruit.glb",
+    "walk": "移动动作/走路/正常走路/Walking.glb",
+    "greeting": "交互动作/递接动作/放下物品/Standing Greeting.glb"
+  },
+  "event_priorities": {
+    "order_placed": 1,
+    "gift_big": 2,
+    "urgent_question": 3,
+    "product_query": 4,
+    "style_switch": 5,
+    "gift_small": 6,
+    "general_chat": 7,
+    "user_enter": 8,
+    "like_received": 9
+  },
+  "rate_limit": {
+    "queue_max_size": 50,
+    "ai_calls_per_minute": 30,
+    "low_priority_per_minute": 5
+  },
+  "blacklist": {
+    "users": [],
+    "keywords": []
+  },
+  "gift_tiers": {
+    "_comment": "礼物分级：先按 name_map 精确匹配，未命中则按 value_thresholds 价值区间判断",
+    "name_map": {
+      "小心心": "gift_tiny",
+      "爱心": "gift_tiny",
+      "玫瑰花": "gift_small",
+      "啤酒": "gift_small",
+      "墨镜": "gift_small",
+      "荷花": "gift_small",
+      "大船": "gift_big",
+      "小车": "gift_big",
+      "火箭": "gift_big",
+      "狮子": "gift_big",
+      "火云": "gift_super",
+      "嘉年华": "gift_super",
+      "火焰五月花": "gift_super"
+    },
+    "value_thresholds": [
+      {
+        "min": 0,
+        "max": 5,
+        "tier": "gift_tiny"
+      },
+      {
+        "min": 5,
+        "max": 100,
+        "tier": "gift_small"
+      },
+      {
+        "min": 100,
+        "max": 1000,
+        "tier": "gift_big"
+      },
+      {
+        "min": 1000,
+        "max": null,
+        "tier": "gift_super"
+      }
+    ]
+  },
+  "ai_settings": {
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "max_tokens": 100,
+    "temperature": 0.8,
+    "context_window": 5,
+    "api_key_env": "DEEPSEEK_API_KEY"
+  },
+  "tts_settings": {
+    "provider": "volcengine",
+    "voice_map": {
+      "classical": "zh_female_qingxin",
+      "cute": "zh_female_sweet",
+      "dominant": "zh_female_cool"
+    },
+    "api_key_env": "VOLC_TTS_TOKEN",
+    "app_id_env": "VOLC_TTS_APPID"
+  },
+  "server": {
+    "http_host": "0.0.0.0",
+    "http_port": 8080,
+    "websocket_host": "0.0.0.0",
+    "websocket_port": 8765
+  }
+}

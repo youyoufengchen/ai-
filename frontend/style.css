@@ -1,0 +1,531 @@
+/* ========================================
+   宝青坊 - 虚拟主播直播间
+   UI美化版 - 古风雅致风格
+   ======================================== */
+
+/* ============== 全局变量 ============== */
+:root {
+  --primary: #c9a55c;
+  --primary-light: #e8d4a8;
+  --primary-dark: #a08040;
+  --bg-dark: #1a1410;
+  --bg-card: rgba(30, 24, 18, 0.95);
+  --accent-red: #c0392b;
+  --accent-gold: #f1c40f;
+  --text-primary: #f5e6c8;
+  --text-secondary: #b8a88a;
+  --glass-bg: rgba(20, 16, 12, 0.85);
+  --glass-border: rgba(201, 165, 92, 0.3);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 30px rgba(201, 165, 92, 0.2);
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-classical: "STKaiti", "KaiTi", "SimKaiti", "Microsoft YaHei", serif;
+}
+
+/* ============== 全局重置 ============== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg-dark);
+  overflow: hidden;
+  font-family: var(--font-classical);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============== 舞台 ============== */
+.stage {
+  position: relative;
+  width: 100vw; height: 100vh;
+  background: radial-gradient(ellipse at center, #2a2018 0%, #1a1410 70%, #0a0806 100%);
+}
+
+.layer { position: absolute; will-change: transform, opacity; }
+
+/* ============== L0 背景 ============== */
+.bg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  top: 0; left: 0;
+  z-index: 0;
+  filter: brightness(0.9) contrast(1.05);
+  animation: bgBreath 8s ease-in-out infinite;
+}
+
+@keyframes bgBreath {
+  0%, 100% { filter: brightness(0.9) contrast(1.05); }
+  50% { filter: brightness(0.95) contrast(1.02); }
+}
+
+/* ============== L1 货架 ============== */
+.shelf {
+  width: 100%; height: 100%;
+  top: 0; left: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.shelf-slot {
+  position: absolute;
+  width: 140px; height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-smooth);
+  border-radius: 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-soft);
+}
+
+.shelf-slot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(201, 165, 92, 0.3), transparent 50%, rgba(201, 165, 92, 0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.shelf-slot:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-glow);
+  border-color: rgba(201, 165, 92, 0.5);
+}
+
+.shelf-slot.highlight {
+  animation: slotHighlight 1s ease-in-out infinite;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 20px rgba(241, 196, 15, 0.4);
+}
+
+@keyframes slotHighlight {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(241, 196, 15, 0.4); }
+  50% { transform: scale(1.08); box-shadow: 0 0 40px rgba(241, 196, 15, 0.6); }
+}
+
+.shelf-slot img {
+  width: 90%; height: 90%;
+  object-fit: contain;
+  border-radius: 8px;
+  transition: transform var(--transition-fast);
+}
+
+.shelf-slot:hover img { transform: scale(1.02); }
+
+/* ============== L2 角色视频（A/B 双缓冲） ============== */
+.host-wrap {
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  height: 75%; width: auto;
+  max-width: 60%;
+  z-index: 20;
+}
+
+.host {
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  height: 100%; width: auto;
+  max-width: 100%;
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.host-back {
+  opacity: 0;
+  z-index: -1;
+}
+
+/* ============== L3 手持物品 ============== */
+.hand-item {
+  z-index: 30;
+  width: 200px;
+  bottom: 28%; left: 58%;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.6));
+  transition: all var(--transition-smooth);
+  animation: handFloat 3s ease-in-out infinite;
+}
+
+@keyframes handFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+/* ============== L4 桌面展示 ============== */
+.table-display {
+  z-index: 25;
+  right: 4%; top: 35%;
+  width: 420px;
+  display: flex; flex-direction: column;
+  gap: 12px; align-items: center;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(15px);
+  box-shadow: var(--shadow-soft);
+  transition: all var(--transition-smooth);
+}
+
+.table-display:hover {
+  box-shadow: var(--shadow-glow);
+  border-color: rgba(201, 165, 92, 0.5);
+}
+
+.table-product-img {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.table-product-video {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 12px;
+}
+
+/* ============== L5 弹窗 ============== */
+.popup-layer { z-index: 50; }
+
+.popup {
+  position: absolute;
+  transition: all var(--transition-smooth);
+}
+
+/* 类型A: 气泡提示 */
+.popup-bubble {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 14px 24px;
+  color: var(--text-primary);
+  font-size: 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-soft);
+  top: 60%; left: 50%;
+  transform: translateX(-50%);
+  animation: bubbleIn 0.4s ease-out;
+}
+
+@keyframes bubbleIn {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.8) translateY(20px); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+
+/* 类型B: 商品卡 */
+.popup-card {
+  top: 20%; right: 5%;
+  width: 320px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(15px);
+  box-shadow: var(--shadow-soft);
+  animation: cardIn 0.5s ease-out;
+}
+
+@keyframes cardIn {
+  0% { opacity: 0; transform: translateX(50px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.popup-card .card-title {
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 10px;
+}
+
+.popup-card .card-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.popup-card .card-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.popup-card .card-item-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.popup-card .card-item-value {
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.popup-card .card-item-value.highlight {
+  color: var(--accent-gold);
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.popup-card .card-footer {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  color: var(--primary-light);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 类型C: 行动号召 */
+.popup-cta {
+  bottom: 25%; right: 5%;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  backdrop-filter: blur(12px);
+  animation: ctaIn 0.5s ease-out;
+}
+
+@keyframes ctaIn {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.popup-cta .cta-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.popup-cta .cta-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.popup-cta .cta-price {
+  color: var(--accent-gold);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.popup-cta .cta-text {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.popup-cta .cta-arrow {
+  font-size: 36px;
+  color: var(--accent-red);
+  animation: arrowBlink 0.8s ease-in-out infinite;
+}
+
+@keyframes arrowBlink {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(8px); opacity: 0.5; }
+}
+
+/* 类型D: 聊天框 */
+.popup-chat {
+  bottom: 8%; left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  background: rgba(20, 14, 8, 0.92);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  color: var(--text-primary);
+  overflow: hidden;
+  animation: chatIn 0.4s ease-out;
+}
+
+@keyframes chatIn {
+  0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.popup-chat .chat-header {
+  background: rgba(139, 69, 19, .8);
+  padding: 10px 16px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--primary);
+}
+
+.popup-chat .chat-body { padding: 16px 20px; }
+
+.popup-chat .chat-question {
+  color: var(--primary);
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.popup-chat .chat-answer {
+  color: #fff;
+  font-size: 17px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  min-height: 24px;
+}
+
+/* ============== L6 字幕 ============== */
+.subtitle {
+  bottom: 4%; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--primary-light);
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-size: 18px;
+  max-width: 80%;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(201, 165, 92, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  animation: subtitleIn 0.3s ease-out;
+}
+
+@keyframes subtitleIn {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ============== L7 特效 ============== */
+.effect-layer {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 70;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.coin {
+  position: absolute;
+  font-size: 32px;
+  animation: coinFall 2s linear forwards;
+}
+
+@keyframes coinFall {
+  from { transform: translateY(-20vh) rotate(0deg); opacity: 1; }
+  to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.sparkle {
+  position: absolute;
+  font-size: 24px;
+  animation: sparkleAnim 1.5s ease-out forwards;
+  z-index: 71;
+  pointer-events: none;
+}
+
+@keyframes sparkleAnim {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+  100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+
+/* ============== L8 状态栏 ============== */
+.status-bar {
+  position: absolute;
+  top: 12px; left: 12px;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--primary);
+  font-family: monospace;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 165, 92, 0.3);
+  backdrop-filter: blur(5px);
+}
+
+.status-bar span { margin-right: 16px; }
+.status-bar span:last-child { margin-right: 0; }
+
+/* ============== 通用工具类 ============== */
+.hidden { display: none !important; }
+
+/* 加载动画 */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: var(--bg-dark);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(201, 165, 92, 0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+/* 渐入动画 */
+.fade-in { animation: fadeIn 0.5s ease-out forwards; }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 脉冲动画 */
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Toast动画 */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

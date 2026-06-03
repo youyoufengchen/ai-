@@ -1,0 +1,349 @@
+{
+  "_comment": "音效库 — 所有音效文件的注册表。action/expression/effect/actors.json中的sounds字段必须引用这里注册的id。运行时由前端SoundManager按id查找文件路径播放。",
+  "version": "1.0",
+
+  "_playback_rules": {
+    "max_simultaneous": 4,
+    "priority_order": ["transform", "event", "emotion", "action", "ambient"],
+    "ambient_volume": 0.25,
+    "emotion_volume": 0.6,
+    "action_volume": 0.8,
+    "transform_volume": 1.0,
+    "event_volume": 0.9,
+    "_note": "同类型音效同时只播一个（emotion不叠加），不同类型可同时播放"
+  },
+
+  "sounds": [
+
+    {
+      "id": "sfx_fox_fire_ignite",
+      "file": "assets/sounds/transform/fox_fire_ignite.mp3",
+      "category": "transform",
+      "display_name": "狐火点燃",
+      "duration_s": 1.0,
+      "loop": false,
+      "volume_multiplier": 1.0
+    },
+    {
+      "id": "sfx_fox_roar",
+      "file": "assets/sounds/transform/fox_roar.mp3",
+      "category": "transform",
+      "display_name": "狐鸣怒吼",
+      "duration_s": 1.5,
+      "loop": false,
+      "volume_multiplier": 1.0
+    },
+    {
+      "id": "sfx_fox_full_transform",
+      "file": "assets/sounds/transform/fox_full_transform.mp3",
+      "category": "transform",
+      "display_name": "全狐化形",
+      "duration_s": 2.0,
+      "loop": false,
+      "volume_multiplier": 1.0
+    },
+    {
+      "id": "sfx_human_restore",
+      "file": "assets/sounds/transform/human_restore.mp3",
+      "category": "transform",
+      "display_name": "人形恢复",
+      "duration_s": 0.8,
+      "loop": false,
+      "volume_multiplier": 0.9
+    },
+    {
+      "id": "sfx_robot_activate",
+      "file": "assets/sounds/transform/robot_activate.mp3",
+      "category": "transform",
+      "display_name": "机器人激活",
+      "duration_s": 1.2,
+      "loop": false,
+      "volume_multiplier": 0.8
+    },
+
+    {
+      "id": "sfx_angry_grunt",
+      "file": "assets/sounds/emotion/angry_grunt.mp3",
+      "category": "emotion",
+      "display_name": "生气哼声",
+      "duration_s": 0.6,
+      "loop": false,
+      "emotion_tag": "angry",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_angry_growl",
+      "file": "assets/sounds/emotion/angry_growl.mp3",
+      "category": "emotion",
+      "display_name": "愤怒低吼",
+      "duration_s": 1.0,
+      "loop": false,
+      "emotion_tag": "angry",
+      "form_restriction": "human"
+    },
+    {
+      "id": "sfx_fox_low_growl",
+      "file": "assets/sounds/emotion/fox_low_growl.mp3",
+      "category": "emotion",
+      "display_name": "狐狸低吼",
+      "duration_s": 1.2,
+      "loop": false,
+      "emotion_tag": "angry",
+      "form_restriction": "fox_partial"
+    },
+    {
+      "id": "sfx_fox_full_roar",
+      "file": "assets/sounds/emotion/fox_full_roar.mp3",
+      "category": "emotion",
+      "display_name": "九尾怒吼",
+      "duration_s": 2.0,
+      "loop": false,
+      "emotion_tag": "angry",
+      "form_restriction": "fox_full"
+    },
+    {
+      "id": "sfx_cute_whimper",
+      "file": "assets/sounds/emotion/cute_whimper.mp3",
+      "category": "emotion",
+      "display_name": "娇嗔哼声",
+      "duration_s": 0.8,
+      "loop": false,
+      "emotion_tag": "cute",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_cute_giggle",
+      "file": "assets/sounds/emotion/cute_giggle.mp3",
+      "category": "emotion",
+      "display_name": "娇笑",
+      "duration_s": 1.2,
+      "loop": false,
+      "emotion_tag": "cute",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_happy_hum",
+      "file": "assets/sounds/emotion/happy_hum.mp3",
+      "category": "emotion",
+      "display_name": "开心哼歌",
+      "duration_s": 0.7,
+      "loop": false,
+      "emotion_tag": "happy",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_happy_laugh_light",
+      "file": "assets/sounds/emotion/happy_laugh_light.mp3",
+      "category": "emotion",
+      "display_name": "轻笑",
+      "duration_s": 1.0,
+      "loop": false,
+      "emotion_tag": "happy",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_surprised_gasp",
+      "file": "assets/sounds/emotion/surprised_gasp.mp3",
+      "category": "emotion",
+      "display_name": "惊讶倒吸气",
+      "duration_s": 0.5,
+      "loop": false,
+      "emotion_tag": "surprised",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_thinking_hmm",
+      "file": "assets/sounds/emotion/thinking_hmm.mp3",
+      "category": "emotion",
+      "display_name": "思考嗯声",
+      "duration_s": 0.6,
+      "loop": false,
+      "emotion_tag": "thinking",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_embarrassed_ehehe",
+      "file": "assets/sounds/emotion/embarrassed_ehehe.mp3",
+      "category": "emotion",
+      "display_name": "害羞嘿嘿",
+      "duration_s": 0.8,
+      "loop": false,
+      "emotion_tag": "embarrassed",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_sad_sigh",
+      "file": "assets/sounds/emotion/sad_sigh.mp3",
+      "category": "emotion",
+      "display_name": "叹气",
+      "duration_s": 1.0,
+      "loop": false,
+      "emotion_tag": "sad",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_disgusted_tsk",
+      "file": "assets/sounds/emotion/disgusted_tsk.mp3",
+      "category": "emotion",
+      "display_name": "嫌弃啧声",
+      "duration_s": 0.4,
+      "loop": false,
+      "emotion_tag": "disgusted",
+      "form_restriction": null
+    },
+    {
+      "id": "sfx_fox_happy_yip",
+      "file": "assets/sounds/emotion/fox_happy_yip.mp3",
+      "category": "emotion",
+      "display_name": "小狐欢叫",
+      "duration_s": 0.5,
+      "loop": false,
+      "emotion_tag": "happy",
+      "form_restriction": "pet"
+    },
+    {
+      "id": "sfx_fox_startled",
+      "file": "assets/sounds/emotion/fox_startled.mp3",
+      "category": "emotion",
+      "display_name": "小狐受惊",
+      "duration_s": 0.6,
+      "loop": false,
+      "emotion_tag": "surprised",
+      "form_restriction": "pet"
+    },
+    {
+      "id": "sfx_robot_beep_ok",
+      "file": "assets/sounds/emotion/robot_beep_ok.mp3",
+      "category": "emotion",
+      "display_name": "机器人确认音",
+      "duration_s": 0.4,
+      "loop": false,
+      "emotion_tag": "happy",
+      "form_restriction": "robot"
+    },
+    {
+      "id": "sfx_robot_alarm",
+      "file": "assets/sounds/emotion/robot_alarm.mp3",
+      "category": "emotion",
+      "display_name": "机器人警报",
+      "duration_s": 1.5,
+      "loop": false,
+      "emotion_tag": "angry",
+      "form_restriction": "robot"
+    },
+
+    {
+      "id": "sfx_finger_snap",
+      "file": "assets/sounds/action/finger_snap.mp3",
+      "category": "action",
+      "display_name": "响指声",
+      "duration_s": 0.15,
+      "loop": false
+    },
+    {
+      "id": "sfx_item_grab",
+      "file": "assets/sounds/action/item_grab.mp3",
+      "category": "action",
+      "display_name": "抓取物品",
+      "duration_s": 0.3,
+      "loop": false
+    },
+    {
+      "id": "sfx_item_place",
+      "file": "assets/sounds/action/item_place.mp3",
+      "category": "action",
+      "display_name": "放置物品",
+      "duration_s": 0.3,
+      "loop": false
+    },
+    {
+      "id": "sfx_footstep_wood",
+      "file": "assets/sounds/action/footstep_wood.mp3",
+      "category": "action",
+      "display_name": "木地板脚步",
+      "duration_s": 0.25,
+      "loop": false
+    },
+
+    {
+      "id": "sfx_fire_whoosh",
+      "file": "assets/sounds/effect/fire_whoosh.mp3",
+      "category": "effect",
+      "display_name": "火焰呼啸",
+      "duration_s": 0.6,
+      "loop": false
+    },
+    {
+      "id": "sfx_tails_appear",
+      "file": "assets/sounds/effect/tails_appear.mp3",
+      "category": "effect",
+      "display_name": "尾巴出现",
+      "duration_s": 0.8,
+      "loop": false
+    },
+    {
+      "id": "sfx_robot_summon",
+      "file": "assets/sounds/effect/robot_summon.mp3",
+      "category": "effect",
+      "display_name": "机器人召唤",
+      "duration_s": 1.5,
+      "loop": false
+    },
+
+    {
+      "id": "sfx_order_placed",
+      "file": "assets/sounds/event/order_placed.mp3",
+      "category": "event",
+      "display_name": "下单成功",
+      "duration_s": 1.0,
+      "loop": false,
+      "trigger_event": "order_placed"
+    },
+    {
+      "id": "sfx_gift_big",
+      "file": "assets/sounds/event/gift_big.mp3",
+      "category": "event",
+      "display_name": "大额礼物",
+      "duration_s": 3.0,
+      "loop": false,
+      "trigger_event": "gift_big"
+    },
+
+    {
+      "id": "sfx_ambient_tea_shop",
+      "file": "assets/sounds/ambient/tea_shop_guqin.mp3",
+      "category": "ambient",
+      "display_name": "茶馆古琴",
+      "duration_s": 180.0,
+      "loop": true,
+      "scene_restriction": "tea_shop"
+    },
+    {
+      "id": "sfx_ambient_fox_fire",
+      "file": "assets/sounds/ambient/fox_fire_loop.mp3",
+      "category": "ambient",
+      "display_name": "狐火燃烧环境音",
+      "duration_s": 10.0,
+      "loop": true,
+      "form_restriction": "fox_partial"
+    },
+    {
+      "id": "sfx_ambient_fire_crackle",
+      "file": "assets/sounds/ambient/fire_crackle_loop.mp3",
+      "category": "ambient",
+      "display_name": "火焰劈啪声",
+      "duration_s": 5.0,
+      "loop": true
+    },
+    {
+      "id": "sfx_ambient_robot_hum",
+      "file": "assets/sounds/ambient/robot_hum_loop.mp3",
+      "category": "ambient",
+      "display_name": "机器人运转声",
+      "duration_s": 8.0,
+      "loop": true,
+      "form_restriction": "robot"
+    }
+
+  ]
+}

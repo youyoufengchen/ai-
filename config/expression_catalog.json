@@ -1,0 +1,355 @@
+{
+  "_comment": "表情库 — 情绪语义到具体视觉实现的映射。公共情绪标签向下按 skeleton_type 和 form 分叉，确保同一情绪在不同角色上有各自的表现。",
+  "version": "1.0",
+
+  "_implementation_types": {
+    "morph":          "Morph Target混合：GLB模型内置shape key，通过权重[0,1]控制（最高质量，需建模支持）",
+    "bone_animation": "骨骼面部动画：用面部骨骼驱动眉毛/眼皮/嘴角（中等质量，VRM/Mixamo支持）",
+    "overlay_2d":     "2D贴图叠加：PNG贴图跟随脸部骨骼坐标叠加（最快实现，无需3D资源）",
+    "screen_display": "屏幕显示：机器人/机械角色用屏幕显示颜文字或图标",
+    "particle":       "粒子特效表情：如心形粒子、怒气符号等飘出效果"
+  },
+
+  "_sound_binding_rules": {
+    "_comment": "表情音效查找优先级（高→低）：精确(emotion+form) → 通用(emotion+skeleton_type) → 最通用(emotion)",
+    "fallback_chain": ["emotion+form", "emotion+skeleton_type", "emotion"]
+  },
+
+  "expression_sets": {
+
+    "human_npc_base": {
+      "display_name": "人形NPC基础表情集",
+      "applies_to_skeleton": "humanoid",
+      "applies_to_forms": ["human"],
+      "implementation_priority": ["morph", "bone_animation", "overlay_2d"],
+
+      "expressions": [
+
+        {
+          "id": "expr_neutral_human",
+          "emotion_tag": "neutral",
+          "display_name": "平静",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_raise": 0.0,
+            "brow_furrow": 0.0,
+            "eye_squint": 0.0,
+            "mouth_smile": 0.05,
+            "mouth_frown": 0.0,
+            "cheek_raise": 0.0
+          },
+          "transition_duration_s": 0.3,
+          "is_default": true,
+          "sounds": { "on_enter": null }
+        },
+
+        {
+          "id": "expr_happy_human",
+          "emotion_tag": "happy",
+          "display_name": "开心",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_raise": 0.3,
+            "brow_furrow": 0.0,
+            "eye_squint": 0.4,
+            "mouth_smile": 0.85,
+            "cheek_raise": 0.7
+          },
+          "transition_duration_s": 0.25,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/happy_hum.mp3",
+            "on_peak":  "assets/sounds/emotion/happy_laugh_light.mp3"
+          }
+        },
+
+        {
+          "id": "expr_angry_human",
+          "emotion_tag": "angry",
+          "display_name": "愤怒",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_furrow": 0.9,
+            "brow_raise": 0.0,
+            "eye_squint": 0.6,
+            "mouth_frown": 0.7,
+            "nostril_flare": 0.5,
+            "jaw_clench": 0.4
+          },
+          "transition_duration_s": 0.2,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/angry_grunt.mp3",
+            "on_peak":  "assets/sounds/emotion/angry_growl.mp3"
+          }
+        },
+
+        {
+          "id": "expr_cute_human",
+          "emotion_tag": "cute",
+          "display_name": "撒娇",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_raise": 0.5,
+            "eye_wide": 0.6,
+            "mouth_pout": 0.8,
+            "cheek_puff": 0.4,
+            "head_tilt": 0.3
+          },
+          "transition_duration_s": 0.3,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/cute_whimper.mp3",
+            "on_peak":  "assets/sounds/emotion/cute_giggle.mp3"
+          }
+        },
+
+        {
+          "id": "expr_surprised_human",
+          "emotion_tag": "surprised",
+          "display_name": "惊讶",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_raise": 0.95,
+            "eye_wide": 0.9,
+            "mouth_open": 0.6
+          },
+          "transition_duration_s": 0.1,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/surprised_gasp.mp3"
+          }
+        },
+
+        {
+          "id": "expr_thinking_human",
+          "emotion_tag": "thinking",
+          "display_name": "思考",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_raise_one": 0.5,
+            "brow_furrow_one": 0.3,
+            "eye_squint_one": 0.2,
+            "mouth_purse": 0.3
+          },
+          "transition_duration_s": 0.4,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/thinking_hmm.mp3"
+          }
+        },
+
+        {
+          "id": "expr_embarrassed_human",
+          "emotion_tag": "embarrassed",
+          "display_name": "害羞",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_raise": 0.2,
+            "eye_squint": 0.3,
+            "cheek_blush": 1.0,
+            "mouth_smile_shy": 0.5,
+            "head_lower": 0.2
+          },
+          "transition_duration_s": 0.35,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/embarrassed_ehehe.mp3"
+          }
+        },
+
+        {
+          "id": "expr_sad_human",
+          "emotion_tag": "sad",
+          "display_name": "悲伤",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_sad": 0.8,
+            "eye_droop": 0.6,
+            "mouth_frown": 0.5,
+            "lip_tremble": 0.3
+          },
+          "transition_duration_s": 0.5,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/sad_sigh.mp3"
+          }
+        },
+
+        {
+          "id": "expr_disgusted_human",
+          "emotion_tag": "disgusted",
+          "display_name": "嫌弃",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_furrow": 0.5,
+            "nose_wrinkle": 0.8,
+            "mouth_one_side_up": 0.7,
+            "eye_squint": 0.3
+          },
+          "transition_duration_s": 0.25,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/disgusted_tsk.mp3"
+          }
+        }
+      ]
+    },
+
+    "fox_partial_expressions": {
+      "display_name": "半狐形态表情集",
+      "applies_to_skeleton": "humanoid",
+      "applies_to_forms": ["fox_partial"],
+      "_note": "继承 human_npc_base 的基础配方，覆盖 angry/surprised 等关键情绪为更野性的版本",
+
+      "expressions": [
+
+        {
+          "id": "expr_angry_fox_partial",
+          "emotion_tag": "angry",
+          "display_name": "狐怒",
+          "implementation": "morph",
+          "morph_weights": {
+            "brow_furrow": 1.0,
+            "eye_slit_fox": 0.9,
+            "mouth_fang_show": 0.7,
+            "nostril_flare": 0.8,
+            "ear_back_fox": 0.8
+          },
+          "transition_duration_s": 0.15,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/fox_low_growl.mp3",
+            "on_peak":  "assets/sounds/emotion/fox_hiss.mp3"
+          }
+        },
+
+        {
+          "id": "expr_happy_fox_partial",
+          "emotion_tag": "happy",
+          "display_name": "狐喜",
+          "implementation": "morph",
+          "morph_weights": {
+            "eye_squint": 0.5,
+            "mouth_smile": 0.7,
+            "ear_perk_fox": 0.9,
+            "tail_wag_speed": 1.0
+          },
+          "transition_duration_s": 0.3,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/fox_happy_yip.mp3"
+          }
+        },
+
+        {
+          "id": "expr_surprised_fox_partial",
+          "emotion_tag": "surprised",
+          "display_name": "狐惊",
+          "implementation": "morph",
+          "morph_weights": {
+            "eye_wide": 1.0,
+            "ear_swivel_fox": 0.8,
+            "mouth_open": 0.4,
+            "tail_puff_fox": 0.6
+          },
+          "transition_duration_s": 0.1,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/fox_startled.mp3"
+          }
+        }
+      ]
+    },
+
+    "fox_full_expressions": {
+      "display_name": "全狐形态表情集",
+      "applies_to_skeleton": "humanoid",
+      "applies_to_forms": ["fox_full"],
+
+      "expressions": [
+
+        {
+          "id": "expr_angry_fox_full",
+          "emotion_tag": "angry",
+          "display_name": "九尾怒吼",
+          "implementation": "bone_animation",
+          "animation_file": "assets/动作库/情绪反应/表情/fox_full_rage.glb",
+          "transition_duration_s": 0.1,
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/fox_full_roar.mp3",
+            "on_peak":  "assets/sounds/emotion/fox_full_roar_peak.mp3"
+          }
+        }
+      ]
+    },
+
+    "robot_display_expressions": {
+      "display_name": "机器人屏幕表情集",
+      "applies_to_skeleton": "humanoid",
+      "applies_to_forms": ["active"],
+      "_note": "机器人无面部骨骼，用屏幕叠加实现",
+
+      "expressions": [
+
+        {
+          "id": "expr_neutral_robot",
+          "emotion_tag": "neutral",
+          "display_name": "待机屏",
+          "implementation": "screen_display",
+          "screen_content": {
+            "type": "text",
+            "text": "( ◕ ‿ ◕ )",
+            "led_color": "#00AAFF"
+          },
+          "is_default": true,
+          "sounds": { "on_enter": null }
+        },
+
+        {
+          "id": "expr_working_robot",
+          "emotion_tag": "thinking",
+          "display_name": "处理中",
+          "implementation": "screen_display",
+          "screen_content": {
+            "type": "animation",
+            "animation": "loading_spinner",
+            "text": "PROCESSING...",
+            "led_color": "#FFAA00"
+          },
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/robot_processing.mp3"
+          }
+        },
+
+        {
+          "id": "expr_happy_robot",
+          "emotion_tag": "happy",
+          "display_name": "完成屏",
+          "implementation": "screen_display",
+          "screen_content": {
+            "type": "text",
+            "text": "( ＾▽＾ )  DONE!",
+            "led_color": "#00FF88"
+          },
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/robot_beep_ok.mp3"
+          }
+        },
+
+        {
+          "id": "expr_error_robot",
+          "emotion_tag": "angry",
+          "display_name": "警报屏",
+          "implementation": "screen_display",
+          "screen_content": {
+            "type": "text",
+            "text": "!! ERROR !!",
+            "led_color": "#FF2200",
+            "blink": true
+          },
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/robot_alarm.mp3"
+          }
+        }
+      ]
+    }
+
+  },
+
+  "_lookup_rules": {
+    "_comment": "表情系统查找流程：1.获取actor当前form → 2.找对应expression_set → 3.按emotion_tag查找 → 4.找不到则降级到human_npc_base",
+    "fallback_set": "human_npc_base",
+    "blend_with_previous": true,
+    "blend_duration_s": 0.3
+  }
+}

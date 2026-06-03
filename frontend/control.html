@@ -1,0 +1,3134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宝青坊直播控制台 v3 · 骨骼动画版</title>
+<style>
+  :root{
+    --primary:#c9a55c; --primary-light:#e8d4a8; --primary-dark:#a08040;
+    --bg:#0d0d12; --panel:#15151c; --card:#1d1d26; --border:#2a2a35;
+    --text:#e8dcc8; --text-2:#888; --text-3:#666;
+    --ok:#27ae60; --warn:#f39c12; --err:#e74c3c; --info:#3498db;
+    --log-h:50px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh; overflow-y:auto; overflow-x:hidden;
+    display:block; font-size:13px;
+  }
+  /* ====== 顶部工具栏 ====== */
+  .topbar{
+    position:fixed; top:0; left:0; right:0;
+    height:48px; background:var(--panel); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; padding:0 16px; gap:12px; z-index:100;
+  }
+  .topbar .title{ font-size:15px; font-weight:600; color:var(--primary);}
+  .topbar .ver{ font-size:11px; color:var(--text-2); padding:2px 6px; background:rgba(201,165,92,.15); border-radius:4px;}
+  .ws-status{ display:flex; align-items:center; gap:6px; padding:4px 10px; border-radius:4px; background:var(--card); font-size:12px;}
+  .ws-status .dot{ width:8px; height:8px; border-radius:50%; background:var(--text-3);}
+  .ws-status.connected .dot{ background:var(--ok); box-shadow:0 0 6px var(--ok);}
+  .ws-status.disconnected .dot{ background:var(--err); box-shadow:0 0 6px var(--err);}
+
+  /* ====== 按钮 ====== */
+  .btn{
+    padding:6px 12px; border:1px solid var(--border); background:var(--card);
+    color:var(--text); border-radius:5px; cursor:pointer; font-size:12px;
+    display:inline-flex; align-items:center; gap:5px; transition:.15s;
+    font-family:inherit;
+  }
+  .btn:hover{ background:var(--primary); color:#000; border-color:var(--primary);}
+  .btn.primary{ background:var(--primary); color:#000; border-color:var(--primary);}
+  .btn.primary:hover{ background:var(--primary-light);}
+  .btn.danger{ background:var(--err); color:#fff; border-color:var(--err);}
+  .btn.danger:hover{ background:#c0392b;}
+  .btn.ok{ background:var(--ok); color:#fff; border-color:var(--ok);}
+  .btn.sm{ padding:4px 8px; font-size:11px;}
+  .btn:disabled{ opacity:.45; cursor:not-allowed;}
+
+  /* ====== 主布局 三栏 ====== */
+  .main{
+    margin-top:48px;
+    height:calc(100vh - 48px);
+    display:flex; overflow:hidden; flex-shrink:0;
+  }
+  .col{ display:flex; flex-direction:column; overflow:hidden;}
+  .col-l{ width:220px; background:var(--panel); border-right:1px solid var(--border);}
+  .col-c{ flex:1; background:var(--bg);}
+  .col-r{ width:360px; background:var(--panel); border-left:1px solid var(--border);}
+
+  /* ====== 卡片 ====== */
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:8px;
+    margin:10px; padding:12px;
+  }
+  .card h3{ font-size:12px; color:var(--primary); margin-bottom:10px; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:6px;}
+  .row{ display:flex; gap:8px;}
+  .row > *{ flex:1;}
+  .mt8{ margin-top:8px;}
+
+  /* ====== 滚动 ====== */
+  .scroll{ overflow-y:auto;}
+  .scroll::-webkit-scrollbar{ width:6px;}
+  .scroll::-webkit-scrollbar-track{ background:var(--bg);}
+  .scroll::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px;}
+
+  /* ====== 状态展示 ====== */
+  .stat{
+    background:var(--bg); border-radius:6px; padding:8px 10px;
+    display:flex; align-items:center; justify-content:space-between; font-size:12px;
+  }
+  .stat .lbl{ color:var(--text-2);}
+  .stat .val{ font-weight:600; color:var(--text);}
+  .stat .val.live{ color:var(--ok);}
+  .stat .val.warn{ color:var(--warn);}
+
+  /* ====== 风格切换 ====== */
+  .style-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;}
+  .style-btn{
+    padding:8px; background:var(--bg); border:1px solid var(--border);
+    border-radius:5px; cursor:pointer; font-size:12px; text-align:center;
+    color:var(--text-2); transition:.15s;
+  }
+  .style-btn:hover{ border-color:var(--primary); color:var(--primary);}
+  .style-btn.active{ background:var(--primary); color:#000; border-color:var(--primary);}
+
+  /* ====== 配置向导步骤 ====== */
+  .config-step{ 
+    background:var(--bg); 
+    border:1px solid var(--border); 
+    border-radius:6px; 
+    padding:10px; 
+    transition:all .2s;
+  }
+  .config-step:hover{ border-color:var(--primary-dark); }
+  .config-step.mt8{ margin-top:8px; }
+
+  /* ====== 功能开关 ====== */
+  .switch{ display:flex; align-items:center; justify-content:space-between; padding:6px 0; font-size:12px;}
+  .switch .lbl{ color:var(--text);}
+  .toggle{
+    width:36px; height:18px; background:var(--border); border-radius:10px;
+    position:relative; cursor:pointer; transition:.2s; flex-shrink:0;
+  }
+  .toggle::after{
+    content:''; position:absolute; left:2px; top:2px; width:14px; height:14px;
+    background:#fff; border-radius:50%; transition:.2s;
+  }
+  .toggle.on{ background:var(--ok);}
+  .toggle.on::after{ left:20px;}
+
+  /* ====== 中间 3D 预览嵌入 ====== */
+  .preview-frame{
+    flex:1; margin:10px 10px 0; background:#000; border:1px solid var(--border);
+    border-radius:8px 8px 0 0; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  /* 比例容器：随直播比例同步，让预览构图和实际输出一致 */
+  .preview-ratio-box{
+    position:relative; background:#000;
+    /* 默认自适应：撑满容器 */
+    width:100%; height:100%;
+  }
+  .preview-ratio-box iframe{ width:100%; height:100%; border:0; display:block;}
+  .preview-status{
+    margin:0 10px; padding:5px 10px;
+    background:var(--card); border:1px solid var(--border); border-top:none;
+    border-radius:0 0 8px 8px;
+    display:flex; align-items:center; gap:8px; flex-shrink:0;
+    font-size:11px; color:var(--text-2);
+  }
+  .preview-status .now{ color:var(--primary); font-weight:600;}
+
+  /* ====== 动作快捷触发 ====== */
+  .action-bar{
+    display:flex; flex-wrap:wrap; gap:6px; padding:10px;
+    background:var(--card); border:1px solid var(--border); border-radius:8px; margin:0 10px 10px;
+  }
+  .action-chip{
+    padding:6px 10px; background:var(--bg); border:1px solid var(--border);
+    border-radius:5px; cursor:pointer; font-size:11px; color:var(--text);
+    transition:.15s; display:inline-flex; align-items:center; gap:4px;
+  }
+  .action-chip:hover{ background:var(--primary); color:#000; border-color:var(--primary);}
+  .action-chip.idle{ border-color:var(--ok); color:var(--ok);}
+
+  /* ====== 事件流 / 队列 ====== */
+  .event-list{ max-height:300px; overflow-y:auto;}
+  .queue-list{ flex:1; overflow-y:auto; min-height:200px;}
+  .event-item, .queue-item{
+    background:var(--bg); padding:8px 10px; border-radius:5px; margin-bottom:6px;
+    font-size:11px; display:flex; flex-direction:column; gap:4px; border-left:3px solid var(--border);
+  }
+  .event-item.danmaku{ border-left-color:var(--info);}
+  .event-item.gift{ border-left-color:var(--warn);}
+  .event-item.order{ border-left-color:var(--ok);}
+  .event-item.user_enter{ border-left-color:#9b59b6;}
+  .event-item .head{ display:flex; justify-content:space-between; align-items:center;}
+  .event-item .type{ font-size:10px; padding:1px 5px; background:var(--border); border-radius:3px; color:var(--text-2);}
+  .event-item .time{ font-size:10px; color:var(--text-3);}
+  .event-item .content{ color:var(--text); line-height:1.4;}
+
+  .queue-item{ border-left-color:var(--primary);}
+  .queue-item.current{ border-left-color:var(--ok); background:rgba(39,174,96,.08);}
+  .queue-item .row2{ display:flex; align-items:center; gap:6px; margin-top:4px;}
+  .queue-item .style-tag{ font-size:10px; padding:1px 5px; border-radius:3px; background:rgba(201,165,92,.2); color:var(--primary);}
+  .queue-item .anim-tag{ font-size:10px; padding:1px 5px; border-radius:3px; background:rgba(155,89,182,.2); color:#9b59b6;}
+  .queue-item .text{ color:var(--text); font-size:11px; line-height:1.4;}
+  .queue-item .actions{ display:flex; gap:4px; margin-top:4px;}
+  .queue-item button{ padding:2px 6px; font-size:10px; background:transparent; border:1px solid var(--border); color:var(--text-2); border-radius:3px; cursor:pointer;}
+  .queue-item button:hover{ color:var(--primary); border-color:var(--primary);}
+
+  /* ====== 底部日志栏（普通流，在main下方，拖大时页面向下扩展） ====== */
+  .log-bar-wrap{
+    height:var(--log-h); min-height:30px;
+    background:var(--panel); border-top:1px solid var(--border);
+    display:flex; flex-direction:row; position:relative; flex-shrink:0;
+  }
+  .log-resize-handle{
+    position:absolute; top:-6px; left:0; right:0; height:10px; cursor:ns-resize;
+    z-index:10;
+  }
+  .log-resize-handle::before{
+    content:''; position:absolute; top:3px; left:50%; transform:translateX(-50%);
+    width:40px; height:2px; background:var(--border); border-radius:1px;
+    transition:.15s;
+  }
+  .log-resize-handle:hover::before{ background:var(--primary); width:60px;}
+  .log-bar-col{
+    flex:1; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .log-bar-col + .log-bar-col{ border-left:1px solid var(--border);}
+  .log-bar-col-head{
+    padding:2px 10px; font-size:10px; color:var(--text-3); border-bottom:1px solid var(--border);
+    flex-shrink:0; background:rgba(255,255,255,.02);
+  }
+  .log-bar-pane{ flex:1; overflow-y:auto; padding:3px 8px; font-size:10px; font-family:monospace; line-height:1.3;}
+  .log-bar{ display:none; }
+  .log-line{ margin-bottom:2px; display:flex; gap:6px;}
+  .log-line .t{ color:var(--text-3); flex-shrink:0;}
+  .log-line .cat{ color:var(--info); flex-shrink:0; min-width:60px;}
+  .log-line .msg{ color:var(--text-2);}
+  .log-line.err .msg{ color:var(--err);}
+  .log-line.ok .msg{ color:var(--ok);}
+
+  /* ====== 通用弹窗 ====== */
+  .modal{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.65); z-index:200;
+    display:none; align-items:center; justify-content:center;
+  }
+  .modal-box{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    width:90%; max-width:520px; max-height:85vh;
+    display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+  }
+  .modal-head{
+    padding:14px 16px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:14px; font-weight:600; color:var(--primary); flex-shrink:0;
+  }
+  .modal-body{
+    padding:16px; overflow-y:auto; flex:1;
+  }
+  .modal-body::-webkit-scrollbar{ width:6px;}
+  .modal-body::-webkit-scrollbar-track{ background:var(--panel);}
+  .modal-body::-webkit-scrollbar-thumb{ background:var(--border); border-radius:3px;}
+
+  /* ====== 折叠卡片 ====== */
+  .card.collapsible h3{ cursor:pointer; user-select:none;}
+  .card.collapsible h3::after{ content:'▾'; margin-left:auto; font-size:10px; color:var(--text-3); transition:.2s;}
+  .card.collapsible.collapsed h3::after{ content:'▸';}
+  .card.collapsible .card-body{ overflow:hidden; transition:max-height .25s ease;}
+  .card.collapsible.collapsed .card-body{ max-height:0 !important; overflow:hidden;}
+
+  /* ====== 右栏 Tab ====== */
+  .rtab-bar{ display:flex; gap:0; flex-shrink:0; border-bottom:1px solid var(--border);}
+  .rtab-btn{ flex:1; padding:7px 0; text-align:center; font-size:11px; color:var(--text-3); cursor:pointer; border-bottom:2px solid transparent; background:transparent; border-left:none; border-right:none; border-top:none; transition:.15s; font-family:inherit;}
+  .rtab-btn:hover{ color:var(--text);}
+  .rtab-btn.active{ color:var(--primary); border-bottom-color:var(--primary);}
+  .rtab-panel{ display:none; flex-direction:column; flex:1; overflow:hidden;}
+  .rtab-panel.active{ display:flex;}
+
+  /* ====== 空状态 ====== */
+  .empty{
+    color:var(--text-3); text-align:center; padding:24px 12px; font-size:12px;
+  }
+
+  /* ====== 模态对话框 ====== */
+  .modal{ position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:100;}
+  .modal.show{ display:flex;}
+  .modal-box{ background:var(--panel); border:1px solid var(--border); border-radius:10px; width:90%; max-width:560px; max-height:80vh; display:flex; flex-direction:column;}
+  .modal-head{ padding:14px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;}
+  .modal-body{ padding:18px; overflow-y:auto; flex:1;}
+  .modal-foot{ padding:12px 18px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end;}
+  .modal input, .modal select, .modal textarea{
+    width:100%; padding:8px; background:var(--bg); border:1px solid var(--border);
+    color:var(--text); border-radius:4px; font-size:13px; font-family:inherit;
+  }
+  .modal label{ display:block; font-size:12px; color:var(--text-2); margin-bottom:4px; margin-top:10px;}
+
+  /* ====== 话术系统 ====== */
+  .preset-btn{
+    padding:5px 10px; font-size:11px; background:rgba(201,165,92,.1); border:1px solid var(--border);
+    color:var(--text); border-radius:4px; cursor:pointer; transition:.15s; font-family:'KaiTi',serif;
+  }
+  .preset-btn:hover{ background:rgba(201,165,92,.25); border-color:var(--primary);}
+  .preset-manage-btn{
+    padding:4px 8px; font-size:10px; background:rgba(255,255,255,.04); border:1px solid var(--border);
+    color:var(--text-3); border-radius:4px; cursor:pointer; transition:.15s;
+  }
+  .preset-manage-btn:hover{ border-color:var(--primary); color:var(--primary);}
+  /* 话术弹窗放大 */
+  #modal-scripts .modal-box{ max-width:900px; width:94vw; height:82vh;}
+  #modal-scripts .modal-body{ display:flex; gap:0; overflow:hidden; padding:0; flex:1;}
+  /* 左侧分类 */
+  .sc-cat-list{
+    width:150px; flex-shrink:0; border-right:1px solid var(--border); overflow-y:auto; padding:8px 0;
+  }
+  .sc-cat-item{
+    padding:7px 12px; font-size:12px; color:#aaa; cursor:pointer; display:flex; align-items:center; gap:6px; transition:.15s;
+  }
+  .sc-cat-item:hover{ background:rgba(255,255,255,.04);}
+  .sc-cat-item.active{ background:rgba(201,165,92,.12); color:var(--primary);}
+  .sc-cat-item .cat-del{
+    background:none; border:none; color:#555; cursor:pointer; font-size:11px; padding:0 2px; margin-left:auto;
+  }
+  .sc-cat-item .cat-del:hover{ color:var(--err);}
+  .sc-cat-add{
+    padding:8px 12px; font-size:11px; color:#555; cursor:pointer; text-align:center; margin-top:4px;
+  }
+  .sc-cat-add:hover{ color:var(--primary);}
+  /* 右侧编辑 */
+  .sc-edit-panel{ flex:1; padding:14px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;}
+  .sc-edit-row{ display:flex; align-items:center; gap:8px;}
+  .sc-edit-label{ color:#888; font-size:12px; width:50px; flex-shrink:0;}
+  .sc-edit-input{
+    flex:1; background:var(--bg); border:1px solid var(--border); color:var(--text);
+    padding:5px 8px; border-radius:4px; font-size:12px;
+  }
+  .sc-edit-input:focus{ border-color:var(--primary); outline:none;}
+  .sc-mode-btn{
+    padding:3px 10px; font-size:11px; border-radius:12px; border:1px solid var(--border);
+    background:transparent; color:#888; cursor:pointer; transition:.15s;
+  }
+  .sc-mode-btn.active{ border-color:var(--primary); color:var(--primary); background:rgba(201,165,92,.1);}
+  .sc-line-row{ display:flex; gap:6px; align-items:center;}
+  .sc-line-input{
+    flex:1; background:rgba(255,255,255,.04); border:1px solid #2a2a2a; color:var(--text);
+    padding:6px 8px; border-radius:4px; font-size:12px; font-family:'KaiTi',serif;
+  }
+  .sc-line-input:focus{ border-color:rgba(201,165,92,.4); outline:none;}
+  .sc-line-del{
+    background:none; border:1px solid #333; border-radius:3px; color:#555; cursor:pointer; padding:3px 6px; font-size:11px;
+  }
+  .sc-line-del:hover{ border-color:var(--err); color:var(--err);}
+  .sc-line-add{
+    background:none; border:1px dashed #333; border-radius:4px; color:#555; cursor:pointer;
+    padding:6px; font-size:11px; text-align:center; transition:.15s; width:100%;
+  }
+  .sc-line-add:hover{ border-color:var(--primary); color:var(--primary);}
+  .sc-play-btn{
+    padding:4px 10px; font-size:11px; border-radius:4px; cursor:pointer; white-space:nowrap; width:34px; text-align:center;
+  }
+  .sc-play-btn.has-mp3{ background:rgba(201,165,92,.2); border:1px solid var(--primary); color:var(--primary);}
+  .sc-play-btn.no-mp3{ background:rgba(100,100,100,.1); border:1px solid rgba(150,150,150,.3); color:#888;}
+  .sc-play-btn.playing{ background:rgba(201,165,92,.4);}
+  .sc-voice-tag{
+    font-size:10px; padding:2px 6px; border-radius:3px; white-space:nowrap;
+    color:var(--primary); background:rgba(201,165,92,.1);
+  }
+  /* 内联话术输入 */
+  .manual-area{ margin-top:8px; border-top:1px solid var(--border); padding-top:8px;}
+  .manual-input{
+    width:100%; background:rgba(0,0,0,.4); border:1px solid var(--border); color:var(--text);
+    padding:8px; border-radius:4px; font-size:12px; font-family:'KaiTi',serif; resize:vertical;
+  }
+  .manual-input:focus{ border-color:var(--primary); outline:none; box-shadow:0 0 8px rgba(201,165,92,.3);}
+  /* 日志收藏按钮 */
+  .log-fav-btn{
+    background:none; border:1px solid var(--border); color:#888; cursor:pointer;
+    font-size:10px; padding:2px 6px; border-radius:3px; flex-shrink:0; transition:.15s;
+  }
+  .log-fav-btn:hover{ border-color:var(--primary); color:var(--primary);}
+</style>
+</head>
+<body>
+
+<!-- ====== 顶部工具栏 ====== -->
+<div class="topbar">
+  <div class="title">🎭 宝青坊直播控制台</div>
+  <div class="ver">v3.0 骨骼动画版</div>
+  <div style="flex:1"></div>
+  <div class="ws-status disconnected" id="ws-status"><span class="dot"></span><span id="ws-text">未连接</span></div>
+  <button class="btn" onclick="window.open('/live-scene','_blank')">🎬 直播间</button>
+  <button class="btn" onclick="window.open('/editor','_blank')">🎨 编辑器</button>
+  <button class="btn" onclick="window.open('/assets','_blank')">🗂 素材管理</button>
+  <button class="btn" onclick="window.open('/products','_blank')">📦 商品管理</button>
+  <button class="btn" onclick="window.open('/settings','_blank')">⚙ 配置</button>
+</div>
+
+<!-- ====== 主区 ====== -->
+<div class="main">
+
+  <!-- 左栏：直播 + 风格 + 应急 -->
+  <div class="col col-l scroll">
+    <!-- 开播配置向导 -->
+    <div class="card" id="live-config-card">
+      <h3>📺 开播配置向导</h3>
+      
+      <!-- 步骤1: 选择平台 -->
+      <div class="config-step" id="step-platform">
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:6px;">步骤 1/3: 选择直播平台</div>
+        <select id="platform-select" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:12px;" onchange="onPlatformChange(this.value)">
+          <option value="">选择平台...</option>
+          <option value="douyin">🎵 抖音直播</option>
+          <option value="taobao">🛒 淘宝直播</option>
+          <option value="kuaishou">⚡ 快手直播</option>
+          <option value="wechat">💬 微信视频号</option>
+          <option value="xiaohongshu">📕 小红书直播</option>
+          <option value="simulate">🧪 本地模拟（测试用）</option>
+        </select>
+        <div id="platform-hint" style="font-size:10px;color:var(--text-3);margin-top:4px;display:none;"></div>
+      </div>
+
+      <!-- 步骤2: 选择数据获取方式 -->
+      <div class="config-step mt8" id="step-source" style="display:none;">
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:6px;">步骤 2/3: 选择交互信息获取方式</div>
+        <select id="source-select" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:12px;" onchange="onSourceChange(this.value)">
+          <option value="">选择获取方式...</option>
+        </select>
+        <div id="source-desc" style="font-size:10px;color:var(--text-3);margin-top:6px;padding:6px;background:var(--bg);border-radius:4px;display:none;"></div>
+      </div>
+
+      <!-- 步骤3: 配置参数（动态表单） -->
+      <div class="config-step mt8" id="step-config" style="display:none;">
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:6px;">步骤 3/3: 填写配置信息</div>
+        <div id="config-form" style="display:flex;flex-direction:column;gap:8px;">
+          <!-- 动态生成的表单字段 -->
+        </div>
+        <div id="config-history" style="margin-top:8px;display:none;">
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;">
+            <span>💾 历史配置</span>
+            <span style="font-size:9px;color:var(--text-3);" id="history-count"></span>
+          </div>
+          <div id="history-list" style="display:flex;flex-direction:column;gap:4px;">
+            <!-- 历史配置项动态生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 连接测试 & 开播按钮 -->
+      <div class="config-step mt8" id="step-action" style="display:none;">
+        <div id="connection-status" style="font-size:11px;padding:6px 8px;border-radius:4px;background:var(--bg);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <span style="color:var(--text-3);">⏳ 未测试连接</span>
+        </div>
+        <div class="row">
+          <button class="btn" style="flex:1;" onclick="testConnection()" id="btn-test">🔌 测试连接</button>
+          <button class="btn" onclick="saveConfig()" id="btn-save">💾 保存配置</button>
+        </div>
+        <button class="btn primary mt8" style="width:100%;" id="btn-start" onclick="startLiveWithConfig()">▶ 开始直播</button>
+      </div>
+
+      <!-- 直播中状态 -->
+      <div id="live-running-panel" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <div class="stat"><span class="lbl">状态</span><span class="val live" id="live-status-text">🔴 直播中</span></div>
+        <div class="stat mt8"><span class="lbl">平台</span><span class="val" id="live-platform-name">—</span></div>
+        <div class="stat mt8"><span class="lbl">获取方式</span><span class="val" id="live-source-name">—</span></div>
+        <div class="stat mt8"><span class="lbl">房间ID</span><span class="val" id="live-room-id">—</span></div>
+        <button class="btn danger mt8" style="width:100%" onclick="stopLive()">⏹ 停止直播</button>
+      </div>
+    </div>
+
+    <!-- 语音互动配置（可折叠） -->
+    <div class="card">
+      <div id="voice-settings-wrap" style="cursor:pointer;" onclick="toggleVoiceSettings()">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--text-3);">🎙️ 语音互动</span>
+          <span id="voice-settings-arrow" style="font-size:10px;color:var(--text-3);">▸</span>
+        </div>
+        <div id="voice-settings-body" style="display:none;margin-top:8px;">
+          <div style="display:flex;gap:8px;margin-bottom:6px;">
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px;flex:1;">
+              <input type="checkbox" id="voice-message-enabled" checked onchange="updateVoiceSettings()">
+              <span>💬 消息</span>
+            </label>
+            <label style="font-size:11px;display:flex;align-items:center;gap:4px;flex:1;">
+              <input type="checkbox" id="voice-call-enabled" checked onchange="updateVoiceSettings()">
+              <span>📞 通话</span>
+            </label>
+          </div>
+          <div style="margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-bottom:2px;">
+              <span>通话时长</span><span id="voice-duration-display">60秒</span>
+            </div>
+            <input type="range" id="voice-call-duration" min="10" max="3600" value="60" step="10"
+                   style="width:100%;height:4px;" oninput="updateVoiceDurationDisplay(this.value); updateVoiceSettings();">
+          </div>
+          <div style="font-size:10px;color:var(--text-2);background:var(--bg);padding:5px 7px;border-radius:4px;display:flex;align-items:center;gap:6px;">
+            <span style="color:var(--text-3);flex-shrink:0;">入口:</span>
+            <span id="voice-entry-link" style="color:var(--primary);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" onclick="copyVoiceEntry()">加载中...</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="btn sm" style="flex:1;" onclick="refreshVoiceStatus()">🔄 刷新状态</button>
+          </div>
+          <div id="voice-queue-status" style="display:none;margin-top:6px;padding:5px;background:var(--bg);border-radius:4px;font-size:10px;">
+            <div style="color:var(--text-3);">⏳ <span id="vq-count">0</span>人排队 | 📞 <span id="va-count">0</span>人进行中</div>
+            <div id="vq-list" style="margin-top:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>� 场景切换</h3>
+      <select id="scene-select" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:12px;margin-bottom:6px;" onchange="onSceneSelectChange(this.value)">
+        <option value="">加载中...</option>
+      </select>
+      <div style="font-size:10px;color:var(--text-3);line-height:1.5;margin-bottom:7px;">切换前请确认：货架编号与新场景对齐，NPC站位已在编辑器设定。</div>
+      <button class="btn sm primary" style="width:100%;" onclick="applyScene()">✅ 应用场景</button>
+      <div id="scene-status" style="font-size:10px;color:var(--text-3);margin-top:5px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>🎭 主播风格</h3>
+      <div class="style-grid">
+        <div class="style-btn active" data-style="classical" onclick="switchStyle('classical')">古风</div>
+        <div class="style-btn" data-style="cute" onclick="switchStyle('cute')">萌系</div>
+        <div class="style-btn" data-style="dominant" onclick="switchStyle('dominant')">御姐</div>
+      </div>
+    </div>
+
+
+    <div class="card">
+      <h3>⚙ 功能开关</h3>
+      <div id="flag-list"><div class="empty">加载中...</div></div>
+      
+      <!-- 真人回复模式（语音版） -->
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+          <span style="font-size:12px;">👤 真人语音回复模式</span>
+          <input type="checkbox" id="human-reply-mode" onchange="toggleHumanReplyMode()" style="width:16px;height:16px;">
+        </label>
+        <div style="font-size:10px;color:var(--text-3);margin-top:4px;">
+          开启后AI不再自动回复，主播按住🎙️说话，NPC复述你的语音
+        </div>
+        
+        <!-- 语音录制按钮（仅在真人模式显示） -->
+        <div id="human-voice-box" style="display:none;margin-top:8px;">
+          <button id="human-voice-btn" class="btn" style="width:100%;background:linear-gradient(145deg, #e74c3c, #c0392b);" 
+                  onmousedown="startHostVoiceRecord()" onmouseup="stopHostVoiceRecord()"
+                  ontouchstart="startHostVoiceRecord()" ontouchend="stopHostVoiceRecord()">
+            🎙️ 按住说话
+          </button>
+          <div id="human-voice-status" style="font-size:10px;color:var(--text-3);text-align:center;margin-top:4px;">
+            按住按钮开始录制，松开结束
+          </div>
+          <!-- 最近评论提示 -->
+          <div id="human-latest-comment" style="margin-top:6px;padding:6px;background:var(--bg-2);border-radius:4px;font-size:11px;display:none;">
+            <div style="color:var(--gold);">📨 最新评论:</div>
+            <div id="human-comment-content" style="color:var(--text);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🚨 应急操作</h3>
+      <button class="btn" style="width:100%" onclick="reloadConfig()">🔄 重载配置</button>
+      <button class="btn mt8" style="width:100%" onclick="clearQueue()">🧹 清空队列</button>
+      <button class="btn danger mt8" style="width:100%" onclick="emergencyReset()">⚠ 紧急重置</button>
+    </div>
+  </div>
+
+  <!-- 中间：3D 预览 + 动作快捷触发 -->
+  <div class="col col-c">
+    <div class="preview-frame" id="preview-frame">
+      <div class="preview-ratio-box" id="preview-ratio-box">
+        <iframe src="/live-scene?mute=1" id="preview-iframe"></iframe>
+      </div>
+    </div>
+    <div class="preview-status">
+      <span style="color:var(--text-3);">动作:</span>
+      <span class="now" id="cur-action">idle</span>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="preview-mute-btn" onclick="togglePreviewMute()"
+        title="预览静音：避免和直播间声音重叠" style="padding:2px 8px;font-size:10px;">🔇 预览静音</button>
+      <select id="character-select"
+        style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;max-width:130px;"
+        onchange="onCharacterSelectChange(this.value)">
+        <option value="">加载角色...</option>
+      </select>
+      <button class="btn sm" style="padding:2px 8px;font-size:10px;" onclick="applyCharacter()">🧑 切换</button>
+      <span id="character-status" style="font-size:10px;color:var(--text-3);"></span>
+    </div>
+    <div class="action-bar" id="action-bar">
+      <button class="action-chip idle" onclick="playAction('idle')">🟢 idle</button>
+      <button class="action-chip" onclick="playAction('greeting')">👋 打招呼</button>
+      <button class="action-chip" onclick="playAction('gift')">🎁 答谢礼物</button>
+      <button class="action-chip" onclick="playAction('order')">🛒 接单动作</button>
+      <button class="action-chip" onclick="playAction('walk')">🚶 走路</button>
+      <button class="action-chip" onclick="playAction('user_enter')">👤 欢迎</button>
+      <button class="action-chip" onclick="playAction('danmaku')">💬 弹幕响应</button>
+      <button class="action-chip" onclick="resetNpcPosition()" title="恢复NPC到场景编辑器设定的默认站位" style="margin-left:auto">📍 恢复位置</button>
+      <button class="action-chip" onclick="window.open('/editor','_blank')">➕ 编辑动作映射</button>
+    </div>
+    <div class="action-bar" id="scene-bar" style="border-top:1px solid var(--border);padding:6px 10px;gap:4px;">
+      <button class="action-chip" onclick="sceneCmd('auto_tour')" title="自动巡游（播放编辑器录制的运镜路径）">▶ 巡游</button>
+      <button class="action-chip" onclick="sceneCmd('stop')" title="停止">⏹</button>
+      <button class="action-chip" onclick="sceneCmd('reset_camera')" title="归位">🏠</button>
+      <button class="action-chip" onclick="sceneCmd('orbit')" title="环绕">🔄</button>
+      <span style="width:1px;background:var(--border);height:16px;flex-shrink:0;"></span>
+      <button class="action-chip" onclick="camPresetCmd('character')" title="角色视角">👤</button>
+      <button class="action-chip" onclick="camPresetCmd('product')" title="商品视角">📦</button>
+      <button class="action-chip" onclick="camPresetCmd('overview')" title="全景">🌐</button>
+      <div id="cam-preset-btns" style="display:contents;"></div>
+      <span style="width:1px;background:var(--border);height:16px;flex-shrink:0;"></span>
+      <span style="color:var(--text-3);font-size:10px;flex-shrink:0;">📦 货架</span>
+      <div style="position:relative;display:inline-block;">
+        <select id="shelf-select"
+          style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer;max-width:160px;"
+          onchange="if(this.value) focusShelf(this.value)">
+          <option value="">选择货架…</option>
+        </select>
+      </div>
+    </div>
+    <!-- 产品视频控制栏 -->
+    <div style="border-top:1px solid var(--border);padding:5px 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--card);">
+      <span style="font-size:10px;color:var(--text-3);flex-shrink:0;">🎬 产品视频</span>
+      <select id="video-shelf-select" style="background:var(--card);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;max-width:100px;">
+        <option value="">全场</option>
+      </select>
+      <input id="video-url-input" type="text" placeholder="视频URL…"
+        style="flex:1;min-width:120px;max-width:220px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px;">
+      <button class="action-chip" onclick="playProductVideo()" title="播放产品视频">▶ 播放</button>
+      <button class="action-chip" onclick="hideProductVideo()" title="隐藏产品视频">⏹ 隐藏</button>
+    </div>
+    <!-- 比例切换栏 -->
+    <div style="border-top:1px solid var(--border);padding:5px 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--card);border-radius:0 0 8px 8px;">
+      <span style="font-size:10px;color:var(--text-3);flex-shrink:0;">📐 直播比例</span>
+      <button id="aspect-btn-free" class="action-chip active" onclick="setAspect('free')" title="跟随窗口，不限比例">自适应</button>
+      <button id="aspect-btn-9:16" class="action-chip" onclick="setAspect('9:16')" title="竖屏 9:16 · 抖音/快手标准">9:16 竖屏</button>
+      <button id="aspect-btn-16:9" class="action-chip" onclick="setAspect('16:9')" title="横屏 16:9 · 淘宝/B站标准">16:9 横屏</button>
+      <button id="aspect-btn-1:1" class="action-chip" onclick="setAspect('1:1')" title="方形 1:1 · 小红书/微博">1:1 方形</button>
+      <button id="aspect-btn-4:3" class="action-chip" onclick="setAspect('4:3')" title="传统 4:3">4:3</button>
+      <span style="font-size:10px;color:var(--text-3);margin-left:4px;" id="aspect-desc"></span>
+      <span style="font-size:10px;color:var(--ok);margin-left:6px;" id="aspect-obs-hint"></span>
+    </div>
+  </div>
+
+  <!-- 右栏：对话队列（主）+ Tab（模拟/话术） -->
+  <div class="col col-r">
+
+    <!-- 对话队列 - 占主要空间 -->
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;margin-bottom:0;border-radius:8px 8px 0 0;">
+      <h3>📜 对话队列 <span id="queue-count" style="margin-left:auto;color:var(--text-3);font-size:10px"></span></h3>
+      <div class="queue-list" id="queue-list" style="flex:1;"><div class="empty">队列为空</div></div>
+      <div class="row mt8" style="flex-shrink:0;">
+        <button class="btn sm" onclick="skipDialogue()">⏭ 跳过</button>
+        <button class="btn sm" onclick="prevDialogue()">⏮ 上一个</button>
+      </div>
+    </div>
+
+    <!-- 底部 Tab区：模拟事件 / 手动话术 -->
+    <div style="height:300px;flex-shrink:0;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;margin:0 10px 10px;overflow:hidden;">
+      <div class="rtab-bar">
+        <button class="rtab-btn active" id="rtab-btn-sim" onclick="switchRTab('sim')">🎯 模拟事件</button>
+        <button class="rtab-btn" id="rtab-btn-speech" onclick="switchRTab('speech')">📝 手动话术</button>
+      </div>
+
+      <!-- 模拟事件 -->
+      <div class="rtab-panel active" id="rtab-panel-sim" style="padding:10px;gap:8px;overflow-y:auto;">
+        <div style="display:flex;gap:6px;">
+          <input class="inp" id="sim-username" placeholder="用户名（可选）"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:11px;">
+          <input class="inp" id="sim-content" placeholder="内容/礼物/商品"
+            style="flex:2;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:11px;">
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+          <button class="btn sm primary" onclick="simEvent('chat')">� 发送</button>
+          <button class="btn sm" onclick="simEvent('user_enter')">👤 进入</button>
+          <button class="btn sm" onclick="simEvent('gift')">🎁 礼物</button>
+          <button class="btn sm" onclick="simEvent('order')">🛒 下单</button>
+        </div>
+        <div style="padding-top:8px;border-top:1px solid var(--border);">
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:6px;">🎙️ 模拟语音互动</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+            <button class="btn sm" onclick="simulateVoiceJoin('message')">💬 语音消息</button>
+            <button class="btn sm" onclick="simulateVoiceJoin('call')">📞 实时通话</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 手动话术 -->
+      <div class="rtab-panel" id="rtab-panel-speech" style="padding:8px;gap:6px;overflow:hidden;flex-direction:column;">
+        <!-- 话术快捷按钮（可滚动） -->
+        <div id="preset-btns" style="display:flex;flex-wrap:wrap;gap:4px;overflow-y:auto;flex:1;align-content:flex-start;">
+          <span style="color:var(--text-3);font-size:10px;">加载中...</span>
+        </div>
+        <!-- 输入区 -->
+        <div style="flex-shrink:0;border-top:1px solid var(--border);padding-top:6px;">
+          <textarea id="manual-text" class="manual-input" placeholder="输入话术，Ctrl+Enter排队" rows="2" style="width:100%;"></textarea>
+          <div class="row mt8" style="gap:6px;">
+            <button class="btn sm" onclick="previewManualText()">🔊 试听</button>
+            <button class="btn sm primary" style="flex:1;" onclick="sendManualSpeech(false)">📤 排队</button>
+            <button class="btn sm danger" style="padding:4px 10px;" onclick="sendManualSpeech(true)">⚡ 插队</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ====== 货架对接弹窗 ====== -->
+<div class="modal" id="modal-shelf-bind" onclick="if(event.target===this)closeShelfBind()" style="z-index:300;">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:560px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div class="modal-head">
+      <div>🗂 货架商品对接</div>
+      <button class="btn sm" onclick="closeShelfBind()">✕</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;flex:1;">
+      <!-- 场景信息 -->
+      <div style="padding:8px 12px;background:rgba(201,165,92,.1);border-radius:6px;margin-bottom:12px;font-size:12px;">
+        <span style="color:var(--text-3);">场景：</span>
+        <span id="sbd-scene-name" style="color:var(--primary);font-weight:600;"></span>
+        <span style="color:var(--text-3);margin-left:12px;">货架数：</span>
+        <span id="sbd-shelf-count" style="color:var(--text);">0</span>
+        <span style="color:var(--text-3);margin-left:12px;">上架商品：</span>
+        <span id="sbd-product-count" style="color:var(--text);">0</span>
+      </div>
+
+      <!-- 货架绑定列表 -->
+      <div style="margin-bottom:8px;font-size:11px;color:var(--text-3);">为每个货架位选择要展示的商品：</div>
+      <div id="sbd-shelf-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <!-- 动态生成 -->
+      </div>
+
+      <!-- 未分配商品提示 -->
+      <div id="sbd-unassigned" style="display:none;padding:8px 12px;background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.3);border-radius:6px;font-size:11px;color:#f39c12;">
+      </div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
+      <button class="btn sm" onclick="autoAssignShelves()">🔀 自动分配</button>
+      <button class="btn sm" onclick="resetShelfBind()">↺ 重置</button>
+      <div style="flex:1;"></div>
+      <button class="btn sm" onclick="closeShelfBind()">取消</button>
+      <button class="btn sm primary" onclick="confirmShelfBind()">✅ 应用场景</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 底部：控制台日志 + 实时事件流 并排 ====== -->
+<div class="log-bar-wrap" id="log-bar-wrap">
+  <div class="log-resize-handle" id="log-resize-handle"></div>
+  <div class="log-bar-col">
+    <div class="log-bar-col-head">📋 控制台日志</div>
+    <div class="log-bar-pane" id="log-bar"></div>
+  </div>
+  <div class="log-bar-col">
+    <div class="log-bar-col-head">💬 实时事件流</div>
+    <div class="log-bar-pane" id="event-list-pane"></div>
+  </div>
+</div>
+
+<!-- ====== 模态：礼物选择弹窗 ====== -->
+<div class="modal" id="modal-gift" onclick="if(event.target===this)closeModal('modal-gift')">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px;">
+    <div class="modal-head">
+      <div>🎁 选择礼物</div>
+      <button class="btn sm" onclick="closeModal('modal-gift')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:12px;color:var(--text-2);display:block;margin-bottom:6px;">选择礼物（点击即选）</label>
+        <div id="gift-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:12px;color:var(--text-2);">数量:</span>
+        <input id="gift-count" type="number" min="1" max="999" value="1"
+          style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:12px;"
+          oninput="updateGiftContentInput()">
+        <span style="font-size:12px;color:var(--text-3);">x <span id="gift-selected-name" style="color:var(--primary);">--</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 模态：话术管理（完整版） ====== -->
+<div class="modal" id="modal-scripts" onclick="if(event.target===this)closeModal('modal-scripts')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div>📚 收藏话术管理</div>
+      <button class="btn sm" onclick="closeModal('modal-scripts')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- 左侧分类 -->
+      <div class="sc-cat-list" id="sc-cat-list"></div>
+      <!-- 右侧编辑 -->
+      <div class="sc-edit-panel" id="sc-edit-panel">
+        <div style="color:var(--text-3);font-size:12px;text-align:center;margin-top:40px;">请选择左侧分类</div>
+      </div>
+    </div>
+    <div class="modal-foot" id="sc-modal-foot">
+      <button class="btn" onclick="closeModal('modal-scripts')">取消</button>
+      <button class="btn primary" onclick="scSave()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 模态：动作预览弹窗 ====== -->
+<div class="modal" id="modal-preview" onclick="if(event.target===this)closePreviewModal()" style="z-index:200;">
+  <div class="modal-box" onclick="event.stopPropagation()" style="width:520px;max-width:96vw;">
+    <div class="modal-head">
+      <div>👁 动作预览</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span id="preview-info" style="font-size:10px;color:var(--text-3);"></span>
+        <button class="btn sm" onclick="closePreviewModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="flex-direction:column;padding:0;">
+      <div style="width:100%;aspect-ratio:16/9;background:#0a0a0e;border-radius:6px;overflow:hidden;position:relative;">
+        <iframe id="preview-iframe-pop" style="width:100%;height:100%;border:none;border-radius:6px;" src="about:blank"></iframe>
+        <div id="preview-overlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);border-radius:6px;">
+          <div style="color:var(--text-3);text-align:center;">
+            <div style="font-size:28px;margin-bottom:8px;">👁</div>
+            <div style="font-size:12px;">点击队列中的"预览"按钮</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:10px;display:flex;gap:8px;align-items:center;border-top:1px solid var(--border);">
+        <span style="font-size:11px;color:var(--text-3);">动作:</span>
+        <span id="preview-action-name" style="font-size:12px;font-weight:600;color:var(--primary);">—</span>
+        <span style="flex:1"></span>
+        <button class="btn sm danger" id="preview-delete-btn" onclick="previewDeleteFromQueue()" disabled>✕ 从队列删除</button>
+        <button class="btn sm" id="preview-replace-btn" onclick="previewReplaceAction()" disabled>🔄 更换动作</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============== 安全工具函数 ==============
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+// ============== 全局状态 ==============
+const state = {
+  liveRunning: false,
+  liveMode: null,
+  currentStyle: 'classical',
+  flags: {},
+  wsConnected: false,
+  events: [],
+  queue: [],
+};
+
+// ============== 工具 ==============
+async function api(method, path, body) {
+  try {
+    const opts = { method, headers: {'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(path, opts);
+    if (!r.ok) {
+      log(`${method} ${path} → ${r.status}`, 'err');
+      return null;
+    }
+    return await r.json();
+  } catch(e) {
+    log(`${method} ${path} → ${e.message}`, 'err');
+    return null;
+  }
+}
+function fmtTime(){ const d=new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
+function log(msg, type='') {
+  const bar = document.getElementById('log-bar');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.innerHTML = `<span class="t">${fmtTime()}</span><span class="cat">[控制台]</span><span class="msg">${msg}</span>`;
+  bar.appendChild(line);
+  bar.scrollTop = bar.scrollHeight;
+  while (bar.children.length > 100) bar.removeChild(bar.firstChild);
+}
+
+// 播报日志（带收藏按钮）
+function logSpeech(fullText, actionPlan) {
+  const bar = document.getElementById('log-bar');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.style.cssText = 'display:flex;align-items:center;gap:6px;';
+  const short = fullText.length > 50 ? fullText.substring(0, 50) + '...' : fullText;
+  line.innerHTML = `<span class="t">${fmtTime()}</span><span class="cat" style="color:var(--primary);">[主播]</span><span class="msg" style="flex:1;">${short}</span>`;
+  // 收藏按钮
+  const btn = document.createElement('button');
+  btn.textContent = '⭐';
+  btn.title = '收藏到话术分类';
+  btn.style.cssText = 'background:none;border:1px solid var(--border);color:var(--primary);cursor:pointer;font-size:11px;padding:2px 6px;border-radius:3px;flex-shrink:0;';
+  btn.onclick = (e) => { e.stopPropagation(); showFavPicker(btn, fullText, actionPlan); };
+  line.appendChild(btn);
+  bar.appendChild(line);
+  bar.scrollTop = bar.scrollHeight;
+  while (bar.children.length > 100) bar.removeChild(bar.firstChild);
+}
+
+// 收藏分类选择浮层
+let _favPicker = null;
+function showFavPicker(anchorBtn, text, actionPlan) {
+  if (_favPicker) { _favPicker.remove(); _favPicker = null; return; }
+  const picker = document.createElement('div');
+  picker.style.cssText = 'position:fixed;z-index:200;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px;min-width:120px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+  if (presetCategories.length) {
+    presetCategories.forEach((cat, i) => {
+      const item = document.createElement('div');
+      item.textContent = cat.label;
+      item.style.cssText = 'padding:5px 10px;cursor:pointer;font-size:11px;border-radius:3px;';
+      item.onmouseenter = () => item.style.background = 'var(--card)';
+      item.onmouseleave = () => item.style.background = '';
+      item.onclick = () => favToCategory(i, text, actionPlan);
+      picker.appendChild(item);
+    });
+  } else {
+    const empty = document.createElement('div');
+    empty.textContent = '无分类，请先管理';
+    empty.style.cssText = 'font-size:10px;color:var(--text-3);padding:6px;';
+    picker.appendChild(empty);
+  }
+  document.body.appendChild(picker);
+  const rect = anchorBtn.getBoundingClientRect();
+  picker.style.top = Math.max(4, rect.top - picker.offsetHeight - 4) + 'px';
+  picker.style.left = Math.max(4, rect.right - picker.offsetWidth) + 'px';
+  _favPicker = picker;
+  setTimeout(() => document.addEventListener('mousedown', _closeFav), 0);
+}
+function _closeFav(e) {
+  if (_favPicker && !_favPicker.contains(e.target)) {
+    _favPicker.remove(); _favPicker = null;
+    document.removeEventListener('mousedown', _closeFav);
+  }
+}
+async function favToCategory(catIdx, text, actionPlan) {
+  if (_favPicker) { _favPicker.remove(); _favPicker = null; }
+  document.removeEventListener('mousedown', _closeFav);
+  const cat = presetCategories[catIdx];
+  if (!cat) return;
+  // 检查是否已存在相同文字的话术
+  const existIdx = cat.lines.findIndex(l => {
+    const t = typeof l === 'object' ? l.text : l;
+    return t === text;
+  });
+  if (existIdx >= 0) {
+    // 已存在：若有新的 action_plan 则更新，否则提示
+    if (actionPlan) {
+      const existing = cat.lines[existIdx];
+      cat.lines[existIdx] = {
+        ...(typeof existing === 'object' ? existing : { text: existing }),
+        action_plan: actionPlan
+      };
+      const res = await api('POST', '/api/presets', { categories: presetCategories });
+      if (res?.ok) log(`🔄 已更新「${cat.label}」中该话术的动作流`, 'ok');
+    } else {
+      log(`已在「${cat.label}」中`, 'warn');
+    }
+    return;
+  }
+  // 新增：存为对象格式（含 action_plan）
+  const entry = actionPlan ? { text, action_plan: actionPlan } : text;
+  cat.lines.push(entry);
+  const res = await api('POST', '/api/presets', { categories: presetCategories });
+  if (res?.ok) {
+    log(`⭐ 已收藏到「${cat.label}」${actionPlan ? '（含动作流）' : ''}`, 'ok');
+    renderPresetBtns();
+  }
+}
+
+// ============== 开播配置向导 ==============
+
+// 平台配置定义
+const PLATFORM_CONFIG = {
+  douyin: {
+    name: '抖音直播',
+    sources: [
+      { id: 'crawler', name: '🔍 爬虫抓取', desc: '无需申请，直接抓取直播间公开弹幕（可能不稳定）', fields: ['room_id', 'room_url'] },
+      { id: 'webhook', name: '🔔 官方Webhook', desc: '抖音开放平台推送，稳定可靠（需企业资质申请）', fields: ['app_id', 'app_secret', 'webhook_secret', 'room_id'] },
+      { id: 'minigame', name: '🎮 直播玩法SDK', desc: '抖音小程序接入，支持语音互动（需申请权限）', fields: ['app_id', 'app_secret', 'access_token'] }
+    ]
+  },
+  taobao: {
+    name: '淘宝直播',
+    sources: [
+      { id: 'webhook', name: '🔔 官方Webhook', desc: '淘宝开放平台推送（需企业资质）', fields: ['app_key', 'app_secret', 'session_key', 'room_id'] }
+    ]
+  },
+  kuaishou: {
+    name: '快手直播',
+    sources: [
+      { id: 'crawler', name: '🔍 爬虫抓取', desc: '直接抓取直播间弹幕', fields: ['room_id'] },
+      { id: 'webhook', name: '🔔 官方Webhook', desc: '快手开放平台推送（需企业资质）', fields: ['app_id', 'app_secret', 'room_id'] }
+    ]
+  },
+  wechat: {
+    name: '微信视频号',
+    sources: [
+      { id: 'webhook', name: '🔔 官方Webhook', desc: '视频号助手消息推送', fields: ['token', 'encoding_aes_key', 'app_id', 'room_id'] }
+    ]
+  },
+  xiaohongshu: {
+    name: '小红书直播',
+    sources: [
+      { id: 'webhook', name: '🔔 官方Webhook', desc: '小红书专业号API推送', fields: ['api_key', 'api_secret', 'room_id'] }
+    ]
+  },
+  simulate: {
+    name: '本地模拟',
+    sources: [
+      { id: 'mock', name: '🧪 模拟数据', desc: '生成虚拟弹幕/礼物事件用于测试', fields: [] }
+    ]
+  }
+};
+
+// 字段定义
+const FIELD_DEFS = {
+  room_id: { label: '直播间ID', placeholder: '如：7389456210', type: 'text', help: '从直播间链接提取数字部分' },
+  room_url: { label: '直播间链接', placeholder: 'https://live.douyin.com/xxx', type: 'text', help: '完整链接（可选，用于自动提取ID）' },
+  app_id: { label: 'App ID', placeholder: '开放平台应用ID', type: 'text', help: '从抖音/淘宝开放平台获取' },
+  app_secret: { label: 'App Secret', placeholder: '应用密钥', type: 'password', help: '保密，不要泄露给他人' },
+  app_key: { label: 'App Key', placeholder: '应用Key', type: 'text', help: '淘宝开放平台使用' },
+  webhook_secret: { label: 'Webhook Secret', placeholder: '签名密钥', type: 'password', help: '用于验证推送请求合法性' },
+  access_token: { label: 'Access Token', placeholder: '访问令牌', type: 'password', help: '部分平台需要' },
+  session_key: { label: 'Session Key', placeholder: '会话密钥', type: 'password', help: '淘宝开放平台使用' },
+  token: { label: 'Token', placeholder: '消息Token', type: 'text', help: '微信视频号使用' },
+  encoding_aes_key: { label: 'Encoding AES Key', placeholder: '消息加密密钥', type: 'password', help: '微信视频号使用' },
+  api_key: { label: 'API Key', placeholder: 'API密钥', type: 'text', help: '小红书等平台使用' },
+  api_secret: { label: 'API Secret', placeholder: 'API密钥', type: 'password', help: '保密' }
+};
+
+// 当前配置状态
+let currentConfig = {
+  platform: '',
+  source: '',
+  values: {}
+};
+
+// 初始化平台选择
+function initPlatformSelect() {
+  const select = document.getElementById('platform-select');
+  if (!select) return;
+  
+  // 加载历史配置
+  const saved = localStorage.getItem('liveConfigs');
+  if (saved) {
+    const configs = JSON.parse(saved);
+    if (configs.lastUsed) {
+      select.value = configs.lastUsed.platform || '';
+      currentConfig = { ...configs.lastUsed };
+      onPlatformChange(currentConfig.platform, false);
+      if (currentConfig.source) {
+        setTimeout(() => onSourceChange(currentConfig.source, false), 100);
+      }
+    }
+  }
+}
+
+function onPlatformChange(platform, reset = true) {
+  currentConfig.platform = platform;
+  if (reset) {
+    currentConfig.source = '';
+    currentConfig.values = {};
+  }
+  
+  const platformData = PLATFORM_CONFIG[platform];
+  const hintEl = document.getElementById('platform-hint');
+  const sourceStep = document.getElementById('step-source');
+  const configStep = document.getElementById('step-config');
+  const actionStep = document.getElementById('step-action');
+  
+  if (!platform) {
+    hintEl.style.display = 'none';
+    sourceStep.style.display = 'none';
+    configStep.style.display = 'none';
+    actionStep.style.display = 'none';
+    return;
+  }
+  
+  // 显示平台提示
+  hintEl.textContent = `已选择: ${platformData.name}`;
+  hintEl.style.display = 'block';
+  
+  // 填充获取方式选项
+  const sourceSelect = document.getElementById('source-select');
+  sourceSelect.innerHTML = '<option value="">选择获取方式...</option>';
+  platformData.sources.forEach(src => {
+    const opt = document.createElement('option');
+    opt.value = src.id;
+    opt.textContent = src.name;
+    sourceSelect.appendChild(opt);
+  });
+  
+  // 显示获取方式步骤
+  sourceStep.style.display = 'block';
+  if (reset) {
+    sourceSelect.value = '';
+    document.getElementById('source-desc').style.display = 'none';
+    configStep.style.display = 'none';
+    actionStep.style.display = 'none';
+  }
+  
+  log(`已选择平台: ${platformData.name}`, 'info');
+  
+  // 如果是模拟模式，直接显示开播按钮
+  if (platform === 'simulate') {
+    setTimeout(() => {
+      sourceSelect.value = 'mock';
+      onSourceChange('mock');
+    }, 10);
+  }
+}
+
+function onSourceChange(source, reset = true) {
+  currentConfig.source = source;
+  if (reset) {
+    currentConfig.values = {};
+  }
+  
+  const platformData = PLATFORM_CONFIG[currentConfig.platform];
+  const sourceData = platformData?.sources.find(s => s.id === source);
+  const descEl = document.getElementById('source-desc');
+  const configStep = document.getElementById('step-config');
+  const actionStep = document.getElementById('step-action');
+  
+  if (!source) {
+    descEl.style.display = 'none';
+    configStep.style.display = 'none';
+    actionStep.style.display = 'none';
+    return;
+  }
+  
+  // 显示方式描述
+  descEl.innerHTML = `<strong>${sourceData.name}</strong><br>${sourceData.desc}`;
+  descEl.style.display = 'block';
+  
+  // 生成动态表单
+  renderConfigForm(sourceData.fields);
+  
+  // 显示配置步骤
+  configStep.style.display = 'block';
+  
+  // 填充历史配置选项
+  loadHistoryOptions();
+  
+  // 如果有历史值，填充表单
+  if (reset && currentConfig.values) {
+    Object.keys(currentConfig.values).forEach(key => {
+      const input = document.getElementById(`config-${key}`);
+      if (input) input.value = currentConfig.values[key] || '';
+    });
+  }
+  
+  // 检查是否可以直接显示开播按钮（无需配置或已有值）
+  if (sourceData.fields.length === 0 || !reset) {
+    actionStep.style.display = 'block';
+    updateConnectionStatus('ready', '✅ 配置完成，可以开始直播');
+  } else {
+    actionStep.style.display = 'none';
+  }
+}
+
+function renderConfigForm(fields) {
+  const form = document.getElementById('config-form');
+  form.innerHTML = '';
+  
+  if (fields.length === 0) {
+    form.innerHTML = '<div style="font-size:11px;color:var(--text-2);padding:8px;background:var(--bg);border-radius:4px;">✅ 此获取方式无需额外配置</div>';
+    return;
+  }
+  
+  fields.forEach(fieldKey => {
+    const field = FIELD_DEFS[fieldKey];
+    if (!field) return;
+    
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
+      <label style="font-size:11px;color:var(--text-2);display:block;margin-bottom:3px;">${field.label}</label>
+      <input type="${field.type}" id="config-${fieldKey}" 
+        placeholder="${field.placeholder}" 
+        style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:12px;"
+        onchange="updateConfigValue('${fieldKey}', this.value)">
+      <div style="font-size:10px;color:var(--text-3);margin-top:2px;">${field.help}</div>
+    `;
+    form.appendChild(wrapper);
+  });
+}
+
+function updateConfigValue(key, value) {
+  currentConfig.values[key] = value;
+  
+  // 如果所有必填字段都有值，显示开播按钮
+  const platformData = PLATFORM_CONFIG[currentConfig.platform];
+  const sourceData = platformData?.sources.find(s => s.id === currentConfig.source);
+  if (sourceData) {
+    const hasAllFields = sourceData.fields.every(f => currentConfig.values[f] && currentConfig.values[f].trim() !== '');
+    if (hasAllFields) {
+      document.getElementById('step-action').style.display = 'block';
+      updateConnectionStatus('ready', '✅ 配置完成，建议先测试连接');
+    }
+  }
+}
+
+function loadHistoryOptions() {
+  const saved = localStorage.getItem('liveConfigs');
+  const historyList = document.getElementById('history-list');
+  const historyCount = document.getElementById('history-count');
+  
+  if (!saved) {
+    document.getElementById('config-history').style.display = 'none';
+    return;
+  }
+  
+  const configs = JSON.parse(saved);
+  
+  // 找到匹配当前平台和方式的配置
+  const matching = (configs.saved || []).filter(c => 
+    c.platform === currentConfig.platform && c.source === currentConfig.source
+  );
+  
+  if (matching.length === 0) {
+    document.getElementById('config-history').style.display = 'none';
+    return;
+  }
+  
+  // 更新计数
+  historyCount.textContent = `${matching.length}条`;
+  
+  // 生成历史配置列表
+  historyList.innerHTML = '';
+  matching.forEach((cfg, idx) => {
+    const originalIdx = configs.saved.findIndex(c => c.savedAt === cfg.savedAt);
+    const roomId = cfg.values.room_id || '无房间ID';
+    const time = new Date(cfg.savedAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const platformName = PLATFORM_CONFIG[cfg.platform]?.name || cfg.platform;
+    const sourceName = PLATFORM_CONFIG[cfg.platform]?.sources.find(s => s.id === cfg.source)?.name || cfg.source;
+    
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg);border-radius:4px;font-size:11px;border:1px solid var(--border);';
+    item.innerHTML = `
+      <div style="flex:1;cursor:pointer;" onclick="loadHistoryConfig(${originalIdx})">
+        <div style="font-weight:500;color:var(--text);">${roomId}</div>
+        <div style="font-size:9px;color:var(--text-3);">${platformName} · ${sourceName} · ${time}</div>
+      </div>
+      <button class="btn sm" style="flex-shrink:0;padding:2px 6px;font-size:10px;" onclick="deleteHistoryConfig(${originalIdx}, event)" title="删除">🗑</button>
+    `;
+    historyList.appendChild(item);
+  });
+  
+  document.getElementById('config-history').style.display = 'block';
+}
+
+function loadHistoryConfig(originalIdx) {
+  const saved = JSON.parse(localStorage.getItem('liveConfigs') || '{}');
+  const config = saved.saved?.[originalIdx];
+  if (!config) return;
+  
+  // 更新当前配置
+  currentConfig.platform = config.platform;
+  currentConfig.source = config.source;
+  currentConfig.values = { ...config.values };
+  
+  // 更新平台选择
+  document.getElementById('platform-select').value = config.platform;
+  onPlatformChange(config.platform, false);
+  
+  // 更新获取方式
+  setTimeout(() => {
+    const sourceSelect = document.getElementById('source-select');
+    if (sourceSelect) {
+      sourceSelect.value = config.source;
+      onSourceChange(config.source, false);
+      
+      // 填充表单值
+      Object.keys(config.values).forEach(key => {
+        const input = document.getElementById(`config-${key}`);
+        if (input) input.value = config.values[key] || '';
+      });
+      
+      document.getElementById('step-action').style.display = 'block';
+      updateConnectionStatus('ready', '✅ 已加载历史配置');
+      log('已加载历史配置', 'ok');
+    }
+  }, 50);
+}
+
+function deleteHistoryConfig(originalIdx, event) {
+  event.stopPropagation();
+  if (!confirm('确定删除这条历史配置？')) return;
+  
+  const saved = JSON.parse(localStorage.getItem('liveConfigs') || '{}');
+  if (saved.saved && saved.saved[originalIdx]) {
+    saved.saved.splice(originalIdx, 1);
+    localStorage.setItem('liveConfigs', JSON.stringify(saved));
+    loadHistoryOptions();
+    log('已删除历史配置', 'ok');
+  }
+}
+
+function updateConnectionStatus(status, message) {
+  const el = document.getElementById('connection-status');
+  const colors = {
+    pending: 'var(--text-3)',
+    ready: 'var(--ok)',
+    testing: 'var(--warn)',
+    success: 'var(--ok)',
+    error: 'var(--err)'
+  };
+  el.innerHTML = `<span style="color:${colors[status] || colors.pending};">${message}</span>`;
+}
+
+async function testConnection() {
+  updateConnectionStatus('testing', '⏳ 正在测试连接...');
+  
+  try {
+    const r = await api('POST', '/api/platforms/test', {
+      platform: currentConfig.platform,
+      ...currentConfig.values
+    });
+    
+    if (r?.success) {
+      updateConnectionStatus('success', '✅ 连接成功！可以开始直播');
+      log('连接测试成功', 'ok');
+    } else {
+      updateConnectionStatus('error', `❌ 连接失败: ${r?.error || '未知错误'}`);
+      log(`连接测试失败: ${r?.error || '未知错误'}`, 'error');
+    }
+  } catch (e) {
+    updateConnectionStatus('error', `❌ 测试出错: ${e.message}`);
+    log(`连接测试出错: ${e.message}`, 'error');
+  }
+}
+
+function saveConfig() {
+  const saved = JSON.parse(localStorage.getItem('liveConfigs') || '{}');
+  if (!saved.saved) saved.saved = [];
+  
+  // 检查是否已存在相同配置
+  const exists = saved.saved.findIndex(c => 
+    c.platform === currentConfig.platform && 
+    c.source === currentConfig.source &&
+    c.values.room_id === currentConfig.values.room_id
+  );
+  
+  const configToSave = {
+    ...currentConfig,
+    savedAt: new Date().toISOString()
+  };
+  
+  if (exists >= 0) {
+    saved.saved[exists] = configToSave;
+  } else {
+    saved.saved.unshift(configToSave);
+    // 限制保存数量
+    if (saved.saved.length > 10) saved.saved = saved.saved.slice(0, 10);
+  }
+  
+  saved.lastUsed = configToSave;
+  localStorage.setItem('liveConfigs', JSON.stringify(saved));
+  
+  // 刷新历史选项
+  loadHistoryOptions();
+  log('配置已保存到本地', 'ok');
+}
+
+async function startLiveWithConfig() {
+  // 保存当前配置
+  saveConfig();
+  
+  // 构建启动参数
+  const params = {
+    platform: currentConfig.platform,
+    source: currentConfig.source,
+    simulate: currentConfig.platform === 'simulate',
+    ...currentConfig.values
+  };
+  
+  const r = await api('POST', '/api/live/start', params);
+  if (r?.ok) {
+    // 显示直播状态面板
+    document.getElementById('live-config-card').querySelectorAll('.config-step').forEach(el => {
+      el.style.display = 'none';
+    });
+    document.getElementById('live-running-panel').style.display = 'block';
+    
+    // 更新状态显示
+    const platformData = PLATFORM_CONFIG[currentConfig.platform];
+    const sourceData = platformData?.sources.find(s => s.id === currentConfig.source);
+    document.getElementById('live-platform-name').textContent = platformData?.name || '—';
+    document.getElementById('live-source-name').textContent = sourceData?.name || '—';
+    document.getElementById('live-room-id').textContent = currentConfig.values.room_id || '—';
+    
+    state.liveRunning = true;
+    state.liveMode = r.mode;
+    log(`直播已开始 (${r.mode})`, 'ok');
+  }
+}
+
+async function stopLive() {
+  if (!confirm('停止直播将清空队列，确认？')) return;
+  const r = await api('POST', '/api/live/stop', {});
+  if (r?.ok) {
+    // 恢复配置面板
+    document.getElementById('live-running-panel').style.display = 'none';
+    document.getElementById('step-platform').style.display = 'block';
+    onPlatformChange(currentConfig.platform, false);
+    
+    state.liveRunning = false;
+    state.liveMode = null;
+    log('直播已停止', 'ok');
+  }
+}
+
+async function fetchLiveStatus(){
+  const r = await api('GET', '/api/live/status');
+  if (r?.running) {
+    // 如果正在直播，显示直播状态面板
+    document.getElementById('live-config-card').querySelectorAll('.config-step').forEach(el => {
+      el.style.display = 'none';
+    });
+    document.getElementById('live-running-panel').style.display = 'block';
+    state.liveRunning = true;
+    state.liveMode = r.mode;
+  }
+}
+
+// 兼容性函数
+function getPlatformName(platform) {
+  return PLATFORM_CONFIG[platform]?.name || platform;
+}
+function startLive() { startLiveWithConfig(); }
+function startSimulate() {
+  document.getElementById('platform-select').value = 'simulate';
+  onPlatformChange('simulate');
+}
+function updateLiveUI(running, mode) {}
+
+// ============== 风格 ==============
+async function switchStyle(style) {
+  const r = await api('POST', '/api/style/switch', { style });
+  if (r?.ok) {
+    state.currentStyle = r.new_style || style;
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.toggle('active', b.dataset.style === state.currentStyle));
+    log('切换风格: ' + state.currentStyle, 'ok');
+  }
+}
+
+// ============== 功能开关 ==============
+async function loadFlags() {
+  const r = await api('GET', '/api/feature-flags');
+  if (!r?.ok) return;
+  state.flags = r.flags || {};
+  renderFlags();
+}
+function renderFlags() {
+  const labels = {
+    enable_ai_response:    'AI 自动回复',
+    enable_danmaku:        '弹幕抓取',
+    enable_gift_effects:   '礼物特效',
+    enable_auto_welcome:   '自动欢迎',
+    enable_order_response: '下单响应',
+    enable_direct_broadcast: '直接播报（跳过NPC表演）',
+  };
+  const c = document.getElementById('flag-list');
+  c.innerHTML = '';
+  Object.keys(labels).forEach(k => {
+    const on = !!state.flags[k];
+    const div = document.createElement('div');
+    div.className = 'switch';
+    div.innerHTML = `<span class="lbl">${labels[k]}</span><div class="toggle ${on?'on':''}" data-key="${k}"></div>`;
+    div.querySelector('.toggle').onclick = () => toggleFlag(k);
+    c.appendChild(div);
+  });
+}
+async function toggleFlag(key) {
+  const newVal = !state.flags[key];
+  const r = await api('POST', '/api/feature-flags', { key, value: newVal });
+  if (r?.ok) {
+    state.flags[key] = newVal;
+    renderFlags();
+    log(`${key}: ${newVal?'开':'关'}`, 'ok');
+  }
+}
+
+// ============== 动作触发 ==============
+async function playAction(actionKey) {
+  document.getElementById('cur-action').textContent = actionKey + ' (触发中...)';
+  const r = await api('POST', '/api/play-action', { action_key: actionKey });
+  if (r?.ok) {
+    document.getElementById('cur-action').textContent = actionKey;
+    log('触发动作: ' + actionKey, 'ok');
+  }
+}
+
+// ============== 角色切换 ==============
+let _characterData = {};     // { id: { display_name, file, ... } }
+let _currentCharId = '';     // 当前已应用的角色
+let _pendingCharId = '';     // 已选但未应用
+
+async function loadCharacterList() {
+  const r = await api('GET', '/api/character-skeletons');
+  if (!r || !r.ok) return;
+  _characterData = r.characters || {};
+  const sel = document.getElementById('character-select');
+  if (!sel) return;
+  const ids = Object.keys(_characterData);
+  if (ids.length === 0) {
+    sel.innerHTML = '<option value="">暂无角色</option>';
+    return;
+  }
+  sel.innerHTML = ids.map(id =>
+    `<option value="${escapeAttr(id)}" ${id===_currentCharId?'selected':''}>${escapeHtml(_characterData[id].display_name || id)}</option>`
+  ).join('');
+  if (!_currentCharId && ids.length > 0) {
+    _currentCharId = ids[0];
+    _pendingCharId = ids[0];
+    sel.value = ids[0];
+  }
+  updateCharacterStatus();
+}
+
+function onCharacterSelectChange(charId) {
+  _pendingCharId = charId;
+  updateCharacterStatus();
+}
+
+function updateCharacterStatus() {
+  const el = document.getElementById('character-status');
+  if (!el) return;
+  if (!_pendingCharId) return;
+  if (_pendingCharId === _currentCharId) {
+    const name = _characterData[_currentCharId]?.display_name || _currentCharId;
+    el.innerHTML = `<span style="color:var(--ok)">✔ 当前：${escapeHtml(name)}</span>`;
+  } else {
+    const name = _characterData[_pendingCharId]?.display_name || _pendingCharId;
+    el.innerHTML = `<span style="color:var(--warn)">⚠ 待应用：${escapeHtml(name)}</span>`;
+  }
+}
+
+async function applyCharacter() {
+  if (!_pendingCharId) { log('请先选择角色', 'warn'); return; }
+  const name = _characterData[_pendingCharId]?.display_name || _pendingCharId;
+  const r = await api('POST', '/api/character/switch', { character_id: _pendingCharId });
+  if (r?.ok) {
+    _currentCharId = _pendingCharId;
+    updateCharacterStatus();
+    log(`🧑 切换角色：${name}`, 'ok');
+  } else {
+    log('角色切换失败: ' + (r?.error || '未知'), 'err');
+  }
+}
+
+// ============== 场景列表 ==============
+let _scenesData = {};
+let _currentSceneId = '';
+let _pendingSceneId = '';  // 已选但未应用
+
+async function loadSceneList() {
+  const r = await api('GET', '/api/scenes');
+  if (!r) return;
+  _scenesData = r.scenes || {};
+  _currentSceneId = r.current_scene || Object.keys(_scenesData)[0] || '';
+  _pendingSceneId = _currentSceneId;
+  const sel = document.getElementById('scene-select');
+  if (!sel) return;
+  sel.innerHTML = Object.entries(_scenesData).map(([id, sc]) =>
+    `<option value="${escapeAttr(id)}" ${id===_currentSceneId?'selected':''}>${escapeHtml(sc.name||id)}</option>`
+  ).join('');
+  updateSceneStatus();
+}
+
+function onSceneSelectChange(sceneId) {
+  _pendingSceneId = sceneId;
+  updateSceneStatus();
+}
+
+function updateSceneStatus() {
+  const el = document.getElementById('scene-status');
+  if (!el) return;
+  if (_pendingSceneId === _currentSceneId) {
+    const name = _scenesData[_currentSceneId]?.name || _currentSceneId;
+    el.innerHTML = `<span style="color:var(--ok)">✔ 已加载：${name}</span>`;
+  } else {
+    const name = _scenesData[_pendingSceneId]?.name || _pendingSceneId;
+    el.innerHTML = `<span style="color:var(--warn)">⚠ 待应用：${name}</span>`;
+  }
+}
+
+async function applyScene() {
+  const sceneId = _pendingSceneId || document.getElementById('scene-select')?.value;
+  if (!sceneId) return;
+  // 打开货架对接弹窗
+  await openShelfBind(sceneId);
+}
+
+// ============== 货架对接弹窗 ==============
+let _sbdSceneId   = '';     // 待应用的场景ID
+let _sbdShelves   = [];     // 场景的货架列表 [{id, label}]
+let _sbdProducts  = [];     // 已上架商品列表
+let _sbdBindings  = {};     // shelf_id → sku_id
+
+async function openShelfBind(sceneId) {
+  _sbdSceneId  = sceneId;
+  _sbdBindings = {};
+
+  // 加载已上架商品
+  try {
+    const r = await api('GET', '/api/skus');
+    _sbdProducts = (r?.skus || []).filter(p => p.is_active);
+  } catch(e) { _sbdProducts = []; }
+
+  // 从场景数据里拿货架列表
+  const scene = _scenesData[sceneId];
+  _sbdShelves = (scene?.shelves || []).map(s => ({ id: s.id, label: s.label || s.id }));
+
+  // 如果场景里没有货架信息，尝试从场景快照结构中获取
+  if (_sbdShelves.length === 0) {
+    // 用场景名生成3个默认货架位作为兜底
+    _sbdShelves = [
+      { id: 'shelf_01', label: '1号位' },
+      { id: 'shelf_02', label: '2号位' },
+      { id: 'shelf_03', label: '3号位' },
+    ];
+  }
+
+  // 预填：读取商品现有的 shelf_id 绑定
+  _sbdProducts.forEach(p => {
+    if (p.shelf_id) _sbdBindings[p.shelf_id] = p.id;
+  });
+
+  // 自动填充未分配货架
+  autoAssignShelves();
+
+  // 更新弹窗头部信息
+  document.getElementById('sbd-scene-name').textContent  = scene?.name || sceneId;
+  document.getElementById('sbd-shelf-count').textContent = _sbdShelves.length;
+  document.getElementById('sbd-product-count').textContent = _sbdProducts.length;
+
+  renderShelfBindList();
+  document.getElementById('modal-shelf-bind').style.display = 'flex';
+}
+
+function closeShelfBind() {
+  document.getElementById('modal-shelf-bind').style.display = 'none';
+}
+
+function renderShelfBindList() {
+  const list = document.getElementById('sbd-shelf-list');
+  const opts = [{ id: '', name: '（不展示商品）' }, ..._sbdProducts.map(p => ({ id: p.id, name: `${p.name} ¥${p.price}` }))];
+
+  list.innerHTML = _sbdShelves.map(shelf => {
+    const bound = _sbdBindings[shelf.id] || '';
+    const selOpts = opts.map(o =>
+      `<option value="${o.id}" ${o.id === bound ? 'selected' : ''}>${o.name}</option>`
+    ).join('');
+    return `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--card);border-radius:6px;border:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text-3);width:60px;flex-shrink:0;">${shelf.label}</div>
+        <select style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:12px;"
+          onchange="_sbdBindings['${shelf.id}']=this.value; updateUnassigned()">
+          ${selOpts}
+        </select>
+      </div>`;
+  }).join('');
+
+  updateUnassigned();
+}
+
+function updateUnassigned() {
+  const assignedSkus = new Set(Object.values(_sbdBindings).filter(Boolean));
+  const unassigned = _sbdProducts.filter(p => !assignedSkus.has(p.id));
+  const el = document.getElementById('sbd-unassigned');
+  if (unassigned.length > 0) {
+    el.style.display = 'block';
+    el.innerHTML = `⚠️ 以下商品本次未分配货架（不影响直播，可手动介绍）：<br>` +
+      unassigned.map(p => `<span style="margin-right:8px;color:var(--text-2);">· ${p.name}</span>`).join('');
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function autoAssignShelves() {
+  _sbdBindings = {};
+  _sbdProducts.slice(0, _sbdShelves.length).forEach((p, i) => {
+    _sbdBindings[_sbdShelves[i].id] = p.id;
+  });
+  renderShelfBindList();
+}
+
+function resetShelfBind() {
+  _sbdBindings = {};
+  renderShelfBindList();
+}
+
+async function confirmShelfBind() {
+  const name = _scenesData[_sbdSceneId]?.name || _sbdSceneId;
+  const el = document.getElementById('scene-status');
+
+  // 1. 保存货架绑定到各商品的 shelf_id
+  const updatePromises = _sbdShelves.map(async shelf => {
+    const skuId = _sbdBindings[shelf.id];
+    // 清除原先绑定此货架的商品
+    const oldHolder = _sbdProducts.find(p => p.shelf_id === shelf.id && p.id !== skuId);
+    if (oldHolder) {
+      try { await api('PUT', `/api/skus/${oldHolder.id}`, { ...oldHolder, shelf_id: '' }); } catch(e) {}
+    }
+    // 绑定新商品到货架
+    if (skuId) {
+      const p = _sbdProducts.find(p => p.id === skuId);
+      if (p) {
+        try { await api('PUT', `/api/skus/${skuId}`, { ...p, shelf_id: shelf.id }); } catch(e) {}
+      }
+    }
+  });
+  await Promise.allSettled(updatePromises);
+
+  // 2. 切换场景
+  if (el) el.innerHTML = `<span style="color:var(--text-3)">⏳ 切换中...</span>`;
+  const r = await api('POST', '/api/scene/apply', { scene_id: _sbdSceneId });
+  if (r?.ok) {
+    _currentSceneId = _sbdSceneId;
+    log(`🏠 场景已切换 → ${name}，货架绑定完成`, 'ok');
+    updateSceneStatus();
+    closeShelfBind();
+  } else {
+    log('场景切换失败: ' + (r?.error||'未知错误'), 'err');
+    if (el) el.innerHTML = `<span style="color:var(--err)">✕ 切换失败</span>`;
+  }
+}
+
+// ============== 场景控制（广播到live-scene） ==============
+async function sceneCmd(cmd, params={}) {
+  const r = await api('POST', '/api/scene/command', { command: cmd, ...params });
+  if (r?.ok) log('场景指令: ' + cmd, 'ok');
+}
+
+// ============== 画面比例切换 ==============
+let _currentAspect = localStorage.getItem('liveAspect') || 'free';
+
+const _aspectDescs = {
+  'free':  '跟随窗口，OBS浏览器源宽高和推流分辨率保持一致即可',
+  '9:16':  '抖音/快手竖屏，画布居中黑边',
+  '16:9':  '淘宝/B站横屏，画布居中黑边',
+  '1:1':   '小红书/微博方形，画布居中黑边',
+  '4:3':   '传统比例，画布居中黑边',
+};
+const _aspectOBSHint = {
+  'free':  'OBS浏览器源宽高设为推流分辨率即可',
+  '9:16':  'OBS建议设宽高 1080 × 1920',
+  '16:9':  'OBS建议设宽高 1920 × 1080',
+  '1:1':   'OBS建议设宽高 1080 × 1080',
+  '4:3':   'OBS建议设宽高 1440 × 1080',
+};
+// 比例 → CSS aspect-ratio 值
+const _aspectRatioCSS = {
+  'free':  null,
+  '9:16':  '9/16',
+  '16:9':  '16/9',
+  '1:1':   '1/1',
+  '4:3':   '4/3',
+};
+
+// ============== 预览静音切换 ==============
+let _previewMuted = true; // 默认静音
+
+function togglePreviewMute() {
+  _previewMuted = !_previewMuted;
+  const iframe = document.getElementById('preview-iframe');
+  const btn    = document.getElementById('preview-mute-btn');
+  if (!iframe) return;
+  // 重新加载 iframe，切换 mute 参数
+  const url = _previewMuted ? '/live-scene?mute=1' : '/live-scene';
+  iframe.src = url;
+  if (btn) {
+    btn.textContent = _previewMuted ? '🔇 预览静音' : '🔊 预览有声';
+    btn.style.color = _previewMuted ? '' : 'var(--warn)';
+    btn.title = _previewMuted ? '点击开启预览声音（注意会与直播间重叠）' : '点击关闭预览声音';
+  }
+  log(_previewMuted ? '🔇 预览静音已开启' : '🔊 预览声音已开启（注意双声道）', 'ok');
+}
+
+function syncPreviewRatio(ratio) {
+  const frame  = document.getElementById('preview-frame');
+  const box    = document.getElementById('preview-ratio-box');
+  if (!frame || !box) return;
+  const css = _aspectRatioCSS[ratio];
+  if (!css) {
+    // 自适应：撑满整个 preview-frame
+    box.style.width       = '100%';
+    box.style.height      = '100%';
+    box.style.aspectRatio = '';
+  } else {
+    // 固定比例：在 preview-frame 内 letter-box 居中
+    box.style.width       = '';
+    box.style.height      = '';
+    box.style.aspectRatio = css;
+    box.style.maxWidth    = '100%';
+    box.style.maxHeight   = '100%';
+  }
+}
+
+async function setAspect(ratio) {
+  const r = await api('POST', '/api/scene/command', { command: 'set_aspect', ratio });
+  if (r?.ok) {
+    _currentAspect = ratio;
+    const desc = document.getElementById('aspect-desc');
+    if (desc) desc.textContent = _aspectDescs[ratio] || '';
+    localStorage.setItem('liveAspect', ratio);
+    // 更新按钮高亮
+    ['free','9:16','16:9','1:1','4:3'].forEach(k => {
+      const btn = document.getElementById('aspect-btn-' + k);
+      if (btn) btn.classList.toggle('active', k === ratio);
+    });
+    // 同步预览容器比例
+    syncPreviewRatio(ratio);
+    const obsHint = document.getElementById('aspect-obs-hint');
+    if (obsHint) obsHint.textContent = _aspectOBSHint[ratio] || '';
+    const label = ratio === 'free' ? '自适应' : ratio;
+    log(`📐 画面比例 → ${label}`, 'ok');
+  }
+}
+
+function initAspectBtns() {
+  ['free','9:16','16:9','1:1','4:3'].forEach(k => {
+    const btn = document.getElementById('aspect-btn-' + k);
+    if (btn) btn.classList.toggle('active', k === _currentAspect);
+  });
+  syncPreviewRatio(_currentAspect);
+  const desc = document.getElementById('aspect-desc');
+  if (desc) desc.textContent = _aspectDescs[_currentAspect] || '';
+  const obsHint = document.getElementById('aspect-obs-hint');
+  if (obsHint) obsHint.textContent = _aspectOBSHint[_currentAspect] || '';
+  // 恢复上次设置（通知 live-scene）
+  if (_currentAspect !== 'free') setAspect(_currentAspect);
+}
+async function focusShelf(shelfId) {
+  await sceneCmd('focus_shelf', { shelf_id: shelfId });
+}
+
+async function playProductVideo() {
+  const videoUrl = document.getElementById('video-url-input')?.value?.trim();
+  const shelfId  = document.getElementById('video-shelf-select')?.value || '';
+  if (!videoUrl) { log('请填写视频URL', 'warn'); return; }
+  const r = await api('POST', '/api/scene/product-video', { video_url: videoUrl, shelf_id: shelfId, operation: 'show' });
+  if (r?.ok) log(`🎬 产品视频播放: ${shelfId || '全场'}`, 'ok');
+}
+
+async function hideProductVideo() {
+  const shelfId = document.getElementById('video-shelf-select')?.value || '';
+  const r = await api('POST', '/api/scene/product-video', { shelf_id: shelfId, operation: 'hide' });
+  if (r?.ok) log(`⏹ 产品视频已隐藏`, 'ok');
+}
+
+async function loadShelfButtons() {
+  const r = await api('GET', '/api/scenes');
+  if (!r) return;
+  const current = r.meta?.current_scene || r.current_scene || Object.keys(r.scenes||{})[0];
+  const scene = (r.scenes||{})[current];
+
+  // 加载货架下拉（含绑定商品名）
+  const sel = document.getElementById('shelf-select');
+  if (sel && scene?.shelves) {
+    // 尝试拉取商品列表获取绑定信息
+    let skuMap = {};
+    try {
+      const sr = await api('GET', '/api/skus');
+      (sr?.skus || []).forEach(p => { if (p.shelf_id) skuMap[p.shelf_id] = p.name; });
+    } catch(e) {}
+
+    sel.innerHTML = '<option value="">聚焦货架…</option>' +
+      scene.shelves.map((sh, i) => {
+        const label = sh.label || (i+1) + '号位';
+        const sku   = skuMap[sh.id] ? ` · ${skuMap[sh.id]}` : '';
+        return `<option value="${sh.id}">${label}${sku}</option>`;
+      }).join('');
+  }
+
+  // 同步更新产品视频的货架选择下拉
+  const vsel = document.getElementById('video-shelf-select');
+  if (vsel && scene?.shelves) {
+    vsel.innerHTML = '<option value="">全场</option>' +
+      scene.shelves.map((sh, i) => {
+        const label = sh.label || (i+1) + '号位';
+        return `<option value="${sh.id}">${label}</option>`;
+      }).join('');
+  }
+
+  // 加载自定义视角按钮
+  loadCamPresetButtons(scene);
+}
+
+async function camPresetCmd(preset) {
+  await sceneCmd('camera_preset', { preset });
+}
+
+function loadCamPresetButtons(scene) {
+  const div = document.getElementById('cam-preset-btns');
+  if (!div) return;
+  const presets = scene?.camera_presets || [];
+  if (!presets.length) { div.innerHTML = ''; return; }
+  div.innerHTML = presets.map(p => {
+    const label = p.label || p.name || p.id;
+    return `<button class="action-chip" onclick="camPresetCmd('custom:${p.id}')" title="${label}" style="max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">⭐ ${label}</button>`;
+  }).join('');
+}
+
+// ============== 模拟事件 ==============
+const GIFT_LIST = [
+  { name:'小心心', icon:'❤️', amount:1 },
+  { name:'火箭', icon:'🚀', amount:5 },
+  { name:'荷花', icon:'🏵️', amount:10 },
+  { name:'大船', icon:'🚢', amount:50 },
+  { name:'狮子', icon:'🦁', amount:100 },
+  { name:'小车', icon:'🚗', amount:200 },
+  { name:'火云', icon:'🔥', amount:500 },
+  { name:'火焰五月花', icon:'🎆', amount:1000 },
+];
+let _selectedGift = GIFT_LIST[0];
+
+function openGiftModal() {
+  document.getElementById('gift-count').value = 1;
+  _selectedGift = null;
+  const grid = document.getElementById('gift-grid');
+  grid.innerHTML = GIFT_LIST.map((g,i) => `
+    <div id="gift-item-${i}" onclick="selectGift(${i})"
+      style="padding:8px 4px;border:1px solid var(--border);border-radius:6px;text-align:center;cursor:pointer;background:var(--bg);transition:.15s;">
+      <div style="font-size:22px;">${g.icon}</div>
+      <div style="font-size:10px;color:var(--text-2);margin-top:2px;">${g.name}</div>
+      <div style="font-size:9px;color:var(--text-3);">流通${g.amount}</div>
+    </div>`).join('');
+  document.getElementById('gift-selected-name').textContent = '--';
+  document.getElementById('modal-gift').classList.add('show');
+}
+
+function updateGiftContentInput() {
+  if (!_selectedGift) return;
+  const count = parseInt(document.getElementById('gift-count')?.value) || 1;
+  document.getElementById('sim-content').value = `${_selectedGift.icon}${_selectedGift.name} x${count}`;
+}
+
+function selectGift(i) {
+  _selectedGift = GIFT_LIST[i];
+  document.querySelectorAll('#gift-grid > div').forEach((el,j) => {
+    el.style.background = j===i ? 'rgba(201,165,92,.15)' : 'var(--bg)';
+    el.style.borderColor = j===i ? 'var(--primary)' : 'var(--border)';
+  });
+  document.getElementById('gift-selected-name').textContent = _selectedGift.name;
+  updateGiftContentInput();
+  // 选中即关闭弹窗
+  setTimeout(() => closeModal('modal-gift'), 200);
+}
+
+async function simEvent(type) {
+  if (type === 'gift') { openGiftModal(); return; }
+  const username = document.getElementById('sim-username')?.value?.trim() || '测试用户';
+  const content = document.getElementById('sim-content')?.value?.trim();
+
+  // 发送时若有选中礼物，走gift类型
+  if (type === 'chat' && _selectedGift) {
+    const count = parseInt(document.getElementById('gift-count')?.value) || 1;
+    const r = await api('POST', '/api/simulate/event', {
+      type: 'gift',
+      data: { username, gift_name: _selectedGift.name, count, amount: _selectedGift.amount * count }
+    });
+    if (r?.ok) {
+      log(`模拟: ${username} 赠送 ${_selectedGift.icon}${_selectedGift.name} x${count}`, 'ok');
+      document.getElementById('sim-content').value = '';
+      _selectedGift = null;
+      refreshQueue();
+    } else {
+      log('礼物模拟失败: ' + (r?.error || ''), 'err');
+    }
+    return;
+  }
+
+  if ((type === 'chat' || type === 'order') && !content) {
+    const el = document.getElementById('sim-content');
+    if (el) {
+      el.focus();
+      el.placeholder = type === 'chat' ? '请先输入评论内容...' : '请先输入商品名...';
+      el.style.borderColor = 'var(--warn)';
+      setTimeout(() => { el.style.borderColor = ''; el.placeholder = '内容/礼物/商品'; }, 2000);
+    }
+    return;
+  }
+  
+  const payloads = {
+    chat:       { username, content },
+    user_enter: { username },
+    order:      { username, sku_name: content },
+  };
+  
+  const r = await api('POST', '/api/simulate/event', { type, data: payloads[type] });
+  if (r?.ok) {
+    const desc = type === 'chat' ? `[评论] ${username}: ${content}` :
+                 type === 'order' ? `${username} 购买 ${content}` :
+                 `${username} 进入直播间`;
+    log('模拟: ' + desc, 'ok');
+    document.getElementById('sim-content').value = '';
+    refreshQueue();
+  }
+}
+
+// ============== 真人语音回复模式 ==============
+let humanReplyMode = false;
+let latestComment = null;  // 最近一条评论
+let hostMediaRecorder = null;  // 主播语音录制器
+let hostAudioChunks = [];  // 音频数据
+
+// ── 语音设置折叠 ──
+function toggleVoiceSettings() {
+  const body = document.getElementById('voice-settings-body');
+  const arrow = document.getElementById('voice-settings-arrow');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.textContent = open ? '▸' : '▾';
+}
+
+// ── 右栏 Tab ──
+function switchRTab(name) {
+  ['sim','speech'].forEach(t => {
+    document.getElementById('rtab-btn-'+t)?.classList.toggle('active', t===name);
+    document.getElementById('rtab-panel-'+t)?.classList.toggle('active', t===name);
+  });
+}
+
+async function toggleHumanReplyMode() {
+  const checkbox = document.getElementById('human-reply-mode');
+  humanReplyMode = checkbox?.checked ?? false;
+  
+  const voiceBox = document.getElementById('human-voice-box');
+  if (voiceBox) {
+    voiceBox.style.display = humanReplyMode ? 'block' : 'none';
+  }
+  
+  // 请求麦克风权限
+  if (humanReplyMode) {
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      log('🎙️ 麦克风权限已获取，可以开始语音回复', 'ok');
+    } catch (e) {
+      log('❌ 无法访问麦克风，请检查权限设置', 'error');
+      checkbox.checked = false;
+      humanReplyMode = false;
+      voiceBox.style.display = 'none';
+      return;
+    }
+  }
+  
+  try {
+    // 修复：正确 API 路径
+    const r = await api('POST', '/api/feature-flags', {
+      key: 'human_reply_mode', value: humanReplyMode
+    });
+    if (r?.ok) {
+      log(humanReplyMode ? '👤 已开启真人语音回复模式' : '🤖 已关闭真人模式', 'ok');
+    }
+    // 开启真人模式时自动关闭AI自动回复
+    if (humanReplyMode && state.flags['enable_ai_response']) {
+      await toggleFlag('enable_ai_response'); // 将AI自动回复关闭
+      log('🔕 已自动关闭AI自动回复', 'ok');
+    }
+    // 关闭真人模式时不自动开启AI（由用户手动决定）
+  } catch (e) {
+    log('切换模式失败: ' + e.message, 'error');
+  }
+}
+
+// 接收新评论（真人模式下显示最近评论）
+function onNewCommentForHuman(username, message) {
+  if (!humanReplyMode) return;
+  
+  latestComment = { username, message, time: Date.now() };
+  
+  // 显示最近评论
+  const box = document.getElementById('human-latest-comment');
+  const content = document.getElementById('human-comment-content');
+  if (box && content) {
+    box.style.display = 'block';
+    content.innerHTML = `<span style="color:var(--gold);">${escapeHtml(username)}:</span> ${escapeHtml(message)}`;
+  }
+  
+  log(`📨 新评论: ${username}: ${message.slice(0, 30)}...`, 'info');
+}
+
+// 开始录制主播语音
+async function startHostVoiceRecord() {
+  if (!humanReplyMode) return;
+  
+  const btn = document.getElementById('human-voice-btn');
+  const status = document.getElementById('human-voice-status');
+  
+  hostAudioChunks = [];
+  
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    hostMediaRecorder = new MediaRecorder(stream);
+    
+    hostMediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        hostAudioChunks.push(e.data);
+      }
+    };
+    
+    hostMediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(hostAudioChunks, { type: 'audio/webm' });
+      await sendHostVoice(audioBlob);
+      
+      // 停止所有轨道
+      stream.getTracks().forEach(track => track.stop());
+    };
+    
+    hostMediaRecorder.start();
+    
+    // UI反馈
+    btn.style.background = 'linear-gradient(145deg, #c0392b, #a93226)';
+    btn.innerHTML = '🔴 录制中...';
+    status.textContent = '正在录制，松开结束';
+    status.style.color = '#e74c3c';
+    
+    log('🔴 开始录制语音...', 'info');
+    
+  } catch (e) {
+    log('录制失败: ' + e.message, 'error');
+  }
+}
+
+// 停止录制
+function stopHostVoiceRecord() {
+  if (!hostMediaRecorder || hostMediaRecorder.state === 'inactive') return;
+  
+  hostMediaRecorder.stop();
+  
+  // UI恢复
+  const btn = document.getElementById('human-voice-btn');
+  const status = document.getElementById('human-voice-status');
+  btn.style.background = 'linear-gradient(145deg, #e74c3c, #c0392b)';
+  btn.innerHTML = '🎙️ 按住说话';
+  status.textContent = '按住按钮开始录制，松开结束';
+  status.style.color = 'var(--text-3)';
+  
+  log('⏹️ 停止录制，处理中...', 'info');
+}
+
+// 发送主播语音到后端
+async function sendHostVoice(audioBlob) {
+  const status = document.getElementById('human-voice-status');
+  if (status) {
+    status.textContent = '🔍 正在识别语音...';
+    status.style.color = 'var(--gold)';
+  }
+  
+  try {
+    // 转换为base64
+    const reader = new FileReader();
+    reader.readAsDataURL(audioBlob);
+    reader.onloadend = async () => {
+      const base64Audio = reader.result.split(',')[1];
+      
+      // 发送到后端进行语音识别
+      const r = await api('POST', '/api/host/voice', {
+        audio: base64Audio,
+        reply_to: latestComment ? { 
+          username: latestComment.username, 
+          message: latestComment.message 
+        } : null,
+        timestamp: Date.now()
+      });
+      
+      if (r?.ok) {
+        log(`👤 主播说: "${r.transcribed || '...'}" → NPC复述中`, 'ok');
+        // 清除已回复的评论
+        latestComment = null;
+        const box = document.getElementById('human-latest-comment');
+        if (box) box.style.display = 'none';
+      } else {
+        log('❌ ' + (r?.error || '语音识别失败'), 'error');
+      }
+      
+      // 恢复状态
+      if (status) {
+        status.textContent = '按住按钮开始录制，松开结束';
+        status.style.color = 'var(--text-3)';
+      }
+    };
+  } catch (e) {
+    log('语音处理错误: ' + e.message, 'error');
+    if (status) {
+      status.textContent = '按住按钮开始录制，松开结束';
+      status.style.color = 'var(--text-3)';
+    }
+  }
+}
+
+// ============== 动作流控制 ==============
+let actionFlows = [];  // 动作流预设列表
+
+// 加载动作流预设
+async function loadActionFlows() {
+  try {
+    const r = await api('GET', '/api/action-flows');
+    actionFlows = r?.flows || [];
+    renderActionFlowList();
+  } catch (e) {
+    console.error('加载动作流失败:', e);
+  }
+}
+
+// 渲染动作流列表
+function renderActionFlowList() {
+  const list = document.getElementById('action-flow-list');
+  if (!list) return;
+  
+  if (actionFlows.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text-3);">暂无动作流预设，点击"编辑动作流"创建</div>';
+    return;
+  }
+  
+  list.innerHTML = actionFlows.map(flow => `
+    <button class="btn" style="text-align:left;font-size:11px;padding:6px 8px;" onclick="playActionFlow('${escapeAttr(flow.id)}')">
+      ${flow.icon || '🎬'} ${escapeHtml(flow.name)}
+      <span style="font-size:10px;color:var(--text-3);float:right;">${flow.actions?.length || 0}动作</span>
+    </button>
+  `).join('');
+}
+
+// 执行动作流
+async function playActionFlow(flowId) {
+  const flow = actionFlows.find(f => f.id === flowId);
+  if (!flow) {
+    log('动作流不存在', 'error');
+    return;
+  }
+  
+  try {
+    const r = await api('POST', '/api/action-flows/play', { flow_id: flowId });
+    if (r?.ok) {
+      log(`🎬 执行动作流: ${flow.name}`, 'ok');
+    } else {
+      log('执行动作流失败', 'error');
+    }
+  } catch (e) {
+    log('执行动作流错误: ' + e.message, 'error');
+  }
+}
+
+// 执行快捷动作
+async function playQuickAction(actionKey) {
+  const actionMap = {
+    'greeting': { name: '打招呼', icon: '🙋' },
+    'thanks': { name: '感谢', icon: '🙏' },
+    'dance': { name: '跳舞', icon: '💃' },
+    'think': { name: '思考', icon: '🤔' },
+    'surprise': { name: '惊讶', icon: '😲' },
+    'idle': { name: '待机', icon: '😐' }
+  };
+  
+  const action = actionMap[actionKey];
+  if (!action) return;
+  
+  try {
+    const r = await api('POST', '/api/action/play', { 
+      action_key: actionKey,
+      priority: 'high'
+    });
+    if (r?.ok) {
+      log(`${action.icon} ${action.name}`, 'ok');
+    }
+  } catch (e) {
+    log('执行动作失败', 'error');
+  }
+}
+
+// 停止当前动作
+async function stopCurrentAction() {
+  try {
+    const r = await api('POST', '/api/action/stop');
+    if (r?.ok) {
+      log('⏹️ 已停止当前动作', 'ok');
+    }
+  } catch (e) {
+    log('停止动作失败', 'error');
+  }
+}
+
+// 打开动作流编辑器
+function openActionFlowEditor() {
+  // 简单的弹窗编辑
+  const flowName = prompt('输入动作流名称:');
+  if (!flowName) return;
+  
+  const flowActions = prompt('输入动作序列（逗号分隔）:\n例如: greeting,think,thanks');
+  if (!flowActions) return;
+  
+  const actions = flowActions.split(',').map(a => a.trim()).filter(a => a);
+  
+  const newFlow = {
+    id: 'flow_' + Date.now(),
+    name: flowName,
+    icon: '🎬',
+    actions: actions
+  };
+  
+  actionFlows.push(newFlow);
+  renderActionFlowList();
+  
+  // 保存到后端
+  saveActionFlows();
+  
+  log(`🎬 已创建动作流: ${flowName}`, 'ok');
+}
+
+// 保存动作流到后端
+async function saveActionFlows() {
+  try {
+    await api('POST', '/api/action-flows', { flows: actionFlows });
+  } catch (e) {
+    console.error('保存动作流失败:', e);
+  }
+}
+
+// ============== 主播控制台：语音互动管理 ==============
+let voiceStatusTimer = null;
+
+// 初始化语音入口链接
+function initVoiceEntryLink() {
+  const url = `${window.location.origin}/voice/join`;
+  const el = document.getElementById('voice-entry-link');
+  if (el) el.textContent = url;
+}
+
+// 更新时长显示
+function updateVoiceDurationDisplay(value) {
+  const display = document.getElementById('voice-duration-display');
+  if (display) display.textContent = value + '秒';
+}
+
+// 复制入口链接
+function copyVoiceEntry() {
+  const url = `${window.location.origin}/voice/join`;
+  navigator.clipboard.writeText(url).then(() => {
+    log('✅ 观众入口链接已复制', 'ok');
+  }).catch(() => {
+    log('❌ 复制失败', 'error');
+  });
+}
+
+// 更新语音设置
+async function updateVoiceSettings() {
+  const config = {
+    voice_message_enabled: document.getElementById('voice-message-enabled')?.checked ?? true,
+    voice_call_enabled: document.getElementById('voice-call-enabled')?.checked ?? true,
+    default_call_duration: parseInt(document.getElementById('voice-call-duration')?.value || '60'),
+    auto_accept: false  // 主播控制台始终手动接受
+  };
+  
+  try {
+    const r = await api('POST', '/api/voice/config', config);
+    if (r?.ok) {
+      log('🎙️ 语音设置已保存', 'ok');
+    }
+  } catch (e) {
+    log('保存语音设置失败: ' + e.message, 'error');
+  }
+}
+
+// 刷新语音状态（主播控制台用）
+async function refreshVoiceStatus() {
+  try {
+    const r = await api('GET', '/api/voice/queue');
+    if (!r?.ok) return;
+    
+    // 更新入口链接
+    initVoiceEntryLink();
+    
+    // 更新状态显示
+    const statusBox = document.getElementById('voice-queue-status');
+    const countEl = document.getElementById('vq-count');
+    const activeEl = document.getElementById('va-count');
+    const listEl = document.getElementById('vq-list');
+    
+    if (countEl) countEl.textContent = r.queue_length || 0;
+    if (activeEl) activeEl.textContent = r.active_sessions || 0;
+    
+    // 显示排队列表（简化版）
+    if (r.waiting_list && r.waiting_list.length > 0) {
+      statusBox.style.display = 'block';
+      listEl.innerHTML = r.waiting_list.slice(0, 3).map(item => `
+        <div style="display:flex;justify-content:space-between;padding:2px 0;">
+          <span>${escapeHtml(item.username)} ${item.feature === 'call' ? '📞' : '💬'}</span>
+          <span style="color:var(--text-3);">${escapeHtml(String(item.wait_time))}s</span>
+        </div>
+      `).join('');
+      if (r.waiting_list.length > 3) {
+        listEl.innerHTML += `<div style="color:var(--text-3);text-align:center;">...还有${r.waiting_list.length - 3}人</div>`;
+      }
+    } else {
+      statusBox.style.display = r.active_sessions > 0 ? 'block' : 'none';
+      listEl.innerHTML = '<div style="color:var(--text-3);">暂无排队</div>';
+    }
+    
+    // 更新配置同步
+    if (r.config) {
+      document.getElementById('voice-message-enabled').checked = r.config.voice_message_enabled;
+      document.getElementById('voice-call-enabled').checked = r.config.voice_call_enabled;
+      const duration = r.config.default_call_duration;
+      document.getElementById('voice-call-duration').value = duration;
+      document.getElementById('voice-duration-display').textContent = duration + '秒';
+    }
+    
+  } catch (e) {
+    log('刷新语音状态失败', 'error');
+  }
+}
+
+// 启动语音状态监控
+function startVoiceMonitoring() {
+  if (voiceStatusTimer) clearInterval(voiceStatusTimer);
+  voiceStatusTimer = setInterval(refreshVoiceStatus, 5000);
+}
+
+// ============== 模拟区：语音互动模拟 ==============
+async function simulateVoiceJoin(featureType) {
+  const username = document.getElementById('sim-username')?.value?.trim() || '测试用户' + Math.floor(Math.random() * 1000);
+  
+  try {
+    const r = await api('POST', '/api/voice/join', {
+      username: username,
+      user_id: 'sim_' + Date.now(),
+      feature: featureType
+    });
+    
+    if (r?.success) {
+      log(`🎙️ 模拟: ${username} 加入${featureType === 'call' ? '实时通话' : '语音消息'}排队 (#${r.position})`, 'ok');
+    } else {
+      log(`🎙️ 模拟失败: ${r?.error || '未知错误'}`, 'error');
+    }
+  } catch (e) {
+    log('模拟语音排队错误: ' + e.message, 'error');
+  }
+}
+
+// 初始化语音系统（主播控制台）
+function initVoiceSystem() {
+  initVoiceEntryLink();
+  refreshVoiceStatus();
+  startVoiceMonitoring();
+}
+
+// ============== NPC动作控制 ==============
+async function playAction(eventKey) {
+  // 从 main.json 的 event_action_map 读取对应GLB路径，广播到 live-scene
+  try {
+    const r = await api('GET', '/api/event-action-map');
+    const map = r?.map || {};
+    const filePath = map[eventKey];
+    if (!filePath) {
+      log(`⚠️ 动作 ${eventKey} 未配置，请在编辑器设置`, 'warn');
+      return;
+    }
+    const res = await api('POST', '/api/play-action', { file_path: filePath, loop: eventKey === 'idle' });
+    if (res?.ok) {
+      log(`🎬 ${eventKey}: ${filePath.split('/').pop()}`, 'ok');
+    }
+  } catch(e) {
+    log('播放动作失败: ' + e.message, 'error');
+  }
+}
+
+async function sceneCmd(command, params) {
+  try {
+    const r = await api('POST', '/api/scene/command', { command, ...(params||{}) });
+    if (r?.ok) log(`📷 场景指令: ${command}`, 'ok');
+  } catch(e) {
+    log('场景指令失败: ' + e.message, 'error');
+  }
+}
+
+async function resetNpcPosition() {
+  try {
+    const r = await api('POST', '/api/npc/reset-position');
+    if (r?.ok) {
+      const p = r.position || {};
+      log(`📍 NPC已恢复到默认位置 (${(p.x||0).toFixed(2)}, ${(p.y||0).toFixed(2)}, ${(p.z||0).toFixed(2)})`, 'ok');
+    } else {
+      log('恢复位置失败: ' + (r?.error || ''), 'error');
+    }
+  } catch(e) {
+    log('恢复位置失败: ' + e.message, 'error');
+  }
+}
+
+// ============== 应急 ==============
+async function reloadConfig(){ const r=await api('POST','/api/config/reload'); if(r?.ok) log('配置已重载','ok');}
+async function clearQueue(){ if(!confirm('清空队列？')) return; const r=await api('POST','/api/queue/clear'); if(r?.ok) log('队列已清空','ok'); refreshQueue();}
+async function emergencyReset(){ if(!confirm('紧急重置？')) return; const r=await api('POST','/api/emergency/reset'); if(r?.ok) log('紧急重置完成','ok');}
+
+// ============== 队列 ==============
+async function refreshQueue() {
+  const r = await api('GET', '/api/dialogue');
+  if (!r) return;
+  // API字段: current_item(当前播报), pending(待处理), queued(已排队)
+  const playing = r.current_item || r.playing || null;
+  const pending = r.pending || [];
+  const queued  = r.queued || r.queue || [];
+  state.queue = [...pending, ...queued];
+  if (playing) state.queue.unshift(playing);
+  renderQueue(playing, pending, queued);
+}
+function renderQueue(playing, pending, queued) {
+  const c = document.getElementById('queue-list');
+  const items = [];
+  if (playing) items.push({...playing, _current: true});
+  pending.forEach(x => items.push({...x, _pending: true}));
+  queued.forEach(x => items.push(x));
+  document.getElementById('queue-count').textContent = `(${items.length})`;
+  if (items.length === 0) { c.innerHTML = '<div class="empty">队列为空</div>'; return;}
+  c.innerHTML = items.map(it => {
+    const text = it.reply || it.text || it.content || '-';
+    const source = it.source || '';
+    const tags = (it.tags || []).join(' ');
+    return `
+    <div class="queue-item ${it._current?'current':''} ${it._pending?'pending':''}">
+      <div class="text">${escape(text)}</div>
+      <div class="row2">
+        ${source ? `<span class="style-tag">${escapeHtml(source)}</span>` : ''}
+        ${it.action || it.animation ? `<span class="anim-tag">🎬 ${escapeHtml(it.action||it.animation)}</span>` : ''}
+        ${it._current ? `<span class="style-tag" style="background:rgba(39,174,96,.2);color:var(--ok)">▶ 播放中</span>` : ''}
+        ${it._pending ? `<span class="style-tag" style="background:rgba(201,165,92,.15);color:var(--primary)">⏳ 待处理</span>` : ''}
+        ${it.username ? `<span class="style-tag" style="opacity:.7">👤 ${escapeHtml(it.username)}</span>` : ''}
+      </div>
+      ${!it._current ? `
+        <div class="actions">
+          ${(it.action || it.animation || it.action_flow) ? `<button onclick="previewDialogue('${escapeAttr(it.id)}')" title="预览动作效果">👁 预览</button>` : ''}
+          <button onclick="dialogueEmergency('${escapeAttr(it.id)}')">⚡紧急</button>
+          <button onclick="dialogueCancel('${escapeAttr(it.id)}')">✕忽略</button>
+        </div>` : ''}
+    </div>`;
+  }).join('');
+}
+function escape(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+async function dialogueCancel(id){ await api('POST','/api/dialogue/cancel',{id}); refreshQueue();}
+async function dialogueEmergency(id){ await api('POST','/api/dialogue/emergency',{id}); refreshQueue();}
+async function skipDialogue(){ await api('POST','/api/dialogue/skip'); refreshQueue();}
+async function prevDialogue(){ await api('POST','/api/dialogue/prev'); refreshQueue();}
+
+// ============== 动作预览弹窗 ==============
+let _previewDialogueId = null;
+
+function previewDialogue(dialogueId) {
+  // 从队列中找到该条目
+  const item = state.queue.find(it => it.id === dialogueId);
+  if (!item) { log('未找到该对话', 'warn'); return; }
+
+  const actionName = item.action || item.animation || item.action_flow || '未知';
+  _previewDialogueId = dialogueId;
+
+  // 显示弹窗
+  document.getElementById('modal-preview').classList.add('show');
+  document.getElementById('preview-overlay').style.display = 'none';
+  document.getElementById('preview-action-name').textContent = actionName;
+  document.getElementById('preview-info').textContent = item.reply ? item.reply.slice(0, 30) + '...' : '';
+  document.getElementById('preview-delete-btn').disabled = false;
+  document.getElementById('preview-replace-btn').disabled = false;
+
+  // 加载独立 live-scene 预览（带预览参数，不影响主画面）
+  const iframe = document.getElementById('preview-iframe-pop');
+  const previewUrl = `/live-scene?preview=1&action=${encodeURIComponent(actionName)}`;
+  iframe.src = previewUrl;
+}
+
+function closePreviewModal() {
+  document.getElementById('modal-preview').classList.remove('show');
+  document.getElementById('preview-iframe-pop').src = 'about:blank';
+  _previewDialogueId = null;
+}
+
+async function previewDeleteFromQueue() {
+  if (!_previewDialogueId) return;
+  await dialogueCancel(_previewDialogueId);
+  closePreviewModal();
+  log('✕ 已从队列移除', 'ok');
+}
+
+async function previewReplaceAction() {
+  if (!_previewDialogueId) return;
+  const newAction = prompt('输入新动作关键词（如: greeting, dance, gift 等）：');
+  if (!newAction) return;
+  // 通过API替换动作
+  const r = await api('POST', '/api/dialogue/update', { id: _previewDialogueId, action: newAction.trim() });
+  if (r?.ok) {
+    log(`🔄 动作已替换为: ${newAction.trim()}`, 'ok');
+    refreshQueue();
+    // 刷新预览
+    document.getElementById('preview-action-name').textContent = newAction.trim();
+    const iframe = document.getElementById('preview-iframe-pop');
+    iframe.src = `/live-scene?preview=1&action=${encodeURIComponent(newAction.trim())}`;
+  } else {
+    log('替换失败: ' + (r?.error || ''), 'err');
+  }
+}
+
+// ============== 手动话术输入 ==============
+function closeModal(id){ document.getElementById(id).classList.remove('show');}
+function previewManualText() {
+  const text = document.getElementById('manual-text').value.trim();
+  if (!text) return;
+  speakTTS(text, 'manual_preview');
+}
+async function sendManualSpeech(emergency) {
+  const text = document.getElementById('manual-text').value.trim();
+  if (!text) return;
+  const r = await api('POST', '/api/dialogue/manual', { text, emergency: !!emergency });
+  if (r?.ok) {
+    log(`${emergency?'⚡插队':'📤排队'}: ${text.substring(0,40)}`, 'ok');
+    document.getElementById('manual-text').value = '';
+    refreshQueue();
+  }
+}
+// Ctrl+Enter 快捷键
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'Enter' && document.activeElement.id === 'manual-text') {
+    sendManualSpeech(e.shiftKey); // Shift+Ctrl+Enter = 插队
+  }
+});
+
+// ============== 事件流（来自 WebSocket） ==
+function pushEvent(evt) {
+  state.events.unshift({...evt, _t: fmtTime()});
+  if (state.events.length > 30) state.events.pop();
+  renderEvents();
+}
+function renderEvents() {
+  const c = document.getElementById('event-list-pane');
+  if (!c) return;
+  if (state.events.length === 0) { c.innerHTML = '<div class="empty" style="padding:12px;">等待事件...</div>'; return;}
+  c.innerHTML = state.events.map(e => {
+    const t = e.type || e.action || 'event';
+    let content = '';
+    const d = e.data || e;
+    if (t === 'danmaku') content = `💬 ${d.username||'?'}: ${d.content||''}`;
+    else if (t === 'gift') content = `🎁 ${d.username||'?'} 送 ${d.gift_name||''} ×${d.count||1}`;
+    else if (t === 'user_enter') content = `👋 ${d.username||'?'} 进入直播间`;
+    else if (t === 'order') content = `🛒 ${d.username||'?'} 下单 ${d.sku_name||''}`;
+    else content = JSON.stringify(d).substring(0, 80);
+    return `<div style="display:flex;align-items:baseline;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+      <span style="color:var(--text-3);font-size:10px;flex-shrink:0;">${e._t}</span>
+      <span style="font-size:10px;padding:1px 5px;background:var(--border);border-radius:3px;color:var(--text-2);flex-shrink:0;">${t}</span>
+      <span style="color:var(--text);font-size:11px;">${escape(content)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ============== WebSocket ==============
+let ws = null;
+function connectWS() {
+  ws = new WebSocket('ws://' + location.hostname + ':8765');
+  ws.onopen = () => {
+    state.wsConnected = true;
+    const el = document.getElementById('ws-status');
+    el.className = 'ws-status connected';
+    document.getElementById('ws-text').textContent = '已连接';
+  };
+  ws.onclose = () => {
+    state.wsConnected = false;
+    const el = document.getElementById('ws-status');
+    el.className = 'ws-status disconnected';
+    document.getElementById('ws-text').textContent = '断开,重连中';
+    setTimeout(connectWS, 3000);
+  };
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      // 事件流
+      if (['danmaku','chat','user_enter','gift','order','like_received'].includes(msg.action)) {
+        pushEvent({type: msg.action, data: msg.data});
+        
+        // 真人模式下，评论加入待回复队列
+        if (humanReplyMode && (msg.action === 'chat' || msg.action === 'danmaku') && msg.data) {
+          onNewCommentForHuman(msg.data.username || '观众', msg.data.message || msg.data.content || '');
+        }
+      }
+      // 动作切换
+      if (msg.action === 'play_action' && msg.data) {
+        document.getElementById('cur-action').textContent = msg.data.action_key || msg.data.file_path || '?';
+      }
+      // 当前播报
+      if (msg.action === 'speak' && msg.text) {
+        document.getElementById('cur-action').textContent = '🗣️ ' + msg.text.slice(0, 30);
+        logSpeech(msg.text, msg.action_plan || null);
+        refreshQueue();
+      }
+      // 队列更新触发刷新
+      if (['dialogue_update','queue_update','playing_update','dialogue_added','dialogue_completed'].includes(msg.action)) {
+        refreshQueue();
+      }
+      // 场景切换同步（其他端触发的广播）
+      if (msg.action === 'scene_changed' && msg.scene_id) {
+        _currentSceneId = msg.scene_id;
+        _pendingSceneId = msg.scene_id;
+        const sel = document.getElementById('scene-select');
+        if (sel) sel.value = msg.scene_id;
+        updateSceneStatus();
+      }
+    } catch {}
+  };
+}
+
+// ============== 话术系统（完整版） ==============
+let presetCategories = [];
+let editingPresets = [];       // 弹窗内编辑副本
+let scActiveCat = -1;          // 当前选中分类索引
+const presetSeqIdx = {};       // 顺序模式索引
+let visiblePresetCats = {};    // 哪些分类在快捷面板显示
+let scVoiceFilter = 'all';     // 编辑面板音色过滤
+let presetLineSelected = new Set(); // 勾选的话术行
+
+// -- 数据格式兼容 --
+function getLineText(line) { return typeof line === 'string' ? line : (line?.text || ''); }
+function getLineMeta(line) { return typeof line === 'object' && line !== null ? line : { text: line }; }
+
+// -- 加载 --
+async function loadPresets() {
+  try {
+    const data = await api('GET', '/api/presets');
+    presetCategories = data?.categories || [];
+  } catch(e) { presetCategories = []; }
+  // 新分类默认可见
+  presetCategories.forEach(cat => {
+    if (!(cat.id in visiblePresetCats)) visiblePresetCats[cat.id] = true;
+  });
+  renderPresetBtns();
+}
+
+// -- 快捷面板按钮（只显示勾选的分类） --
+function renderPresetBtns() {
+  const el = document.getElementById('preset-btns');
+  if (!el) return;
+  const modeIcon = { random:'🎲', sequence:'🔁', fixed:'📌' };
+  const visible = presetCategories.filter(c => visiblePresetCats[c.id] !== false);
+  if (!visible.length) {
+    el.innerHTML = '<span style="font-size:10px;color:var(--text-3);">暂无话术</span>' +
+      '<button class="preset-manage-btn" onclick="openScriptsEditor()">⚙ 管理</button>';
+    return;
+  }
+  el.innerHTML = visible.map(cat => {
+    const titleLines = (cat.lines||[]).map(getLineText).join('\n');
+    return `<button class="preset-btn" onclick="pickPreset('${cat.id}')"
+      title="模式：${cat.mode==='random'?'随机':cat.mode==='sequence'?'顺序':'固定'}\n${titleLines}">
+      ${modeIcon[cat.mode]||''}${cat.label}
+    </button>`;
+  }).join('') +
+  `<button class="preset-manage-btn" onclick="openScriptsEditor()">⚙ 管理 (${visible.length}/${presetCategories.length})</button>`;
+}
+
+// -- 点击预设 → 填入文本框（不直接执行，用户自行排队） --
+function pickPreset(categoryId) {
+  const cat = presetCategories.find(c => c.id === categoryId);
+  if (!cat || !cat.lines?.length) return;
+  // 只从勾选的行中选取（checked字段，默认全部可用）
+  const available = cat.lines.filter((l, i) => {
+    const meta = getLineMeta(l);
+    return meta.checked !== false && getLineText(l).trim();
+  });
+  if (!available.length) { log('该分类无可用话术', 'warn'); return; }
+  let line;
+  if (cat.mode === 'fixed') {
+    line = available[0];
+  } else if (cat.mode === 'sequence') {
+    const idx = presetSeqIdx[cat.id] || 0;
+    line = available[idx % available.length];
+    presetSeqIdx[cat.id] = (idx + 1) % available.length;
+  } else {
+    line = available[Math.floor(Math.random() * available.length)];
+  }
+  const text = getLineText(line);
+  // 填入文本框，不直接发送
+  const ta = document.getElementById('manual-text');
+  ta.value = text;
+  ta.focus();
+  log(`📚 [${cat.label}] → ${text.substring(0, 40)}`);
+}
+
+// ====== 管理弹窗 ======
+function openScriptsEditor() {
+  editingPresets = JSON.parse(JSON.stringify(presetCategories));
+  scActiveCat = editingPresets.length > 0 ? 0 : -1;
+  presetLineSelected.clear();
+  scVoiceFilter = 'all';
+  scRenderCatList();
+  if (scActiveCat >= 0) scRenderEditPanel(scActiveCat);
+  // 底部按钮
+  document.getElementById('sc-modal-foot').innerHTML = `
+    <button class="btn" onclick="closeModal('modal-scripts')">取消</button>
+    <button class="btn primary" onclick="scSave()">💾 保存</button>`;
+  document.getElementById('modal-scripts').classList.add('show');
+}
+
+// -- 左侧分类列表（带勾选框，事件话术分组） --
+function scRenderCatList() {
+  const el = document.getElementById('sc-cat-list');
+  const normalCats = editingPresets.filter(c => !c.system);
+  const eventCats  = editingPresets.filter(c =>  c.system);
+
+  function renderCat(cat, i) {
+    const isVisible = visiblePresetCats[cat.id] !== false;
+    const lineCount = (cat.lines||[]).filter(l => getLineText(l).trim()).length;
+    const realIdx   = editingPresets.indexOf(cat);
+    const delBtn    = cat.system
+      ? `<span style="font-size:9px;color:var(--text-3);" title="系统分类不可删除">🔒</span>`
+      : `<button class="cat-del" onclick="scDeleteCat(event,${realIdx})">✕</button>`;
+    return `<div class="sc-cat-item ${realIdx===scActiveCat?'active':''}" onclick="scSelectCat(${realIdx})">
+      <input type="checkbox" ${isVisible?'checked':''} onclick="scToggleCatVisible(event,'${cat.id}')"
+        style="cursor:pointer;width:14px;height:14px;flex-shrink:0;" title="勾选后显示在快捷面板">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${cat.label}</span>
+      <span style="font-size:9px;color:#666;">${lineCount}</span>
+      ${delBtn}
+    </div>`;
+  }
+
+  el.innerHTML =
+    normalCats.map(c => renderCat(c, editingPresets.indexOf(c))).join('') +
+    `<div class="sc-cat-add" onclick="scAddCat()">＋ 新增分类</div>` +
+    (eventCats.length ? `<div style="font-size:10px;color:var(--text-3);padding:10px 8px 4px;border-top:1px solid var(--border);margin-top:4px;letter-spacing:.5px;">📌 事件话术</div>` : '') +
+    eventCats.map(c => renderCat(c, editingPresets.indexOf(c))).join('');
+}
+
+function scToggleCatVisible(e, catId) {
+  e.stopPropagation();
+  visiblePresetCats[catId] = e.target.checked;
+  renderPresetBtns();
+}
+
+function scSelectCat(idx) {
+  if (scActiveCat >= 0) scCollectEditPanel(scActiveCat);
+  scActiveCat = idx;
+  scRenderCatList();
+  scRenderEditPanel(idx);
+}
+
+// -- 右侧编辑面板（含勾选、试听、音色筛选） --
+function scRenderEditPanel(idx) {
+  const cat = editingPresets[idx];
+  const ep = document.getElementById('sc-edit-panel');
+  if (!cat) {
+    ep.innerHTML = '<div style="color:var(--text-3);font-size:12px;text-align:center;margin-top:40px;">请选择左侧分类</div>';
+    return;
+  }
+  // 统计音色
+  const voices = new Set();
+  cat.lines.forEach(l => { const m = getLineMeta(l); if (m.style_id) voices.add(m.style_id); });
+  const voiceOpts = ['<option value="all">🎵 全部音色</option>',
+    ...Array.from(voices).map(v => `<option value="${v}" ${scVoiceFilter===v?'selected':''}>${v}</option>`),
+    '<option value="none">— 无音色 —</option>'
+  ].join('');
+  // 全选状态
+  const allChecked = cat.lines.length > 0 && cat.lines.every((l,i) => presetLineSelected.has(`${cat.id}_${i}`));
+
+  const isSystemCat = !!cat.system;
+  const eventTypeLabel = cat.event_type ? `<span style="font-size:10px;color:var(--primary);background:rgba(201,165,92,.15);padding:1px 6px;border-radius:3px;margin-left:6px;">${cat.event_type}</span>` : '';
+  ep.innerHTML = `
+    <div class="sc-edit-row">
+      <span class="sc-edit-label">名称</span>
+      <input class="sc-edit-input" id="sc-edit-label" value="${cat.label}" placeholder="按钮名称" ${isSystemCat ? 'readonly style="opacity:.6;"' : ''}>
+      ${isSystemCat
+        ? `<span style="font-size:10px;color:var(--text-3);white-space:nowrap;display:flex;align-items:center;gap:4px;">🔒系统事件${eventTypeLabel}</span>`
+        : `<button class="sc-line-del" onclick="scDeleteCat(null,${idx})" title="删除分类">🗑️</button>`
+      }
+    </div>
+    <div class="sc-edit-row">
+      <span class="sc-edit-label">模式</span>
+      <div style="display:flex;gap:4px;">
+        <button class="sc-mode-btn ${cat.mode==='random'?'active':''}" onclick="scSetMode('random')">🎲 随机</button>
+        <button class="sc-mode-btn ${cat.mode==='sequence'?'active':''}" onclick="scSetMode('sequence')">🔁 顺序</button>
+        <button class="sc-mode-btn ${cat.mode==='fixed'?'active':''}" onclick="scSetMode('fixed')">📌 固定</button>
+      </div>
+    </div>
+    <div style="color:#888;font-size:11px;padding-left:58px;margin-top:-4px;">
+      ${cat.mode==='random'?'每次随机选一条':cat.mode==='sequence'?'每次按顺序取下一条':'永远使用第一条'}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="color:#888;font-size:12px;">话术列表</span>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#666;font-size:11px;">
+          <input type="checkbox" ${allChecked?'checked':''} onchange="scToggleSelectAll('${cat.id}',this.checked)" style="cursor:pointer;">
+          <span>全选</span>
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="color:#666;font-size:11px;">音色:</span>
+        <select onchange="scSetVoiceFilter(this.value)" style="background:var(--bg);color:var(--primary);border:1px solid var(--border);padding:3px 8px;font-size:11px;border-radius:4px;">
+          ${voiceOpts}
+        </select>
+      </div>
+    </div>
+    <div id="sc-lines-list" style="display:flex;flex-direction:column;gap:5px;margin-top:6px;">
+      ${cat.lines.map((l, i) => {
+        const meta = getLineMeta(l);
+        const txt = (meta.text||'').replace(/"/g,'&quot;');
+        const textEnc = encodeURIComponent(meta.text||'');
+        const hasMp3 = !!meta.mp3_filename;
+        const btnCls = hasMp3 ? 'sc-play-btn has-mp3' : 'sc-play-btn no-mp3';
+        const btnIcon = hasMp3 ? '▶' : '🔊';
+        const btnTitle = hasMp3 ? '试听（有录音）' : '试听（TTS朗读）';
+        // 音色过滤
+        let hide = false;
+        if (scVoiceFilter === 'none') hide = !!meta.style_id;
+        else if (scVoiceFilter !== 'all') hide = (meta.style_id !== scVoiceFilter);
+        const voiceTag = meta.style_id
+          ? '<span class="sc-voice-tag" title="音色：' + meta.style_id + '">🎵 ' + meta.style_id + '</span>'
+          : '<span class="sc-voice-tag" style="color:#555;background:rgba(255,255,255,.05);">🎵 -</span>';
+        const isChecked = meta.checked !== false; // 默认勾选
+        const isSelected = presetLineSelected.has(cat.id+'_'+i);
+        return '<div class="sc-line-row" style="' + (hide?'display:none;':'') + '">' +
+          '<input type="checkbox" ' + (isSelected?'checked':'') + ' data-cat="'+cat.id+'" data-idx="'+i+'" onchange="scToggleLine(this.dataset.cat,+this.dataset.idx,this.checked)" style="cursor:pointer;width:14px;height:14px;flex-shrink:0;">' +
+          '<input class="sc-line-input" data-line="'+i+'" value="'+txt+'" placeholder="输入话术">' +
+          voiceTag +
+          '<button class="'+btnCls+'" data-play-id="preset_'+cat.id+'_'+i+'" data-text="'+textEnc+'" data-cat="'+cat.id+'" data-idx="'+i+'" title="'+btnTitle+'">'+btnIcon+'</button>' +
+          '<button class="sc-line-del" onclick="scDelLine('+i+')">✕</button>' +
+        '</div>';
+      }).join('')}
+    </div>
+    <button class="sc-line-add" onclick="scAddLine()">＋ 添加一条话术</button>`;
+
+  // 绑定试听按钮事件
+  const linesList = document.getElementById('sc-lines-list');
+  if (linesList) {
+    linesList.querySelectorAll('.sc-play-btn').forEach(btn => {
+      btn.onclick = function(e) {
+        e.preventDefault(); e.stopPropagation();
+        const text = decodeURIComponent(this.dataset.text||'');
+        const catId = this.dataset.cat;
+        const idx = parseInt(this.dataset.idx, 10);
+        scPreviewLine(text, catId, idx);
+      };
+    });
+  }
+}
+
+function scSetMode(mode) {
+  if (scActiveCat < 0) return;
+  editingPresets[scActiveCat].mode = mode;
+  scRenderEditPanel(scActiveCat);
+}
+
+function scSetVoiceFilter(v) {
+  scVoiceFilter = v;
+  if (scActiveCat >= 0) scRenderEditPanel(scActiveCat);
+}
+
+function scToggleLine(catId, lineIdx, checked) {
+  const key = `${catId}_${lineIdx}`;
+  if (checked) presetLineSelected.add(key); else presetLineSelected.delete(key);
+}
+
+function scToggleSelectAll(catId, checked) {
+  const cat = editingPresets.find(c => c.id === catId);
+  if (!cat) return;
+  cat.lines.forEach((l, i) => {
+    const key = `${catId}_${i}`;
+    if (checked) presetLineSelected.add(key); else presetLineSelected.delete(key);
+  });
+  if (scActiveCat >= 0) scRenderEditPanel(scActiveCat);
+}
+
+// -- 收集编辑面板数据 --
+function scCollectEditPanel(idx) {
+  const cat = editingPresets[idx];
+  if (!cat) return;
+  const labelEl = document.getElementById('sc-edit-label');
+  if (labelEl) cat.label = labelEl.value.trim() || cat.label;
+  const lineInputs = document.querySelectorAll('#sc-lines-list .sc-line-input');
+  const newLines = Array.from(lineInputs).map((el, i) => {
+    const text = el.value;
+    const oldLine = cat.lines[i];
+    if (typeof oldLine === 'object' && oldLine !== null) return { ...oldLine, text };
+    return text;
+  }).filter(v => (typeof v === 'string' ? v.trim() : (v.text||'').trim()) !== '');
+  cat.lines = newLines.length ? newLines : [''];
+}
+
+function scDelLine(lineIdx) {
+  if (scActiveCat < 0) return;
+  scCollectEditPanel(scActiveCat);
+  const cat = editingPresets[scActiveCat];
+  cat.lines.splice(lineIdx, 1);
+  if (!cat.lines.length) cat.lines = [''];
+  scRenderEditPanel(scActiveCat);
+}
+
+function scAddLine() {
+  if (scActiveCat < 0) return;
+  scCollectEditPanel(scActiveCat);
+  editingPresets[scActiveCat].lines.push('');
+  scRenderEditPanel(scActiveCat);
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#sc-lines-list .sc-line-input');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }, 30);
+}
+
+function scAddCat() {
+  if (scActiveCat >= 0) scCollectEditPanel(scActiveCat);
+  const label = prompt('新分类名称：');
+  if (!label?.trim()) return;
+  const newCat = { id: 'cat_' + Date.now(), label: label.trim(), mode: 'random', lines: [''] };
+  editingPresets.push(newCat);
+  visiblePresetCats[newCat.id] = true;
+  scActiveCat = editingPresets.length - 1;
+  scRenderCatList();
+  scRenderEditPanel(scActiveCat);
+}
+
+function scDeleteCat(e, idx) {
+  if (e) e.stopPropagation();
+  if (!confirm(`确认删除「${editingPresets[idx].label}」分类？`)) return;
+  editingPresets.splice(idx, 1);
+  scActiveCat = Math.min(scActiveCat, editingPresets.length - 1);
+  scRenderCatList();
+  if (scActiveCat >= 0) scRenderEditPanel(scActiveCat);
+  else document.getElementById('sc-edit-panel').innerHTML =
+    '<div style="color:var(--text-3);font-size:12px;text-align:center;margin-top:40px;">请选择左侧分类</div>';
+}
+
+async function scSave() {
+  if (scActiveCat >= 0) scCollectEditPanel(scActiveCat);
+  const valid = editingPresets.filter(c => c.label.trim());
+  const res = await api('POST', '/api/presets', { categories: valid });
+  if (res?.ok) {
+    presetCategories = valid;
+    renderPresetBtns();
+    closeModal('modal-scripts');
+    log('✅ 话术已保存', 'ok');
+  } else {
+    log('❌ 保存失败', 'err');
+  }
+}
+
+// ====== 试听系统 ======
+let globalAudioPlayer = null;
+let currentPlayingId = null;
+
+function stopPlayback() {
+  if (globalAudioPlayer) { globalAudioPlayer.pause(); globalAudioPlayer.src = ''; globalAudioPlayer = null; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  const prevId = currentPlayingId;
+  currentPlayingId = null;
+  updatePlayBtnState(prevId, false);
+  return prevId;
+}
+
+function updatePlayBtnState(playId, playing) {
+  document.querySelectorAll('.sc-play-btn').forEach(btn => {
+    if (btn.dataset.playId === playId) {
+      btn.innerHTML = playing ? '⏸' : (btn.classList.contains('has-mp3') ? '▶' : '🔊');
+      btn.title = playing ? '暂停' : '试听';
+      btn.classList.toggle('playing', playing);
+    } else {
+      btn.innerHTML = btn.classList.contains('has-mp3') ? '▶' : '🔊';
+      btn.classList.remove('playing');
+    }
+  });
+}
+
+function scPreviewLine(text, catId, lineIdx) {
+  const playId = `preset_${catId}_${lineIdx}`;
+  // 点击当前正在播的 → 暂停
+  if (currentPlayingId === playId) { stopPlayback(); return; }
+  stopPlayback();
+  // 尝试获取MP3
+  const cat = editingPresets.find(c => c.id === catId);
+  if (cat && cat.lines[lineIdx]) {
+    const meta = getLineMeta(cat.lines[lineIdx]);
+    if (meta.mp3_filename) {
+      playMp3(`/cache/tts_minimax/${meta.mp3_filename}`, playId, text);
+      return;
+    }
+  }
+  speakTTS(text, playId);
+}
+
+function playMp3(url, playId, text) {
+  globalAudioPlayer = new Audio(url);
+  globalAudioPlayer.onended = () => { currentPlayingId = null; updatePlayBtnState(playId, false); };
+  globalAudioPlayer.onerror = () => { currentPlayingId = null; updatePlayBtnState(playId, false); speakTTS(text, playId); };
+  const p = globalAudioPlayer.play();
+  if (p) p.then(() => { currentPlayingId = playId; updatePlayBtnState(playId, true); })
+    .catch(() => { currentPlayingId = null; updatePlayBtnState(playId, false); speakTTS(text, playId); });
+}
+
+function speakTTS(text, playId) {
+  if (!text || !window.speechSynthesis) return;
+  if (currentPlayingId === playId && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel(); currentPlayingId = null; updatePlayBtnState(playId, false); return;
+  }
+  stopPlayback();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN'; u.rate = 1.0;
+  u.onstart = () => { currentPlayingId = playId; updatePlayBtnState(playId, true); };
+  u.onend = () => { currentPlayingId = null; updatePlayBtnState(playId, false); };
+  u.onerror = () => { currentPlayingId = null; updatePlayBtnState(playId, false); };
+  window.speechSynthesis.speak(u);
+}
+
+// ============== 日志栏拖拽 resize ==============
+function initLogResize() {
+  const handle = document.getElementById('log-resize-handle');
+  const wrap   = document.getElementById('log-bar-wrap');
+  if (!handle || !wrap) return;
+  let dragging = false, startY = 0, startH = 0;
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startH = wrap.offsetHeight;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const delta = startY - e.clientY;   // 向上拖 = 增大高度
+    const newH  = Math.max(startH + delta, 30);
+    document.documentElement.style.setProperty('--log-h', newH + 'px');
+    // 拖大后自动滚动到底部，让日志栏可见
+    if (delta > 0) window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' });
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+}
+
+// ============== 启动 ==============
+window.addEventListener('DOMContentLoaded', () => {
+  fetchLiveStatus();
+  loadFlags();
+  refreshQueue();
+  loadShelfButtons();
+  loadSceneList();
+  loadCharacterList();
+  loadPresets();
+  loadActionFlows();
+  initPlatformSelect();
+  initVoiceSystem();
+  initLogResize();
+  initAspectBtns();
+  connectWS();
+  setInterval(refreshQueue, 5000);
+  setInterval(fetchLiveStatus, 8000);
+  log('控制台 v3 已就绪');
+});
+</script>
+</body>
+</html>

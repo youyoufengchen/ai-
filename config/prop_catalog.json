@@ -1,0 +1,112 @@
+{
+  "_comment": "道具库 — 可挂载到骨骼节点的3D物件。道具不是独立角色，没有自己的动画，跟随挂载骨骼运动。",
+  "version": "1.0",
+
+  "_attach_bone_reference": {
+    "rightHand":  "右手",
+    "leftHand":   "左手",
+    "head":       "头顶（耳朵/帽子等）",
+    "hips":       "臀部（尾巴/裙摆等）",
+    "chest":      "胸口（胸甲/饰品等）",
+    "back":       "背部（翅膀/背包等）"
+  },
+
+  "props": [
+
+    {
+      "id": "fox_ears_prop",
+      "name": "狐狸耳朵",
+      "category": "变身道具/耳朵",
+      "model_file": "assets/props/fox_ears.glb",
+      "attach_bone": "head",
+      "default_offset": { "x": 0.0, "y": 0.18, "z": 0.0 },
+      "default_rotation": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "default_scale": 1.0,
+      "has_idle_animation": true,
+      "idle_animation": "assets/props/animations/fox_ears_twitch.glb",
+      "compatible_forms": ["fox_partial"],
+      "compatible_skeletons": ["humanoid"],
+      "sounds": {
+        "on_attach": null,
+        "on_detach": null
+      }
+    },
+
+    {
+      "id": "nine_tails_prop",
+      "name": "九尾狐尾巴",
+      "category": "变身道具/尾巴",
+      "model_file": "assets/props/nine_tails.glb",
+      "attach_bone": "hips",
+      "default_offset": { "x": 0.0, "y": -0.05, "z": -0.35 },
+      "default_rotation": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "default_scale": 1.0,
+      "has_idle_animation": true,
+      "idle_animation": "assets/props/animations/nine_tails_sway.glb",
+      "compatible_forms": ["fox_partial", "fox_full"],
+      "compatible_skeletons": ["humanoid"],
+      "sounds": {
+        "on_attach": "assets/sounds/effect/tails_appear.mp3",
+        "on_detach": null
+      }
+    },
+
+    {
+      "id": "palm_fire_prop",
+      "name": "手心火苗",
+      "category": "技能道具/火焰",
+      "model_file": null,
+      "_note": "纯粒子特效，不是GLB模型，通过effect_catalog的fx_palm_fire实现",
+      "is_particle_effect": true,
+      "effect_id": "fx_palm_fire",
+      "attach_bone": "rightHand",
+      "default_offset": { "x": 0.0, "y": 0.05, "z": 0.0 },
+      "default_scale": 1.0,
+      "auto_remove_after_s": null,
+      "compatible_forms": ["human", "fox_partial", "fox_full"],
+      "compatible_skeletons": ["humanoid"],
+      "sounds": {
+        "on_attach": "assets/sounds/effect/fire_whoosh.mp3",
+        "loop_while_attached": "assets/sounds/ambient/fire_crackle_loop.mp3",
+        "on_detach": "assets/sounds/effect/fire_extinguish.mp3"
+      }
+    },
+
+    {
+      "id": "product_display_box",
+      "name": "商品展示台",
+      "category": "销售道具/展示",
+      "model_file": "assets/props/display_stand.glb",
+      "attach_bone": "leftHand",
+      "default_offset": { "x": -0.1, "y": 0.0, "z": 0.1 },
+      "default_rotation": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "default_scale": 0.5,
+      "has_idle_animation": false,
+      "compatible_forms": ["human"],
+      "compatible_skeletons": ["humanoid"],
+      "sounds": {
+        "on_attach": null,
+        "on_detach": null
+      }
+    },
+
+    {
+      "id": "robot_cargo_crate",
+      "name": "机器人货物箱",
+      "category": "销售道具/运输",
+      "model_file": "assets/props/cargo_crate.glb",
+      "attach_bone": "rightHand",
+      "default_offset": { "x": 0.0, "y": 0.1, "z": 0.0 },
+      "default_rotation": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "default_scale": 0.8,
+      "has_idle_animation": false,
+      "compatible_forms": ["active"],
+      "compatible_skeletons": ["humanoid", "mechanical"],
+      "sounds": {
+        "on_attach": "assets/sounds/action/item_grab.mp3",
+        "on_detach": "assets/sounds/action/item_place.mp3"
+      }
+    }
+
+  ]
+}

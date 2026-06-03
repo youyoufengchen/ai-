@@ -1,0 +1,359 @@
+{
+  "_comment": "Actor注册表 — 场景中所有可调度实体的定义。每个Actor有自己的骨骼类型、能力集、形态列表和音效集。",
+  "version": "1.1",
+
+  "_task_assignment_rules": {
+    "_comment": "AI action_planner 在规划任务时的Actor选择逻辑（不是随机，是能力+语境推断）",
+    "algorithm": "capability_match_then_context_prefer",
+    "steps": [
+      "1. 解析NPC台词意图 → 得到任务类型（FETCH/PRESENT/NAVIGATE/SUMMON等）",
+      "2. 查询任务所需的capabilities列表",
+      "3. 筛选场景中当前available的actor（已注册且未busy）",
+      "4. 从满足能力的actor中，按context_weight最高者优先分配",
+      "5. 若无任何actor满足，则NPC台词播报'暂时无法完成'并跳过该任务步骤"
+    ],
+    "task_capability_map": {
+      "FETCH_PRODUCT":   ["LOCOMOTION", "MANIPULATION"],
+      "PRESENT_PRODUCT": ["MANIPULATION"],
+      "NAVIGATE_TO":     ["LOCOMOTION", "NAVIGATION"],
+      "SUMMON_ACTOR":    ["SPAWNING"],
+      "TRANSFORM":       ["TRANSFORMATION"],
+      "EXPRESS_EMOTION": ["EXPRESSION"]
+    }
+  },
+
+  "_capability_reference": {
+    "_comment": "所有可用能力类型（在各actor的capabilities[]中引用）",
+    "LOCOMOTION":      "移动能力：走路、跑步、飞行",
+    "MANIPULATION":    "操作能力：抓取、放下、递送、展示",
+    "EXPRESSION":      "表情能力：面部情绪表达",
+    "TRANSFORMATION":  "变身能力：切换形态",
+    "SPAWNING":        "召唤能力：生成其他Actor或道具",
+    "NAVIGATION":      "导航能力：自主路径规划（可无人监督移动）",
+    "INTERACTION":     "场景交互能力：开门、推抽屉、按按钮",
+    "FLYING":          "飞行能力：可在空中自由移动",
+    "GAZE_CONTROL":    "视线控制：头部朝向跟随目标"
+  },
+
+  "actors": [
+
+    {
+      "id": "bao_qing_host",
+      "name": "宝青坊主",
+      "type": "npc_host",
+      "description": "千年狐妖，主播位固定，高情绪表达能力",
+      "skeleton_type": "humanoid",
+      "model_file": "assets/角色/npc_01.vrm",
+      "spawn_point": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "is_primary_host": true,
+
+      "position_locked": true,
+      "position_locked_reason": "主播位固定，镜头对准她的位置，物理上不做大范围移动",
+
+      "capabilities": [
+        "MANIPULATION",
+        "EXPRESSION",
+        "TRANSFORMATION",
+        "SPAWNING",
+        "GAZE_CONTROL"
+      ],
+
+      "_capability_note": "刻意不含LOCOMOTION——取货类任务会自动路由到有LOCOMOTION的robot_helper_01",
+
+      "task_delegation": {
+        "_comment": "NPC自己无法完成时的委派规则",
+        "FETCH_PRODUCT": {
+          "delegate_to": "robot_helper_01",
+          "host_action": "summon_robot_gesture",
+          "host_tts_hint": "NPC台词中会说'让助手去取'/'叫机器人来'之类的话"
+        }
+      },
+
+      "current_form": "human",
+      "default_form": "human",
+
+      "forms": {
+        "human": {
+          "display_name": "人形态",
+          "description": "正常古风NPC形态",
+          "model_override": null,
+          "scale": 1.0,
+          "morph_weights": {},
+          "prop_attachments": [],
+          "expression_set": "human_npc_base",
+          "action_filter": "all",
+          "tts_voice": null,
+          "sounds": {
+            "on_enter": null,
+            "ambient_loop": null
+          }
+        },
+        "fox_partial": {
+          "display_name": "半狐形态",
+          "description": "情绪激动时局部变化：狐耳+九尾+竖瞳",
+          "model_override": null,
+          "scale": 1.0,
+          "morph_weights": {
+            "fox_eye_slit": 1.0,
+            "ear_shape_fox": 1.0
+          },
+          "prop_attachments": [
+            {
+              "prop_id": "fox_ears_prop",
+              "attach_bone": "head",
+              "offset": { "x": 0.0, "y": 0.18, "z": 0.0 },
+              "rotation": { "x": 0.0, "y": 0.0, "z": 0.0 }
+            },
+            {
+              "prop_id": "nine_tails_prop",
+              "attach_bone": "hips",
+              "offset": { "x": 0.0, "y": 0.0, "z": -0.35 },
+              "rotation": { "x": 0.0, "y": 0.0, "z": 0.0 }
+            }
+          ],
+          "expression_set": "fox_partial_expressions",
+          "action_filter": ["all", "fox_exclusive"],
+          "exclusive_actions": ["fox_rage_stomp", "fox_fire_wave", "fox_tail_whip"],
+          "tts_voice": { "pitch": -0.4, "emotion": "fierce", "speed": 0.95 },
+          "revert_to_form": "human",
+          "revert_after_seconds": 180,
+          "revert_transition_effect": "fx_fox_fire_burst",
+          "sounds": {
+            "on_enter": "assets/sounds/transform/fox_fire_ignite.mp3",
+            "ambient_loop": "assets/sounds/ambient/fox_fire_loop.mp3",
+            "on_exit": "assets/sounds/transform/human_restore.mp3"
+          },
+          "trigger": {
+            "auto_trigger": true,
+            "emotion_condition": { "angry": 0.7 },
+            "transition_effect": "fx_fox_fire_burst",
+            "transition_duration_s": 1.2
+          }
+        },
+        "fox_full": {
+          "display_name": "全狐形态",
+          "description": "极端情绪下完全化为九尾狐，更换整个模型",
+          "model_override": "assets/角色/fox_full_form.glb",
+          "scale": 1.1,
+          "morph_weights": {},
+          "prop_attachments": [],
+          "expression_set": "fox_full_expressions",
+          "action_filter": ["fox_exclusive", "quadruped_basic"],
+          "exclusive_actions": ["fox_full_roar", "fox_teleport", "fox_fire_storm"],
+          "tts_voice": { "pitch": -0.8, "emotion": "fierce", "speed": 0.85 },
+          "revert_to_form": "human",
+          "revert_after_seconds": 180,
+          "revert_transition_effect": "fx_fox_full_burst",
+          "sounds": {
+            "on_enter": "assets/sounds/transform/fox_full_transform.mp3",
+            "ambient_loop": "assets/sounds/ambient/fox_aura_loop.mp3",
+            "on_exit": "assets/sounds/transform/fox_to_human.mp3"
+          },
+          "trigger": {
+            "auto_trigger": true,
+            "emotion_condition": { "angry": 0.95 },
+            "transition_effect": "fx_fox_full_burst",
+            "transition_duration_s": 2.0,
+            "requires_form": "fox_partial"
+          }
+        }
+      },
+
+      "emotion_sound_map": {
+        "_comment": "情绪音效：情绪达到阈值时触发，与TTS台词同时播放",
+        "angry": {
+          "on_enter": "assets/sounds/emotion/angry_grunt.mp3",
+          "on_peak":  "assets/sounds/emotion/angry_growl.mp3",
+          "threshold_enter": 0.5,
+          "threshold_peak": 0.85
+        },
+        "happy": {
+          "on_enter": "assets/sounds/emotion/happy_hum.mp3",
+          "on_peak":  "assets/sounds/emotion/happy_laugh_light.mp3",
+          "threshold_enter": 0.6,
+          "threshold_peak": 0.9
+        },
+        "cute": {
+          "on_enter": "assets/sounds/emotion/cute_whimper.mp3",
+          "on_peak":  "assets/sounds/emotion/cute_giggle.mp3",
+          "threshold_enter": 0.5,
+          "threshold_peak": 0.8
+        },
+        "surprised": {
+          "on_enter": "assets/sounds/emotion/surprised_gasp.mp3",
+          "threshold_enter": 0.4
+        },
+        "thinking": {
+          "on_enter": "assets/sounds/emotion/thinking_hmm.mp3",
+          "threshold_enter": 0.3
+        }
+      }
+    },
+
+    {
+      "id": "robot_helper_01",
+      "name": "取货机器人",
+      "type": "robot_helper",
+      "description": "可自由移动的机器人助手，执行取货/配送任务",
+      "skeleton_type": "humanoid",
+      "_note": "先用humanoid骨骼复用现有动作，后期可换mechanical专用骨骼",
+      "model_file": "assets/角色/robot_helper.glb",
+      "spawn_point": { "x": -3.0, "y": 0.0, "z": -1.0 },
+      "is_primary_host": false,
+
+      "position_locked": false,
+
+      "capabilities": [
+        "LOCOMOTION",
+        "MANIPULATION",
+        "NAVIGATION",
+        "INTERACTION",
+        "GAZE_CONTROL"
+      ],
+
+      "task_trigger_conditions": {
+        "_comment": "AI什么情况下会调度这个actor（基于语境判断，不是随机）",
+        "primary_use_cases": [
+          "NPC台词提到'取货'/'去拿'/'派机器人'等意图，且NPC自身无LOCOMOTION",
+          "货架距离主播位超过 scene_context.robot_threshold_distance（默认2.0m）",
+          "商品数量>=2件需同时取",
+          "NPC正在进行重要销售讲解，不宜中断移动到货架"
+        ],
+        "context_weight_boosts": {
+          "npc_is_talking": 0.8,
+          "product_is_heavy": 0.6,
+          "multiple_products": 0.9,
+          "npc_in_transformation": 1.0
+        }
+      },
+
+      "current_form": "active",
+      "default_form": "active",
+
+      "forms": {
+        "active": {
+          "display_name": "激活态",
+          "description": "正常工作状态",
+          "model_override": null,
+          "scale": 0.95,
+          "morph_weights": {},
+          "prop_attachments": [],
+          "expression_set": "robot_display_expressions",
+          "action_filter": "all",
+          "tts_voice": null,
+          "sounds": {
+            "on_enter": "assets/sounds/transform/robot_activate.mp3",
+            "ambient_loop": "assets/sounds/ambient/robot_hum_loop.mp3"
+          }
+        },
+        "standby": {
+          "display_name": "待机态",
+          "description": "任务完成后低能耗待机",
+          "model_override": null,
+          "scale": 0.95,
+          "morph_weights": {},
+          "prop_attachments": [],
+          "expression_set": null,
+          "action_filter": ["idle"],
+          "sounds": {
+            "on_enter": "assets/sounds/transform/robot_standby.mp3",
+            "ambient_loop": null
+          }
+        }
+      },
+
+      "emotion_sound_map": {
+        "task_complete": {
+          "on_enter": "assets/sounds/emotion/robot_beep_ok.mp3",
+          "threshold_enter": 0.1
+        },
+        "error": {
+          "on_enter": "assets/sounds/emotion/robot_alarm.mp3",
+          "threshold_enter": 0.1
+        }
+      },
+
+      "navigation": {
+        "move_speed": 1.2,
+        "can_pathfind": true,
+        "avoid_obstacles": true,
+        "carrying_speed_multiplier": 0.7
+      }
+    },
+
+    {
+      "id": "pet_companion_kitsune",
+      "name": "小狐灵",
+      "type": "pet_companion",
+      "description": "宝青坊主的随从小狐，平时蜷缩待机，被召唤时做互动",
+      "skeleton_type": "quadruped",
+      "model_file": "assets/角色/pet_kitsune.glb",
+      "spawn_point": { "x": 0.8, "y": 0.0, "z": 0.3 },
+      "is_primary_host": false,
+      "default_visibility": "hidden",
+
+      "position_locked": false,
+
+      "capabilities": [
+        "LOCOMOTION",
+        "EXPRESSION",
+        "GAZE_CONTROL"
+      ],
+
+      "task_trigger_conditions": {
+        "primary_use_cases": [
+          "NPC台词提到'小狐灵'/'小家伙'等召唤词",
+          "NPC情绪为cute时有概率（0.3）自动出现",
+          "弹幕中出现'好可爱'/'宠物'等关键词"
+        ],
+        "context_weight_boosts": {
+          "npc_emotion_cute": 0.3,
+          "danmu_keyword_pet": 0.5
+        }
+      },
+
+      "current_form": "normal",
+      "default_form": "normal",
+
+      "forms": {
+        "normal": {
+          "display_name": "小狐形态",
+          "model_override": null,
+          "scale": 0.4,
+          "morph_weights": {},
+          "prop_attachments": [],
+          "expression_set": null,
+          "action_filter": ["quadruped_basic"],
+          "sounds": {
+            "on_enter": "assets/sounds/emotion/fox_happy_yip.mp3",
+            "ambient_loop": null
+          }
+        }
+      },
+
+      "emotion_sound_map": {
+        "happy": {
+          "on_enter": "assets/sounds/emotion/fox_happy_yip.mp3",
+          "threshold_enter": 0.3
+        },
+        "surprised": {
+          "on_enter": "assets/sounds/emotion/fox_startled.mp3",
+          "threshold_enter": 0.4
+        }
+      }
+    }
+
+  ],
+
+  "_spawn_rules": {
+    "_comment": "Actor的召唤规则，NPC用SPAWNING能力时依据此表",
+    "robot_helper_01": {
+      "summon_trigger": ["需要取货", "帮我去拿", "派个机器人"],
+      "summon_animation_on_host": "summon_gesture",
+      "summon_effect": "fx_robot_materialize",
+      "summon_sound": "assets/sounds/effect/robot_summon.mp3",
+      "dismiss_animation_on_host": null,
+      "dismiss_effect": "fx_robot_dematerialize"
+    }
+  }
+}

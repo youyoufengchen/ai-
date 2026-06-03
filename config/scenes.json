@@ -1,0 +1,707 @@
+{
+  "scenes": {
+    "default_tea_shop": {
+      "group": "default",
+      "order": 0,
+      "name": "默认茶坊",
+      "description": "宝青坊经典茶坊场景，木质货架，温馨雅致",
+      "bg_image": "/assets/scenes/bg_tea_shop.jpg",
+      "environment": "meeting_room_interior",
+      "host_position": {
+        "x": 50,
+        "y": 75,
+        "scale": 1
+      },
+      "host_position_3d": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "slots": [
+        {
+          "id": "slot_1",
+          "x": 8,
+          "y": 35,
+          "width": 12,
+          "height": 15,
+          "sku_id": "tea_001",
+          "label": "西湖龙井",
+          "z_index": 10
+        },
+        {
+          "id": "slot_2",
+          "x": 25,
+          "y": 32,
+          "width": 11,
+          "height": 14,
+          "sku_id": "tea_002",
+          "label": "铁观音",
+          "z_index": 10
+        },
+        {
+          "id": "slot_3",
+          "x": 40,
+          "y": 38,
+          "width": 10,
+          "height": 13,
+          "sku_id": "tea_003",
+          "label": "普洱",
+          "z_index": 10
+        },
+        {
+          "id": "slot_4",
+          "x": 75,
+          "y": 30,
+          "width": 12,
+          "height": 16,
+          "sku_id": null,
+          "label": "空位",
+          "z_index": 11
+        }
+      ],
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2026-05-27T18:50:04.467Z",
+      "objects": [
+        {
+          "id": "shelf_01",
+          "type": "shelf",
+          "label": "西湖龙井货架",
+          "position": { "x": -2.2, "y": 0, "z": -2.5 },
+          "rotation": { "x": 0, "y": 0.2617993877991494, "z": 0 },
+          "scale": 1,
+          "sku_id": "tea_001",
+          "visible": true,
+          "npc_stop_point": { "position": [-2.2, 0, -1.3], "look_at": [-2.2, 0.8, -2.5] }
+        },
+        {
+          "id": "shelf_02",
+          "type": "shelf",
+          "label": "铁观音货架",
+          "position": { "x": 0, "y": 0, "z": -2.8 },
+          "rotation": { "x": 0, "y": 0, "z": 0 },
+          "scale": 1,
+          "sku_id": "tea_002",
+          "visible": true,
+          "npc_stop_point": { "position": [0, 0, -1.5], "look_at": [0, 0.9, -2.8] }
+        },
+        {
+          "id": "shelf_03",
+          "type": "shelf",
+          "label": "普洱货架",
+          "position": { "x": 2.2, "y": 0, "z": -2.5 },
+          "rotation": { "x": 0, "y": -0.2617993877991494, "z": 0 },
+          "scale": 1,
+          "sku_id": "tea_003",
+          "visible": true,
+          "npc_stop_point": { "position": [2.2, 0, -1.3], "look_at": [2.2, 0.8, -2.5] }
+        },
+        {
+          "id": "obj_1779601930290",
+          "type": "table",
+          "label": "table",
+          "position": {
+            "x": -0.027623819334679042,
+            "y": 0,
+            "z": 0.11718699119620535
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "model_path": "",
+          "visible": true
+        },
+        {
+          "id": "obj_1779603150561",
+          "type": "screen",
+          "label": "screen",
+          "position": {
+            "x": 1.6097875641235528,
+            "y": 0,
+            "z": 11.882368537986165
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "model_path": "",
+          "visible": true
+        },
+        {
+          "id": "obj_1779603154728",
+          "type": "shelf",
+          "label": "shelf",
+          "position": {
+            "x": -2.0294486485617274,
+            "y": 4.440892098500626e-16,
+            "z": -2.2775836909155966
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "model_path": "",
+          "visible": true
+        },
+        {
+          "id": "obj_1779603174236",
+          "type": "screen",
+          "label": "screen",
+          "position": {
+            "x": -15.99567796420311,
+            "y": -2.220446049250313e-16,
+            "z": -62.03085531001237
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "model_path": "",
+          "visible": true
+        },
+        {
+          "id": "obj_1779603951618",
+          "type": "screen",
+          "label": "screen",
+          "position": {
+            "x": 0.07092601726410158,
+            "y": -2.220446049250313e-16,
+            "z": 1.2291092115820437
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "model_path": "",
+          "visible": true
+        }
+      ],
+      "camera": {
+        "position": {
+          "x": 0,
+          "y": 1.8591836686314558,
+          "z": 5.727891124209707
+        },
+        "target": {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        }
+      },
+      "camera_presets": [
+        {
+          "id": "facing_screen",
+          "label": "正面主镜",
+          "pos": [0, 1.6, 4.5],
+          "lookAt": [0, 1.0, 0]
+        },
+        {
+          "id": "overview",
+          "label": "全景俯视",
+          "pos": [0, 4.5, 7],
+          "lookAt": [0, 0, -1]
+        },
+        {
+          "id": "left_shelf",
+          "label": "左货架特写",
+          "pos": [-3.5, 1.5, -0.5],
+          "lookAt": [-2.2, 0.8, -2.5]
+        },
+        {
+          "id": "right_shelf",
+          "label": "右货架特写",
+          "pos": [3.5, 1.5, -0.5],
+          "lookAt": [2.2, 0.8, -2.5]
+        },
+        {
+          "id": "center_shelf",
+          "label": "中央货架特写",
+          "pos": [0, 1.5, 0],
+          "lookAt": [0, 0.9, -2.8]
+        }
+      ],
+      "groups": [
+        {
+          "id": "group_mpnijz02",
+          "name": "系统预设",
+          "snapshots": []
+        }
+      ],
+      "default_character": "npc_01",
+      "default_npc_position": {
+        "position": [
+          0,
+          0,
+          1.5
+        ],
+        "rotation_y": 0,
+        "description": "NPC默认站位，面对观众"
+      },
+      "shelves": [
+        {
+          "id": "A1",
+          "label": "西湖龙井",
+          "sku_id": "tea_001",
+          "position": [
+            -2.2,
+            0,
+            -2.5
+          ],
+          "rotation_y": 15,
+          "case_size": {
+            "width": 0.7,
+            "height": 1,
+            "depth": 0.7
+          },
+          "spin": {
+            "enabled": true,
+            "speed_deg_per_sec": 25,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          "product": {
+            "sku_id": "tea_001",
+            "name": "西湖龙井明前茶"
+          },
+          "npc_stop_point": {
+            "position": [
+              -2.2,
+              0,
+              -1.3
+            ],
+            "look_at": [
+              -2.2,
+              0.8,
+              -2.5
+            ],
+            "action": "fetch_turn"
+          }
+        },
+        {
+          "id": "A2",
+          "label": "铁观音",
+          "sku_id": "tea_002",
+          "position": [
+            0,
+            0,
+            -2.8
+          ],
+          "rotation_y": 0,
+          "case_size": {
+            "width": 0.8,
+            "height": 1.1,
+            "depth": 0.8
+          },
+          "spin": {
+            "enabled": true,
+            "speed_deg_per_sec": 30,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          "product": {
+            "sku_id": "tea_002",
+            "name": "铁观音礼盒装"
+          },
+          "npc_stop_point": {
+            "position": [
+              0,
+              0,
+              -1.5
+            ],
+            "look_at": [
+              0,
+              0.9,
+              -2.8
+            ],
+            "action": "fetch_turn"
+          }
+        },
+        {
+          "id": "A3",
+          "label": "普洱",
+          "sku_id": "tea_003",
+          "position": [
+            2.2,
+            0,
+            -2.5
+          ],
+          "rotation_y": -15,
+          "case_size": {
+            "width": 0.7,
+            "height": 1,
+            "depth": 0.7
+          },
+          "spin": {
+            "enabled": true,
+            "speed_deg_per_sec": 35,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          "product": {
+            "sku_id": "tea_003",
+            "name": "普洱熟茶饼"
+          },
+          "npc_stop_point": {
+            "position": [
+              2.2,
+              0,
+              -1.3
+            ],
+            "look_at": [
+              2.2,
+              0.8,
+              -2.5
+            ],
+            "action": "fetch_turn"
+          }
+        },
+        {
+          "id": "B1",
+          "label": "茶具礼盒",
+          "sku_id": "gift_001",
+          "position": [
+            3.5,
+            0,
+            -1.5
+          ],
+          "rotation_y": -30,
+          "case_size": {
+            "width": 0.9,
+            "height": 1.2,
+            "depth": 0.9
+          },
+          "spin": {
+            "enabled": true,
+            "speed_deg_per_sec": 20,
+            "axis": [
+              0,
+              1,
+              0
+            ]
+          },
+          "product": {
+            "sku_id": "gift_001",
+            "name": "茶具礼盒套装"
+          },
+          "npc_stop_point": {
+            "position": [
+              3.5,
+              0,
+              -0.3
+            ],
+            "look_at": [
+              3.5,
+              0.8,
+              -1.5
+            ],
+            "action": "fetch_turn"
+          }
+        }
+      ]
+    },
+    "festive_scene": {
+      "name": "节日庆典",
+      "description": "春节/节日特别版，红灯笼装饰",
+      "bg_image": "/assets/scenes/bg_festive.jpg",
+      "environment": "meeting_room_interior",
+      "host_position": {
+        "x": 45,
+        "y": 72,
+        "scale": 1.1
+      },
+      "host_position_3d": {
+        "x": 0,
+        "y": 0,
+        "z": 2
+      },
+      "slots": [
+        {
+          "id": "slot_f1",
+          "x": 10,
+          "y": 40,
+          "width": 15,
+          "height": 18,
+          "sku_id": "tea_gift_set",
+          "label": "礼盒套装",
+          "z_index": 10
+        },
+        {
+          "id": "slot_f2",
+          "x": 70,
+          "y": 35,
+          "width": 14,
+          "height": 16,
+          "sku_id": "tea_001",
+          "label": "新年龙井",
+          "z_index": 11
+        }
+      ],
+      "shelves": [
+        {
+          "id": "festive_shelf_1",
+          "name": "节日货架1",
+          "position": [
+            0,
+            0
+          ],
+          "y": 0,
+          "type": "glass_cylinder",
+          "product": {
+            "sku_id": "tea_gift_set",
+            "name": "礼盒套装"
+          }
+        },
+        {
+          "id": "festive_shelf_2",
+          "name": "节日货架2",
+          "position": [
+            -2,
+            -2
+          ],
+          "y": 0,
+          "type": "glass_cylinder",
+          "product": {
+            "sku_id": "tea_001",
+            "name": "新年龙井"
+          }
+        }
+      ],
+      "objects": [
+        {
+          "id": "festive_shelf_1",
+          "type": "shelf",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "sku_id": "tea_gift_set",
+          "visible": true
+        },
+        {
+          "id": "festive_shelf_2",
+          "type": "shelf",
+          "position": {
+            "x": -2,
+            "y": -2,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "sku_id": "tea_001",
+          "visible": true
+        }
+      ],
+      "snapshots": [
+        {
+          "id": "default",
+          "name": "默认视角",
+          "description": "默认展示视角",
+          "camera": {
+            "position": {
+              "x": 0,
+              "y": 1.8,
+              "z": 4
+            },
+            "target": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            },
+            "fov": 45
+          }
+        }
+      ],
+      "created_at": "2024-01-20T08:00:00Z",
+      "updated_at": "2026-05-27T11:59:26.460Z",
+      "default_character": "x_bot_mixamo"
+    },
+    "minimal_scene": {
+      "name": "极简茶室",
+      "description": "现代简约风格，留白更多",
+      "bg_image": "/assets/scenes/bg_minimal.jpg",
+      "host_position": {
+        "x": 50,
+        "y": 70,
+        "scale": 0.9
+      },
+      "slots": [
+        {
+          "id": "slot_m1",
+          "x": 15,
+          "y": 45,
+          "width": 20,
+          "height": 22,
+          "sku_id": "tea_001",
+          "label": "主推产品",
+          "z_index": 10
+        }
+      ],
+      "created_at": "2024-02-01T14:00:00Z",
+      "updated_at": "2024-02-01T14:00:00Z",
+      "environment": "modern_office",
+      "objects": [
+        {
+          "id": "obj_1779601949949",
+          "type": "shelf",
+          "propType": "shelf",
+          "position": {
+            "x": -0.8434607645875254,
+            "y": 0,
+            "z": -0.9013204341345471
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "label": "shelf"
+        },
+        {
+          "id": "obj_1779601951828",
+          "type": "table",
+          "propType": "table",
+          "position": {
+            "x": 1.0644490644490636,
+            "y": 2.220446049250313e-16,
+            "z": -1.0643581200932788
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "label": "table"
+        },
+        {
+          "id": "obj_1779601952891",
+          "type": "screen",
+          "propType": "screen",
+          "position": {
+            "x": 0.5384896558506951,
+            "y": 0,
+            "z": 1.4567215648686314
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "label": "screen"
+        },
+        {
+          "id": "obj_1779601956497",
+          "type": "screen",
+          "propType": "screen",
+          "position": {
+            "x": 0.5504800739336386,
+            "y": 0,
+            "z": 2.091955412331063
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "label": "screen"
+        },
+        {
+          "id": "obj_1779601958073",
+          "type": "screen",
+          "propType": "screen",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": 1,
+          "label": "screen"
+        }
+      ]
+    },
+    "scene_1779596672641": {
+      "name": "新场景",
+      "description": "",
+      "bg_image": "",
+      "host_position": {
+        "x": 50,
+        "y": 75,
+        "scale": 1
+      },
+      "slots": [],
+      "updated_at": "2026-05-24T04:24:39.501Z",
+      "created_at": "2026-05-24T04:24:39.510Z"
+    },
+    "scene_1779602009066": {
+      "id": "scene_1779602009066",
+      "name": "新场景",
+      "description": "",
+      "environment": "virtual_studio",
+      "objects": [],
+      "camera": {
+        "position": {
+          "x": 0,
+          "y": 1.6,
+          "z": 4
+        },
+        "target": {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        }
+      },
+      "actions": []
+    }
+  },
+  "groups": [
+    {
+      "id": "group_1779822541122",
+      "name": "常用视角",
+      "order": 1,
+      "collapsed": false,
+      "scenes": [
+        "default_tea_shop",
+        "festive_scene"
+      ]
+    }
+  ],
+  "current_scene": "default_tea_shop"
+}

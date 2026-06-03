@@ -1,0 +1,757 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>配置中心 - 宝青坊</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#c9a55c;--gl:#e8dcc8;--gd:rgba(201,165,92,.3);--bg:#0d0a07;--bg2:#14100c;--bg3:#1c1510;--bg4:#251e17;--border:rgba(201,165,92,.18);--text:#d4c4a8;--dim:#888;--green:#3eea7c;--red:#e55555}
+body{background:var(--bg);color:var(--text);font-family:'Microsoft YaHei',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+.nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.nav-logo{color:var(--gold);font-weight:bold;font-size:15px}
+.nav-back{margin-left:auto;padding:5px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--gold);text-decoration:none;font-size:13px}
+.nav-back:hover{background:var(--gd)}
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 20px;gap:2px;flex-shrink:0}
+.tab{padding:12px 20px;font-size:14px;color:var(--dim);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;font-family:inherit;transition:.2s}
+.tab:hover{color:var(--gl)}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.body{flex:1;overflow:auto;padding:20px}
+.page{display:none}.page.on{display:block}
+
+/* ---- CARDS ---- */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.card-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:bold;color:var(--gl)}
+.card-body{padding:18px}
+
+/* ---- FORM ---- */
+.row{display:grid;gap:14px;margin-bottom:14px}
+.r2{grid-template-columns:1fr 1fr}.r3{grid-template-columns:1fr 1fr 1fr}.r4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:5px}
+.lbl{font-size:11px;color:var(--dim)}
+.inp,.sel,.ta{background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;padding:7px 10px;outline:none;font-family:inherit;transition:.2s}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--gold)}
+.ta{resize:vertical;min-height:60px}
+.sel option{background:var(--bg4)}
+
+/* ---- BUTTONS ---- */
+.btn{padding:7px 16px;border-radius:5px;font-size:13px;cursor:pointer;border:1px solid var(--border);font-family:inherit;transition:.15s}
+.btn-p{background:var(--gold);color:#1a1000;border-color:var(--gold);font-weight:bold}.btn-p:hover{background:#e0b96a}
+.btn-g{background:var(--bg4);color:var(--text)}.btn-g:hover{border-color:var(--gold);color:var(--gl)}
+.btn-d{background:rgba(220,60,60,.15);color:var(--red);border-color:rgba(220,60,60,.35)}.btn-d:hover{background:rgba(220,60,60,.28)}
+.btn-sm{padding:4px 11px;font-size:12px}
+.rflex{display:flex;align-items:center;gap:8px}
+
+/* ---- TOGGLE ---- */
+.tog{position:relative;width:38px;height:20px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-s{position:absolute;inset:0;background:#2a2a2a;border-radius:20px;cursor:pointer;transition:.3s}
+.tog-s:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#666;border-radius:50%;transition:.3s}
+.tog input:checked+.tog-s{background:rgba(201,165,92,.25)}
+.tog input:checked+.tog-s:before{transform:translateX(18px);background:var(--gold)}
+
+/* ---- CONNECT PAGE ---- */
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.plat-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;transition:.2s}
+.plat-card.enabled{border-color:rgba(62,234,124,.4)}
+.plat-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.plat-icon{font-size:24px}
+.plat-name{font-size:14px;font-weight:bold;color:var(--gl)}
+.plat-status{font-size:11px;padding:2px 8px;border-radius:10px;margin-left:auto}
+.st-off{background:rgba(100,100,100,.2);color:var(--dim)}
+.st-on{background:rgba(62,234,124,.15);color:var(--green)}
+.webhook-box{background:var(--bg4);border:1px solid var(--border);border-radius:5px;padding:8px 10px;font-size:11px;font-family:monospace;color:var(--gold);display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;word-break:break-all}
+
+/* ---- ACTION PAGE ---- */
+.event-list{display:flex;flex-direction:column;gap:10px}
+.ev-row{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:14px 16px;display:grid;grid-template-columns:180px 1fr auto;gap:14px;align-items:center}
+.ev-name{font-size:13px;font-weight:bold;color:var(--gl)}
+.ev-desc{font-size:11px;color:var(--dim);margin-top:2px}
+.ev-videos{display:flex;flex-wrap:wrap;gap:6px}
+.ev-video-tag{background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:3px 9px;font-size:12px;display:flex;align-items:center;gap:5px}
+.ev-video-tag .del{cursor:pointer;color:var(--dim)}.ev-video-tag .del:hover{color:var(--red)}
+
+/* ---- SHELF PAGE ---- */
+.shelf-layout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+/* 预览画布：16:9，带网格底纹，无背景也好看 */
+.shelf-canvas{
+  border:1px solid var(--border);border-radius:10px;
+  aspect-ratio:16/9;position:relative;overflow:hidden;
+  background:#0d0a07
+    repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(201,165,92,.06) 31px,rgba(201,165,92,.06) 32px),
+    repeating-linear-gradient(90deg,transparent,transparent 31px,rgba(201,165,92,.06) 31px,rgba(201,165,92,.06) 32px);
+}
+.shelf-canvas-empty-hint{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:rgba(201,165,92,.25);pointer-events:none;gap:8px
+}
+.shelf-canvas-empty-hint .hint-icon{font-size:48px;opacity:.4}
+.shelf-canvas-empty-hint .hint-text{font-size:13px}
+.shelf-bg{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:10px}
+.shelf-overlay{position:absolute;inset:0}
+/* 槽位点 - 更大更清晰 */
+.slot-dot{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:.15s;z-index:10}
+.slot-dot .dot-inner{
+  min-width:64px;height:64px;border-radius:8px;padding:0 6px;
+  background:rgba(10,8,4,.7);border:2px dashed rgba(201,165,92,.5);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:11px;color:var(--gold);text-align:center;line-height:1.3;
+  transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.5);backdrop-filter:blur(4px)
+}
+.slot-dot .dot-num{
+  position:absolute;top:-8px;left:-8px;width:18px;height:18px;border-radius:50%;
+  background:var(--bg4);border:1px solid var(--border);display:flex;
+  align-items:center;justify-content:center;font-size:10px;color:var(--gold)
+}
+.slot-dot.has-sku .dot-inner{background:rgba(10,30,15,.8);border-color:rgba(62,234,124,.6);color:var(--green)}
+.slot-dot.selected .dot-inner{border-style:solid;border-color:var(--gold);background:rgba(201,165,92,.22);box-shadow:0 0 12px rgba(201,165,92,.4)}
+.slot-dot:hover .dot-inner{border-color:var(--gold);transform:scale(1.05)}
+.slot-dot.dragging .dot-inner{box-shadow:0 0 18px rgba(201,165,92,.6);transform:scale(1.08)}
+.slot-dot{user-select:none}
+.slot-dot.draggable .dot-inner{cursor:move}
+/* 列表项 */
+.slot-panel{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px}
+.slot-list-item{padding:9px 12px;border-radius:6px;cursor:pointer;margin-bottom:5px;display:flex;align-items:center;gap:10px;background:var(--bg4);border:1px solid transparent;transition:.15s}
+.slot-list-item:hover{border-color:var(--border)}
+.slot-list-item.selected{border-color:var(--gold);background:rgba(201,165,92,.08)}
+.slot-num{width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--gold);flex-shrink:0}
+
+/* ---- SCENE PREVIEW EXTRA ---- */
+.host-marker{position:absolute;transform:translate(-50%,-50%);cursor:move;z-index:20;user-select:none}
+.host-marker:hover .host-inner{box-shadow:0 0 14px rgba(201,165,92,.5)}
+.host-inner{
+  width:44px;height:56px;border-radius:6px;
+  background:rgba(201,165,92,.15);border:2px solid rgba(201,165,92,.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--gold);font-weight:bold;backdrop-filter:blur(6px);
+  box-shadow:0 2px 10px rgba(0,0,0,.5);transition:box-shadow .2s
+}
+.host-marker.dragging .host-inner{box-shadow:0 0 20px var(--gold);border-color:var(--gold)}
+/* 弹幕层 */
+.danmu-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:30}
+.danmu-item{position:absolute;background:rgba(0,0,0,.55);color:#fff;padding:4px 12px;border-radius:14px;font-size:13px;white-space:nowrap;animation:dmFly 7s linear forwards}
+.danmu-item.gift{background:linear-gradient(90deg,#c9a55c,#e0b96a);color:#1a1000;font-weight:bold}
+.danmu-item.enter{background:rgba(62,234,124,.7);color:#003300}
+.danmu-item.like{background:rgba(255,80,140,.65);color:#fff}
+@keyframes dmFly{from{right:-30%;opacity:0}10%{opacity:1}90%{opacity:1}to{right:110%;opacity:0}}
+/* 特效层 */
+.effect-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:25}
+.coin{position:absolute;font-size:24px;animation:coinFall 2.5s linear forwards}
+@keyframes coinFall{from{top:-10%;transform:rotate(0)}to{top:110%;transform:rotate(720deg)}}
+.spark{position:absolute;font-size:24px;animation:sparkPop 1s ease-out forwards}
+@keyframes sparkPop{from{transform:scale(0);opacity:1}to{transform:scale(2);opacity:0}}
+.celeb{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:80px;animation:celebPop 1.6s ease-out forwards;text-shadow:0 0 20px gold}
+@keyframes celebPop{0%{transform:translate(-50%,-50%) scale(0) rotate(-30deg);opacity:0}40%{transform:translate(-50%,-50%) scale(1.4) rotate(8deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1.1) rotate(0);opacity:0}}
+/* AI气泡 */
+.ai-bubble{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);max-width:60%;background:rgba(20,16,12,.92);border:1px solid var(--gold);color:var(--gl);padding:9px 16px;border-radius:14px;font-size:13px;z-index:35;animation:bubblePop .35s ease-out;line-height:1.5;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+.ai-bubble:after{content:'';position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:0;height:0;border:7px solid transparent;border-top-color:var(--gold)}
+@keyframes bubblePop{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ---- SIMULATE PANEL ---- */
+.sim-row{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap}
+.sim-row:last-child{margin-bottom:0}
+.sim-label{width:56px;font-size:11px;color:var(--gold);font-weight:bold;flex-shrink:0;text-align:right;padding-right:4px;border-right:2px solid rgba(201,165,92,.2)}
+.sim-input{flex:1;min-width:160px}
+.sim-btn{padding:6px 13px;background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;transition:.15s}
+.sim-btn:hover{border-color:var(--gold);color:var(--gl);background:rgba(201,165,92,.08)}
+.sim-btn.sim-big{border-color:rgba(255,170,80,.4);color:#ffaa50}
+.sim-btn.sim-big:hover{background:rgba(255,170,80,.1)}
+.sim-btn.sim-flow{flex:1;background:linear-gradient(90deg,rgba(201,165,92,.15),rgba(201,165,92,.05));color:var(--gold);font-weight:bold;padding:9px 14px}
+.sim-btn.sim-flow:hover{background:linear-gradient(90deg,rgba(201,165,92,.3),rgba(201,165,92,.1))}
+
+/* ---- PRODUCT PAGE ---- */
+.prod-split{display:grid;grid-template-columns:240px 1fr;gap:16px}
+.prod-list{display:flex;flex-direction:column;gap:8px}
+.prod-item{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:12px 14px;cursor:pointer;transition:.15s}
+.prod-item:hover{border-color:var(--gd)}
+.prod-item.on{border-color:var(--gold);background:var(--bg4)}
+.prod-item-name{font-size:13px;font-weight:bold;color:var(--gl)}
+.prod-item-meta{font-size:11px;color:var(--dim);margin-top:3px}
+
+/* ---- SAVE BAR ---- */
+.save-bar{position:sticky;bottom:0;background:var(--bg2);border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;z-index:50;flex-shrink:0}
+.save-msg{font-size:13px;color:var(--dim);margin-left:auto}
+.save-msg.ok{color:var(--green)}.save-msg.err{color:var(--red)}
+
+/* ---- MISC ---- */
+.hint{font-size:11px;color:var(--dim);margin-top:4px}
+.sec{font-size:12px;font-weight:bold;color:var(--gold);padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px}
+.b-g{background:rgba(62,234,124,.12);color:var(--green)}
+.b-r{background:rgba(220,80,80,.12);color:#ff7777}
+.empty{text-align:center;padding:40px;color:var(--dim)}
+hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <span class="nav-logo">🔥 宝青坊</span>
+  <span style="color:var(--dim);font-size:13px">配置中心</span>
+  <a href="/control" class="nav-back">← 返回控制台</a>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="tab('connect',this)">🔗 直播连接</button>
+  <button class="tab" onclick="tab('llm',this)">🤖 AI大模型</button>
+  <button class="tab" onclick="tab('cloud',this)">☁️ 云服务</button>
+</div>
+
+<div class="body">
+
+<!-- ========== 直播连接 ========== -->
+<div class="page on" id="page-connect">
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">📡 直播平台连接</span>
+      <span style="font-size:12px;color:var(--dim)">配置后点「保存」，重启服务器生效</span>
+    </div>
+    <div class="card-body">
+      <div class="platform-grid" id="plat-grid">
+        <div class="empty">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <button class="btn btn-p" onclick="savePlatforms()">💾 保存平台配置</button>
+    <span class="save-msg" id="connect-msg"></span>
+  </div>
+</div>
+
+<!-- ========== AI大模型配置 ========== -->
+<div class="page" id="page-llm">
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">🤖 AI大模型配置</span>
+      <span style="font-size:12px;color:var(--dim)">全平台共用同一个激活的模型</span>
+    </div>
+    <div class="card-body">
+      <div id="llm-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        <div class="empty">加载中...</div>
+      </div>
+      <button class="btn btn-p" onclick="openAddLlm()">＋ 添加大模型</button>
+    </div>
+  </div>
+
+  <!-- 添加/编辑 表单 -->
+  <div class="card" id="llm-form-card" style="display:none">
+    <div class="card-head">
+      <span class="card-title" id="llm-form-title">添加大模型</span>
+    </div>
+    <div class="card-body">
+      <div class="row r2">
+        <div class="fg">
+          <label class="lbl">提供商</label>
+          <select class="sel" id="llm-provider" onchange="onProviderChange()">
+            <option value="deepseek">DeepSeek</option>
+            <option value="openai">OpenAI</option>
+            <option value="qwen">通义千问 (Qwen)</option>
+            <option value="glm">智谱 GLM</option>
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="local">本地模型 (Ollama)</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="lbl">模型名称</label>
+          <input class="inp" id="llm-model" placeholder="如 deepseek-chat">
+        </div>
+      </div>
+      <div class="row r2">
+        <div class="fg">
+          <label class="lbl">API Key</label>
+          <input class="inp" id="llm-key" type="password" placeholder="sk-...">
+        </div>
+        <div class="fg">
+          <label class="lbl">API Base URL（留空用默认）</label>
+          <input class="inp" id="llm-base" placeholder="https://api.deepseek.com/v1">
+        </div>
+      </div>
+      <div class="row r3">
+        <div class="fg">
+          <label class="lbl">Temperature</label>
+          <input class="inp" id="llm-temp" type="number" min="0" max="2" step="0.1" value="0.7">
+        </div>
+        <div class="fg">
+          <label class="lbl">Max Tokens</label>
+          <input class="inp" id="llm-tokens" type="number" min="100" max="8000" value="2000">
+        </div>
+        <div class="fg">
+          <label class="lbl">超时（秒）</label>
+          <input class="inp" id="llm-timeout" type="number" min="5" max="300" value="60">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn btn-p" onclick="saveLlmConfig()">💾 保存</button>
+        <button class="btn btn-g" onclick="testLlmConfig()">🧪 测试连接</button>
+        <button class="btn btn-g" onclick="closeLlmForm()">取消</button>
+        <span id="llm-test-msg" style="font-size:12px;align-self:center"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 默认模型速查 -->
+  <div class="card">
+    <div class="card-head"><span class="card-title">📖 常用默认值</span></div>
+    <div class="card-body" style="font-size:12px;color:var(--dim);line-height:2">
+      <b style="color:var(--gl)">DeepSeek</b>：模型 <code>deepseek-chat</code>，API Base <code>https://api.deepseek.com/v1</code><br>
+      <b style="color:var(--gl)">OpenAI</b>：模型 <code>gpt-4o</code>，API Base <code>https://api.openai.com/v1</code><br>
+      <b style="color:var(--gl)">通义千问</b>：模型 <code>qwen-turbo</code>，API Base <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code><br>
+      <b style="color:var(--gl)">智谱GLM</b>：模型 <code>glm-4</code>，API Base <code>https://open.bigmodel.cn/api/paas/v4</code><br>
+      <b style="color:var(--gl)">Claude</b>：模型 <code>claude-3-5-sonnet-20241022</code>，API Base <code>https://api.anthropic.com</code><br>
+      <b style="color:var(--gl)">Ollama本地</b>：模型 <code>qwen2.5:7b</code>，API Base <code>http://localhost:11434</code>，Key随便填
+    </div>
+  </div>
+</div>
+
+<!-- ========== 云服务配置 ========== -->
+<div class="page" id="page-cloud">
+  <div class="card">
+    <div class="card-head">
+      <span class="card-title">☁️ 云服务 API 密钥</span>
+      <span style="font-size:12px;color:var(--dim)">替代 .env 文件，部署时无需暴露敏感信息</span>
+    </div>
+    <div class="card-body">
+
+      <!-- 语音合成 TTS -->
+      <div class="sec">🔊 语音合成 TTS</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:bold;color:var(--gl);margin-bottom:10px">🌋 火山引擎 TTS（ByteDance）</div>
+        <div class="row r2">
+          <div class="fg"><label class="lbl">AppID</label><input class="inp" id="sec-VOLC_TTS_APPID" placeholder="如 6949908166"></div>
+          <div class="fg"><label class="lbl">Access Token</label><input class="inp" id="sec-VOLC_TTS_TOKEN" type="password" placeholder="从火山控制台获取"></div>
+        </div>
+        <button class="btn btn-g btn-sm" onclick="testCloudService('volc_tts')">🧪 测试连接</button>
+        <span id="test-volc-msg" style="font-size:12px;color:var(--dim);margin-left:8px"></span>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:bold;color:var(--gl);margin-bottom:10px">🎙 MiniMax TTS</div>
+        <div class="row r2">
+          <div class="fg"><label class="lbl">API Key</label><input class="inp" id="sec-MINIMAX_API_KEY" type="password" placeholder="sk-..."></div>
+          <div class="fg"><label class="lbl">Group ID</label><input class="inp" id="sec-MINIMAX_GROUP_ID" placeholder="如 205812715025859430"></div>
+        </div>
+        <button class="btn btn-g btn-sm" onclick="testCloudService('minimax')">🧪 测试连接</button>
+        <span id="test-minimax-msg" style="font-size:12px;color:var(--dim);margin-left:8px"></span>
+      </div>
+
+      <!-- 语音识别 STT -->
+      <div class="sec" style="margin-top:8px">🎤 语音识别 STT</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:bold;color:var(--gl);margin-bottom:10px">🤖 OpenAI Whisper</div>
+        <div class="row r2">
+          <div class="fg"><label class="lbl">API Key</label><input class="inp" id="sec-OPENAI_API_KEY" type="password" placeholder="sk-..."></div>
+          <div class="fg"><label class="lbl">API Base（留空用官方）</label><input class="inp" id="sec-OPENAI_API_BASE" placeholder="https://api.openai.com/v1"></div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:bold;color:var(--gl);margin-bottom:10px">☁️ 阿里云语音识别</div>
+        <div class="row r3">
+          <div class="fg"><label class="lbl">Access Key ID</label><input class="inp" id="sec-ALIYUN_ACCESS_KEY_ID" placeholder="LTAI5t..."></div>
+          <div class="fg"><label class="lbl">Access Key Secret</label><input class="inp" id="sec-ALIYUN_ACCESS_KEY_SECRET" type="password" placeholder="..."></div>
+          <div class="fg"><label class="lbl">NLS App Key</label><input class="inp" id="sec-ALIYUN_NLS_APP_KEY" placeholder="..."></div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:bold;color:var(--gl);margin-bottom:10px">🟦 腾讯云语音识别</div>
+        <div class="row r2">
+          <div class="fg"><label class="lbl">Secret ID</label><input class="inp" id="sec-TENCENT_SECRET_ID" placeholder="AKID..."></div>
+          <div class="fg"><label class="lbl">Secret Key</label><input class="inp" id="sec-TENCENT_SECRET_KEY" type="password" placeholder="..."></div>
+        </div>
+      </div>
+
+      <div class="save-bar" style="position:static;padding:0;background:none;border:none">
+        <button class="btn btn-p" onclick="saveSecrets()">💾 保存全部云服务配置</button>
+        <span class="save-msg" id="cloud-msg"></span>
+      </div>
+      <div class="hint" style="margin-top:12px">
+        � 密钥保存至服务器本地 <code>config/secrets.json</code>，不上传 Git，不返回前端，页面不回显。<br>
+        ✏️ 如需更新某个密钥，只填该项即可，其余留空不会覆盖已有值。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== STATE ======
+let platCfg = {};
+const BASE = window.location.origin;
+
+// ====== TABS ======
+function tab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('page-' + name).classList.add('on');
+}
+
+// ====== TOAST ======
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.style.display = 'block';
+  clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 2500);
+}
+
+// ====== INIT ======
+async function loadAll() {
+  try {
+    const r = await fetch('/api/platforms');
+    const data = await r.json();
+    platCfg = data.platforms || {};
+    renderPlatforms();
+  } catch (e) {
+    console.error('加载平台配置失败:', e);
+    document.getElementById('plat-grid').innerHTML = '<div class="empty">加载失败，请刷新重试</div>';
+  }
+}
+loadAll();
+loadLlmConfigs();
+loadSecrets();
+
+// ==================== 云服务配置 ====================
+// 所有输入框 id="sec-KEY_NAME"，自动收集和回显
+
+const SECRET_FIELDS = [
+  'VOLC_TTS_APPID','VOLC_TTS_TOKEN',
+  'MINIMAX_API_KEY','MINIMAX_GROUP_ID',
+  'OPENAI_API_KEY','OPENAI_API_BASE',
+  'ALIYUN_ACCESS_KEY_ID','ALIYUN_ACCESS_KEY_SECRET','ALIYUN_NLS_APP_KEY',
+  'TENCENT_SECRET_ID','TENCENT_SECRET_KEY',
+];
+// 非敏感字段（可以回显明文）
+const NON_SECRET = new Set(['VOLC_TTS_APPID','MINIMAX_GROUP_ID','OPENAI_API_BASE','ALIYUN_NLS_APP_KEY',
+                            'ALIYUN_ACCESS_KEY_ID','TENCENT_SECRET_ID']);
+
+async function loadSecrets() {
+  try {
+    const r = await fetch('/api/secrets');
+    const d = await r.json();
+    if (!d.ok) return;
+    const s = d.secrets || {};
+    for (const key of SECRET_FIELDS) {
+      const el = document.getElementById('sec-' + key);
+      if (!el) continue;
+      const val = s[key];
+      if (val && val !== '') {
+        if (NON_SECRET.has(key)) {
+          el.placeholder = `已配置: ${val}`;
+        } else {
+          el.placeholder = '已配置（输入新值可覆盖）';
+        }
+      }
+    }
+  } catch(e) { console.log('secrets加载:', e.message); }
+}
+
+async function saveSecrets() {
+  const secrets = {};
+  for (const key of SECRET_FIELDS) {
+    const el = document.getElementById('sec-' + key);
+    if (el && el.value.trim()) secrets[key] = el.value.trim();
+  }
+  if (!Object.keys(secrets).length) {
+    toast('⚠ 没有填写任何内容');
+    return;
+  }
+  try {
+    const r = await fetch('/api/secrets', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({secrets})
+    });
+    const d = await r.json();
+    const msg = document.getElementById('cloud-msg');
+    msg.textContent = d.ok ? '✅ 已保存（立即生效，无需重启）' : '❌ ' + (d.error||'保存失败');
+    msg.className = 'save-msg ' + (d.ok ? 'ok' : 'err');
+    toast(d.ok ? '✅ 云服务配置已保存' : '❌ 保存失败');
+    if (d.ok) {
+      // 清空输入框，刷新placeholder
+      for (const key of SECRET_FIELDS) {
+        const el = document.getElementById('sec-' + key);
+        if (el) el.value = '';
+      }
+      await loadSecrets();
+    }
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function testCloudService(service) {
+  const msgEl = document.getElementById(service === 'volc_tts' ? 'test-volc-msg' : 'test-minimax-msg');
+  msgEl.textContent = '🧪 测试中...';
+  msgEl.style.color = 'var(--dim)';
+  try {
+    const payload = { service };
+    if (service === 'volc_tts') {
+      payload.app_id = document.getElementById('sec-VOLC_TTS_APPID').value.trim();
+      payload.token  = document.getElementById('sec-VOLC_TTS_TOKEN').value.trim();
+    } else if (service === 'minimax') {
+      payload.api_key  = document.getElementById('sec-MINIMAX_API_KEY').value.trim();
+      payload.group_id = document.getElementById('sec-MINIMAX_GROUP_ID').value.trim();
+    }
+    const r = await fetch('/api/secrets/test', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const d = await r.json();
+    msgEl.textContent = d.ok ? '✅ ' + d.message : '❌ ' + (d.error||'测试失败');
+    msgEl.style.color = d.ok ? 'var(--green)' : 'var(--red)';
+  } catch(e) { msgEl.textContent = '❌ ' + e.message; msgEl.style.color = 'var(--red)'; }
+}
+
+// ==================== AI大模型 ====================
+const PROVIDER_DEFAULTS = {
+  deepseek: { base: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+  openai:   { base: 'https://api.openai.com/v1',   model: 'gpt-4o' },
+  qwen:     { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-turbo' },
+  glm:      { base: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4' },
+  claude:   { base: 'https://api.anthropic.com',   model: 'claude-3-5-sonnet-20241022' },
+  local:    { base: 'http://localhost:11434',       model: 'qwen2.5:7b' },
+};
+let llmConfigs = {};
+let activeAdapter = null;
+let editingConfigId = null;
+
+function onProviderChange() {
+  const p = document.getElementById('llm-provider').value;
+  const d = PROVIDER_DEFAULTS[p] || {};
+  const baseEl = document.getElementById('llm-base');
+  const modelEl = document.getElementById('llm-model');
+  if (!baseEl.value || Object.values(PROVIDER_DEFAULTS).some(x => x.base === baseEl.value))
+    baseEl.value = d.base || '';
+  if (!modelEl.value || Object.values(PROVIDER_DEFAULTS).some(x => x.model === modelEl.value))
+    modelEl.value = d.model || '';
+}
+
+async function loadLlmConfigs() {
+  try {
+    await init_llm_manager_remote();
+    const r = await fetch('/api/llm/configs');
+    const d = await r.json();
+    llmConfigs = d.configs || {};
+    activeAdapter = d.active_adapter || null;
+    renderLlmList();
+  } catch(e) {
+    document.getElementById('llm-list').innerHTML = '<div class="empty">加载失败: ' + e.message + '</div>';
+  }
+}
+
+async function init_llm_manager_remote() {
+  // 触发后端init_llm_manager（加载已有配置）
+  try { await fetch('/api/llm/configs'); } catch(e) {}
+}
+
+function renderLlmList() {
+  const list = document.getElementById('llm-list');
+  const entries = Object.entries(llmConfigs).filter(([k]) => k !== 'default_adapter');
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty">暂无大模型配置，点击「添加」开始配置</div>';
+    return;
+  }
+  list.innerHTML = entries.map(([id, cfg]) => {
+    const isActive = id === activeAdapter;
+    return `<div style="background:var(--bg3);border:1px solid ${isActive?'rgba(62,234,124,.4)':'var(--border)'};border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:13px;font-weight:bold;color:var(--gl)">${esc(cfg.provider?.toUpperCase()||'?')} · ${esc(cfg.model_name||'')}
+          ${isActive ? '<span class="badge b-g" style="margin-left:6px">✓ 当前激活</span>' : ''}
+        </div>
+        <div style="font-size:11px;color:var(--dim);margin-top:2px">${esc(cfg.api_base||'默认地址')} &nbsp;|&nbsp; temp=${cfg.temperature||0.7} &nbsp;|&nbsp; max=${cfg.max_tokens||2000}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${!isActive ? `<button class="btn btn-g btn-sm" onclick="setActive('${id}')">⚡ 激活</button>` : ''}
+        <button class="btn btn-g btn-sm" onclick="editLlm('${id}')">✏ 编辑</button>
+        <button class="btn btn-d btn-sm" onclick="deleteLlm('${id}')">🗑 删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function openAddLlm() {
+  editingConfigId = null;
+  document.getElementById('llm-form-title').textContent = '添加大模型';
+  document.getElementById('llm-provider').value = 'deepseek';
+  document.getElementById('llm-model').value = 'deepseek-chat';
+  document.getElementById('llm-key').value = '';
+  document.getElementById('llm-base').value = 'https://api.deepseek.com/v1';
+  document.getElementById('llm-temp').value = '0.7';
+  document.getElementById('llm-tokens').value = '2000';
+  document.getElementById('llm-timeout').value = '60';
+  document.getElementById('llm-test-msg').textContent = '';
+  document.getElementById('llm-form-card').style.display = 'block';
+  document.getElementById('llm-form-card').scrollIntoView({behavior:'smooth'});
+}
+
+function editLlm(id) {
+  const cfg = llmConfigs[id];
+  if (!cfg) return;
+  editingConfigId = id;
+  document.getElementById('llm-form-title').textContent = '编辑: ' + id;
+  document.getElementById('llm-provider').value = cfg.provider || 'deepseek';
+  document.getElementById('llm-model').value = cfg.model_name || '';
+  document.getElementById('llm-key').value = ''; // 不回显密钥
+  document.getElementById('llm-base').value = cfg.api_base || '';
+  document.getElementById('llm-temp').value = cfg.temperature || 0.7;
+  document.getElementById('llm-tokens').value = cfg.max_tokens || 2000;
+  document.getElementById('llm-timeout').value = cfg.timeout || 60;
+  document.getElementById('llm-test-msg').textContent = '';
+  document.getElementById('llm-form-card').style.display = 'block';
+  document.getElementById('llm-form-card').scrollIntoView({behavior:'smooth'});
+}
+
+function closeLlmForm() {
+  document.getElementById('llm-form-card').style.display = 'none';
+  editingConfigId = null;
+}
+
+async function saveLlmConfig() {
+  const provider = document.getElementById('llm-provider').value;
+  const model = document.getElementById('llm-model').value.trim();
+  const key = document.getElementById('llm-key').value.trim();
+  const base = document.getElementById('llm-base').value.trim();
+  if (!model) { toast('❌ 请填写模型名称'); return; }
+  // 新增：编辑时若旧配置没有api_key，必须重新填写
+  const oldCfg = editingConfigId ? llmConfigs[editingConfigId] : null;
+  const oldHasKey = oldCfg && (oldCfg.has_key || oldCfg.api_key || false);
+  if (!key && (!editingConfigId || !oldHasKey)) {
+    toast('❌ 请填写API Key（编辑时由于安全原因不回显旧Key，需重新填入）');
+    return;
+  }
+  const configId = editingConfigId || (provider + '_' + Date.now());
+  const payload = {
+    config_id: configId,
+    provider, model_name: model,
+    api_key: key || undefined,  // 编辑时留空=不修改
+    api_base: base || null,
+    temperature: parseFloat(document.getElementById('llm-temp').value) || 0.7,
+    max_tokens: parseInt(document.getElementById('llm-tokens').value) || 2000,
+    timeout: parseInt(document.getElementById('llm-timeout').value) || 60,
+    enabled: true
+  };
+  try {
+    const r = await fetch('/api/llm/save-config', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d = await r.json();
+    if (d.ok) {
+      toast('✅ 已保存');
+      closeLlmForm();
+      await loadLlmConfigs();
+      // 如果是第一个配置，自动激活
+      if (Object.keys(llmConfigs).filter(k=>k!=='default_adapter').length === 1)
+        await setActive(configId);
+    } else { toast('❌ ' + (d.error||'保存失败')); }
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function deleteLlm(id) {
+  if (!confirm('确认删除这个大模型配置？')) return;
+  try {
+    const r = await fetch('/api/llm/delete-config', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({config_id:id})});
+    const d = await r.json();
+    if (d.ok) { toast('✅ 已删除'); await loadLlmConfigs(); }
+    else toast('❌ ' + (d.error||'删除失败'));
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function setActive(id) {
+  try {
+    const r = await fetch('/api/llm/set-active', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({config_id:id})});
+    const d = await r.json();
+    if (d.ok) { toast('✅ 已设为激活模型'); await loadLlmConfigs(); }
+    else toast('❌ ' + (d.error||'设置失败'));
+  } catch(e) { toast('❌ ' + e.message); }
+}
+
+async function testLlmConfig() {
+  const provider = document.getElementById('llm-provider').value;
+  const model = document.getElementById('llm-model').value.trim();
+  const key = document.getElementById('llm-key').value.trim();
+  const base = document.getElementById('llm-base').value.trim();
+  const msgEl = document.getElementById('llm-test-msg');
+  msgEl.textContent = '🧪 测试中...';
+  msgEl.style.color = 'var(--dim)';
+  try {
+    const r = await fetch('/api/llm/test-config', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({provider, model_name:model, api_key:key, api_base:base||null, temperature:0.1, max_tokens:10, timeout:30})});
+    const d = await r.json();
+    if (d.ok) { msgEl.textContent = '✅ 连接成功'; msgEl.style.color = 'var(--green)'; }
+    else { msgEl.textContent = '❌ ' + (d.error||'测试失败'); msgEl.style.color = 'var(--red)'; }
+  } catch(e) { msgEl.textContent = '❌ ' + e.message; msgEl.style.color = 'var(--red)'; }
+}
+
+// ==================== 直播连接 ====================
+const PLAT_META = {
+  douyin:    { icon: '🎵', name: '抖音直播', fields: [{key:'room_id', label:'直播间ID', hint:'直播链接中的数字，如 7123456789'}, {key:'app_key', label:'App Key（可选）', hint:'抖音开放平台 App Key'}, {key:'app_secret', label:'App Secret（可选）', type:'password'}] },
+  wechat:    { icon: '💚', name: '微信视频号', fields: [{key:'app_id', label:'AppID'}, {key:'app_secret', label:'AppSecret', type:'password'}, {key:'token', label:'Token', hint:'配置服务器时填写的Token'}] },
+  xiaohongshu:{ icon: '📕', name: '小红书直播', fields: [{key:'room_id', label:'直播间ID'}, {key:'access_token', label:'Access Token', type:'password'}] },
+  taobao:    { icon: '🛒', name: '淘宝直播', fields: [{key:'app_key', label:'App Key'}, {key:'app_secret', label:'App Secret', type:'password'}, {key:'session_key', label:'Session Key（授权后获取）'}] },
+  kuaishou:  { icon: '⚡', name: '快手直播', fields: [{key:'app_id', label:'App ID'}, {key:'app_secret', label:'App Secret', type:'password'}] },
+  huoshan:   { icon: '🔥', name: '火山直播', fields: [{key:'room_id', label:'直播间ID'}, {key:'access_key', label:'Access Key', type:'password'}] },
+};
+
+function renderPlatforms() {
+  const grid = document.getElementById('plat-grid');
+  grid.innerHTML = Object.entries(PLAT_META).map(([id, meta]) => {
+    const cfg = platCfg[id] || {};
+    const en = !!cfg.enabled;
+    return `<div class="plat-card ${en?'enabled':''}" id="pc-${id}">
+      <div class="plat-head">
+        <span class="plat-icon">${meta.icon}</span>
+        <div>
+          <div class="plat-name">${meta.name}</div>
+        </div>
+        <span class="plat-status ${en?'st-on':'st-off'}" id="ps-${id}">${en?'已启用':'未启用'}</span>
+        <label class="tog" style="margin-left:8px"><input type="checkbox" ${en?'checked':''} onchange="togglePlat('${id}',this.checked)"><span class="tog-s"></span></label>
+      </div>
+      ${meta.fields.map(f => `
+        <div class="fg" style="margin-bottom:8px">
+          <label class="lbl">${f.label}</label>
+          <input class="inp" id="pf-${id}-${f.key}" type="${f.type||'text'}" value="${cfg[f.key]||''}" placeholder="${f.hint||''}">
+        </div>`).join('')}
+      <div class="webhook-box">
+        <span>Webhook: ${BASE}/webhook/${id}</span>
+        <button class="btn btn-g btn-sm" onclick="copyWebhook('${BASE}/webhook/${id}')">复制</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePlat(id, on) {
+  const card = document.getElementById('pc-' + id);
+  const badge = document.getElementById('ps-' + id);
+  card.classList.toggle('enabled', on);
+  badge.textContent = on ? '已启用' : '未启用';
+  badge.className = 'plat-status ' + (on ? 'st-on' : 'st-off');
+}
+
+function copyWebhook(url) {
+  navigator.clipboard.writeText(url).then(() => toast('✅ 已复制: ' + url));
+}
+
+async function savePlatforms() {
+  const data = {};
+  for (const [id, meta] of Object.entries(PLAT_META)) {
+    const cb = document.querySelector(`#pc-${id} input[type=checkbox]`);
+    data[id] = { enabled: cb?.checked || false };
+    for (const f of meta.fields) {
+      const inp = document.getElementById(`pf-${id}-${f.key}`);
+      if (inp) data[id][f.key] = inp.value.trim();
+    }
+  }
+  try {
+    const res = await fetch('/api/platforms', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    const r = await res.json();
+    const el = document.getElementById('connect-msg');
+    el.textContent = r.ok ? '✅ 已保存（重启服务器生效）' : '❌ ' + r.error;
+    el.className = 'save-msg ' + (r.ok ? 'ok' : 'err');
+    toast(r.ok ? '✅ 平台配置已保存' : '❌ 保存失败');
+  } catch (e) {
+    toast('❌ 保存失败: ' + e.message);
+  }
+}
+
+</script>
+
+<div id="toast" style="display:none;position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#1e1810;border:1px solid #c9a55c;color:#d4c4a8;padding:9px 20px;border-radius:7px;font-size:13px;z-index:9999"></div>
+
+</body>
+</html>
+

@@ -1,0 +1,111 @@
+{
+  "_comment": "标准骨骼类型定义库。每种类型定义必要关节列表，动作GLB绑定此类型后可被所有同类角色复用。",
+  "version": "1.0",
+
+  "types": {
+
+    "humanoid": {
+      "display_name": "人形",
+      "description": "标准双足直立人形，兼容 Mixamo / VRM / UE Mannequin",
+      "examples": ["人类NPC", "虚拟主播", "古风角色", "机器人"],
+      "required_joints": [
+        "hips", "spine", "chest", "neck", "head",
+        "leftShoulder", "leftUpperArm", "leftLowerArm", "leftHand",
+        "rightShoulder", "rightUpperArm", "rightLowerArm", "rightHand",
+        "leftUpperLeg", "leftLowerLeg", "leftFoot",
+        "rightUpperLeg", "rightLowerLeg", "rightFoot"
+      ],
+      "optional_joints": ["leftToes", "rightToes", "leftEye", "rightEye", "jaw", "tail"],
+      "canonical_format": "vrm",
+      "mixamo_compatible": true
+    },
+
+    "quadruped": {
+      "display_name": "四足",
+      "description": "四条腿的动物形态，如狗、猫、马、狼",
+      "examples": ["导购犬", "宠物猫", "神兽"],
+      "required_joints": [
+        "hips", "spine", "chest", "neck", "head",
+        "frontLeftUpper", "frontLeftLower", "frontLeftPaw",
+        "frontRightUpper", "frontRightLower", "frontRightPaw",
+        "backLeftUpper", "backLeftLower", "backLeftPaw",
+        "backRightUpper", "backRightLower", "backRightPaw"
+      ],
+      "optional_joints": ["tail", "tail1", "tail2", "ears", "jaw"],
+      "canonical_format": "glb",
+      "mixamo_compatible": false
+    },
+
+    "avian": {
+      "display_name": "鸟形",
+      "description": "有翅膀的飞行生物，双足+翅膀骨骼",
+      "examples": ["信使鸟", "神鸟", "翼龙"],
+      "required_joints": [
+        "hips", "spine", "chest", "neck", "head",
+        "leftWingUpper", "leftWingMid", "leftWingTip",
+        "rightWingUpper", "rightWingMid", "rightWingTip",
+        "leftUpperLeg", "leftLowerLeg", "leftFoot",
+        "rightUpperLeg", "rightLowerLeg", "rightFoot"
+      ],
+      "optional_joints": ["tail", "beak", "crest"],
+      "canonical_format": "glb",
+      "mixamo_compatible": false
+    },
+
+    "mechanical": {
+      "display_name": "机械",
+      "description": "机器人/机械装置，关节为刚性旋转，无皮肤权重变形",
+      "examples": ["取货机器人", "机械臂", "巡逻无人机"],
+      "required_joints": [
+        "base", "torso", "head",
+        "leftUpperArm", "leftLowerArm", "leftHand",
+        "rightUpperArm", "rightLowerArm", "rightHand",
+        "leftUpperLeg", "leftLowerLeg", "leftFoot",
+        "rightUpperLeg", "rightLowerLeg", "rightFoot"
+      ],
+      "optional_joints": ["antenna", "display_screen", "cargo_bay", "wheels"],
+      "canonical_format": "glb",
+      "mixamo_compatible": true,
+      "_note": "关节名与humanoid一致，可直接复用humanoid动作库；display_screen节点用于overlay_2d表情"
+    },
+
+    "custom": {
+      "display_name": "自定义",
+      "description": "不匹配以上类型的特殊骨骼，需手动配置映射表",
+      "examples": ["章鱼角色", "蛇形NPC", "特殊机械"],
+      "required_joints": [],
+      "optional_joints": [],
+      "canonical_format": "glb",
+      "mixamo_compatible": false
+    }
+
+  },
+
+  "retarget_maps": {
+    "mixamo_to_vrm": {
+      "_comment": "Mixamo骨骼节点名 → VRM实际节点名(J_Bip_*)，适用于标准VRM0模型如npc_01.vrm",
+      "mixamorigHips":             "Normalized_J_Bip_C_Hips",
+      "mixamorigSpine":            "Normalized_J_Bip_C_Spine",
+      "mixamorigSpine1":           "Normalized_J_Bip_C_Chest",
+      "mixamorigSpine2":           "Normalized_J_Bip_C_UpperChest",
+      "mixamorigNeck":             "Normalized_J_Bip_C_Neck",
+      "mixamorigHead":             "Normalized_J_Bip_C_Head",
+      "mixamorigLeftShoulder":     "Normalized_J_Bip_L_Shoulder",
+      "mixamorigLeftArm":          "Normalized_J_Bip_L_UpperArm",
+      "mixamorigLeftForeArm":      "Normalized_J_Bip_L_LowerArm",
+      "mixamorigLeftHand":         "Normalized_J_Bip_L_Hand",
+      "mixamorigRightShoulder":    "Normalized_J_Bip_R_Shoulder",
+      "mixamorigRightArm":         "Normalized_J_Bip_R_UpperArm",
+      "mixamorigRightForeArm":     "Normalized_J_Bip_R_LowerArm",
+      "mixamorigRightHand":        "Normalized_J_Bip_R_Hand",
+      "mixamorigLeftUpLeg":        "Normalized_J_Bip_L_UpperLeg",
+      "mixamorigLeftLeg":          "Normalized_J_Bip_L_LowerLeg",
+      "mixamorigLeftFoot":         "Normalized_J_Bip_L_Foot",
+      "mixamorigLeftToeBase":      "Normalized_J_Bip_L_ToeBase",
+      "mixamorigRightUpLeg":       "Normalized_J_Bip_R_UpperLeg",
+      "mixamorigRightLeg":         "Normalized_J_Bip_R_LowerLeg",
+      "mixamorigRightFoot":        "Normalized_J_Bip_R_Foot",
+      "mixamorigRightToeBase":     "Normalized_J_Bip_R_ToeBase"
+    }
+  }
+}

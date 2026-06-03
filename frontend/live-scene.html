@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宝青坊 · 3D直播间</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Microsoft YaHei',sans-serif;user-select:none}
+
+/* ── 3D画布层 ── */
+#scene-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+
+/* ── NPC透明视频前景层 ── */
+#npc-layer{position:fixed;inset:0;z-index:10;pointer-events:none;display:flex;align-items:flex-end;justify-content:center}
+#npc-video{width:auto;height:88vh;object-fit:contain;mix-blend-mode:normal;filter:drop-shadow(0 0 30px rgba(0,0,0,.8))}
+
+/* ── 弹幕飘屏层 ── */
+#danmu-layer{position:fixed;left:0;top:0;width:65%;height:100%;z-index:20;pointer-events:none;overflow:hidden}
+.dm{position:absolute;background:rgba(0,0,0,.55);color:#fff;padding:5px 14px;border-radius:16px;font-size:15px;white-space:nowrap;right:-40%;animation:dmFly 8s linear forwards}
+.dm.gift{background:linear-gradient(90deg,#c9a55c,#e8c87a);color:#1a0e00;font-weight:bold}
+.dm.enter{background:rgba(62,234,124,.75);color:#001a00;font-weight:bold}
+.dm.order{background:linear-gradient(90deg,#e55,#ff8800);color:#fff;font-weight:bold}
+@keyframes dmFly{0%{right:-40%;opacity:0}8%{opacity:1}90%{opacity:1}100%{right:110%;opacity:0}}
+
+/* ── 特效层 ── */
+#fx-layer{position:fixed;inset:0;z-index:25;pointer-events:none;overflow:hidden}
+.coin-fx{position:absolute;font-size:28px;animation:coinDrop 2.5s linear forwards}
+@keyframes coinDrop{from{top:-8%}to{top:108%}}
+.spark-fx{position:absolute;font-size:26px;animation:sparkBurst 1.1s ease-out forwards}
+@keyframes sparkBurst{from{transform:scale(0) rotate(0deg);opacity:1}to{transform:scale(2.2) rotate(180deg);opacity:0}}
+
+/* ── AI 字幕 / 气泡 ── */
+#subtitle{position:fixed;bottom:8%;left:50%;transform:translateX(-50%);max-width:70%;background:rgba(10,8,4,.85);border:1px solid rgba(201,165,92,.5);color:#e8dcc8;padding:12px 22px;border-radius:16px;font-size:16px;line-height:1.6;z-index:30;text-align:center;display:none;backdrop-filter:blur(8px);box-shadow:0 4px 24px rgba(0,0,0,.6)}
+#subtitle.show{display:block;animation:subPop .3s ease-out}
+@keyframes subPop{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+
+/* ── 商品聚焦卡片 ── */
+#product-card{position:fixed;top:50%;right:24px;transform:translateY(-50%);z-index:35;width:220px;background:rgba(10,8,4,.92);border:1px solid rgba(201,165,92,.4);border-radius:14px;padding:18px;color:#e8dcc8;display:none;backdrop-filter:blur(10px);animation:cardSlide .35s ease-out}
+@keyframes cardSlide{from{opacity:0;transform:translateY(-50%) translateX(30px)}to{opacity:1;transform:translateY(-50%) translateX(0)}}
+#product-card h3{color:#c9a55c;font-size:15px;margin-bottom:6px}
+#product-card .pc-img{width:100%;height:120px;object-fit:contain;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:10px}
+#product-card .pc-price{color:#ffaa50;font-size:18px;font-weight:bold;margin-bottom:4px}
+#product-card .pc-desc{font-size:12px;color:#aaa;line-height:1.5}
+#product-card .pc-close{position:absolute;top:10px;right:12px;background:none;border:none;color:#888;font-size:16px;cursor:pointer}
+#product-card .pc-close:hover{color:#c9a55c}
+
+/* ── 比例容器（非全屏时居中显示带黑边的画布）── */
+#aspect-wrapper{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:0}
+#scene-canvas{display:block;z-index:0}
+
+/* ── 加载遮罩 ── */
+#loading{position:fixed;inset:0;background:#0d0a07;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#c9a55c}
+#loading h2{font-size:22px;margin-bottom:12px;letter-spacing:4px}
+#loading p{color:#888;font-size:13px}
+#loading-bar{width:200px;height:3px;background:rgba(201,165,92,.2);border-radius:2px;margin-top:16px;overflow:hidden}
+#loading-fill{height:100%;background:#c9a55c;width:0%;transition:width .4s}
+</style>
+</head>
+<body>
+
+<!-- 加载遮罩 -->
+<div id="loading">
+  <h2>宝青坊</h2>
+  <p>正在加载 3D 直播间场景…</p>
+  <div id="loading-bar"><div id="loading-fill"></div></div>
+</div>
+
+<!-- 3D 画布（包在wrapper里实现居中黑边效果）-->
+<div id="aspect-wrapper">
+  <canvas id="scene-canvas"></canvas>
+</div>
+
+<!-- NPC 骨骼动画层（Three.js渲染到主canvas，不再使用视频） -->
+
+<!-- 弹幕层 -->
+<div id="danmu-layer"></div>
+
+<!-- 特效层 -->
+<div id="fx-layer"></div>
+
+<!-- AI 字幕 -->
+<div id="subtitle"></div>
+
+<!-- 商品聚焦卡片 -->
+<div id="product-card">
+  <button class="pc-close" onclick="closeProductCard()">✕</button>
+  <h3 id="pc-name">商品名称</h3>
+  <img id="pc-img" class="pc-img" src="" alt="">
+  <div id="pc-price" class="pc-price">¥--</div>
+  <div id="pc-desc" class="pc-desc">商品简介</div>
+</div>
+
+
+<!-- Three.js 本地 -->
+<script src="/frontend/libs/three.min.js"></script>
+<script src="/frontend/libs/GLTFLoader.js"></script>
+<script src="/frontend/libs/OrbitControls.js"></script>
+<!-- VRM支持 (three-vrm@2.1.3 兼容 Three.js r140) -->
+<script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.3/lib/three-vrm.js"></script>
+<!-- 骨骼动画重定向器 — Mixamo动画→VRM骨骼自动重定向 -->
+<script src="/frontend/core/BoneRetargeter.js"></script>
+<!-- VRM口型同步管理器 — Viseme时间轴驱动 -->
+<script src="/frontend/core/LipSyncManager.js"></script>
+<!-- VRM表情管理器 — AI情绪标签驱动 -->
+<script src="/frontend/core/ExpressionManager.js"></script>
+<!-- 实时动捕 — MediaPipe摄像头骨骼提取 -->
+<script src="/frontend/core/WebcamMotionCapture.js"></script>
+<!-- 自研组件 -->
+<script src="/frontend/components/glass-case.js"></script>
+<!-- 骨骼节点特效管理器 — 粒子/光效挂载到骨骼节点自动跟随 -->
+<script src="/frontend/core/BoneEffectManager.js"></script>
+<script src="/frontend/core/action-executor.js"></script>
+<script src="/frontend/core/CameraManager.js"></script>
+
+<script>
+
+// ═══════════════════════════════════════════════
+//  场景配置（从 /api/scenes 动态加载，这里是默认）
+// ═══════════════════════════════════════════════
+let SCENE_CONFIG = {
+  name: '默认茶坊',
+  floor: { color: 0x3a2a1a, width: 30, depth: 20 },
+  walls: { color: 0x2a1f14, height: 5 },
+  ambientLight: { color: 0xfff5e0, intensity: 0.6 },
+  dirLight: { color: 0xfff0c0, intensity: 1.2, pos: [8, 10, 5] },
+  shelves: [
+    { id: 'A1',  label: '西湖龙井',  pos: [-2.2, 0, -2.5],  color: 0x5c8a3a, products: ['tea_001'], sku_id: 'tea_001' },
+    { id: 'A2',  label: '铁观音',    pos: [0,    0, -2.8],  color: 0x3a6a5c, products: ['tea_002'], sku_id: 'tea_002' },
+    { id: 'A3',  label: '普洱茶',    pos: [2.2,  0, -2.5],  color: 0x7a4a2a, products: ['tea_003'], sku_id: 'tea_003' },
+    { id: 'B1',  label: '茶具礼盒',  pos: [3.5,  0, -1.5],  color: 0xaa7a2a, products: ['gift_001'], sku_id: 'gift_001' },
+  ],
+  camera: {
+    tour: [
+      { pos: [ 0, 1.6, 5],  target: [ 0, 1.0, 0] },
+      { pos: [-4, 2.0, 4],  target: [ 0, 1.2, 0] },
+      { pos: [ 4, 2.0, 4],  target: [ 0, 1.2, 0] },
+      { pos: [ 0, 3.0, 6],  target: [ 0, 1.0, 0] },
+    ]
+  }
+};
+
+let PRODUCTS = {};   // sku_id → product data
+let currentSceneId = 'default_tea_shop';
+
+// ── NPC 骨骼动画状态 ──
+let npcObject = null;
+let npcMixer = null;
+let npcClock = new THREE.Clock();
+
+// ── Action Flow 执行器 ──
+let actionFlowExecutor = null;
+let sceneActualHeight = 10; // GLTF场景缩放后的实际高度，由loadGLTFScene写入
+let _resolveSceneReady;
+let sceneReadyPromise = new Promise(r => _resolveSceneReady = r);
+let npcCurrentAction = null;
+let npcAnimCache = {};   // filePath → AnimationClip（缓存避免重复加载）
+
+// ── VRM 角色状态 ──
+let npcVRM = null;              // 当前VRM实例
+let npcIsVRM = false;           // 当前角色是否为VRM格式
+let npcLipSync = null;          // VRM口型同步管理器
+let npcExpression = null;       // VRM表情管理器
+let _characterSkeletons = {};   // 角色骨架列表缓存
+let _currentCharacterId = null; // 当前角色ID
+
+// ── 实时动捕状态 ──
+let motionCapture = null;       // WebcamMotionCapture实例
+let mcWebSocket = null;         // 动捕WebSocket连接（消费端）
+let mcIsRunning = false;        // 动捕是否运行
+let mcFrameData = null;         // 最新骨骼帧数据
+
+// 事件 → 动作文件路径映射（默认值，启动后会从 /api/event-action-map 覆盖）
+let EVENT_ACTION_MAP = {
+  idle:       '基础姿态/直立站立/Standing Arguing.glb',
+  danmaku:    '交互动作/取物动作/取中间/Pick Fruit (2).glb',
+  user_enter: '交互动作/递接动作/放下物品/Shaking Hands 1.glb',
+  gift:       '情绪反应/打招呼/Standing Greeting (1).glb',
+  order:      '交互动作/取物动作/取低处/Pick Fruit.glb',
+  walk:       '移动动作/走路/正常走路/Walking.glb',
+  greeting:   '交互动作/递接动作/放下物品/Standing Greeting.glb',
+};
+
+// 从后端加载最新映射（编辑器里保存的）
+async function refreshEventActionMap() {
+  try {
+    const r = await fetch('/api/event-action-map').then(r => r.json());
+    if (r?.ok && r.map && Object.keys(r.map).length > 0) {
+      Object.assign(EVENT_ACTION_MAP, r.map);
+      console.log('🔗 已从后端加载事件→动作映射:', Object.keys(r.map).length, '条');
+    }
+  } catch(e) { console.warn('加载映射失败:', e.message); }
+}
+
+// ═══════════════════════════════════════════════
+//  Three.js 初始化
+// ═══════════════════════════════════════════════
+const canvas = document.getElementById('scene-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x100c08);
+scene.fog = new THREE.FogExp2(0x100c08, 0.012);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 4, 14);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enabled = false;          // 禁用所有鼠标/触摸交互（纯被动显示）
+controls.enableDamping = false;
+controls.target.set(0, 1.5, 0);
+
+// ── 光源 ──
+const ambientLight = new THREE.AmbientLight(0xfff5e0, 0.6);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0xfff0c0, 1.2);
+dirLight.position.set(8, 10, 5);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.near = 0.5;
+dirLight.shadow.camera.far = 50;
+dirLight.shadow.camera.left = -20; dirLight.shadow.camera.right = 20;
+dirLight.shadow.camera.top = 15; dirLight.shadow.camera.bottom = -10;
+scene.add(dirLight);
+
+// 暖色点光（营造氛围）
+const warmLight1 = new THREE.PointLight(0xff9944, 0.8, 20);
+warmLight1.position.set(-5, 3, 3);
+scene.add(warmLight1);
+const warmLight2 = new THREE.PointLight(0xffcc88, 0.5, 15);
+warmLight2.position.set(6, 3, 3);
+scene.add(warmLight2);
+
+// ═══════════════════════════════════════════════
+//  场景构建函数
+// ═══════════════════════════════════════════════
+const shelfMeshes = {};  // shelf_id → mesh（旧版兼容）
+const shelfGroup = new THREE.Group();
+scene.add(shelfGroup);
+
+// 新版玻璃柜实例：shelf_id → GlassCase
+const glassCases = {};
+const glassCasesGroup = new THREE.Group();
+glassCasesGroup.name = 'GlassCases';
+scene.add(glassCasesGroup);
+
+/**
+ * 用 GlassCase 组件渲染场景配置中的 shelves 数组。
+ * 期望 cfg.glassShelves = [GlassCase config, ...]（见 docs/shelf-system-design.md）
+ */
+function buildGlassCases(shelvesList) {
+  // 清空旧实例
+  Object.values(glassCases).forEach(c => c.dispose());
+  for (const k in glassCases) delete glassCases[k];
+  while (glassCasesGroup.children.length) glassCasesGroup.remove(glassCasesGroup.children[0]);
+
+  if (!Array.isArray(shelvesList) || !shelvesList.length) return;
+  if (typeof GlassCase === 'undefined') {
+    console.warn('GlassCase 组件未加载');
+    return;
+  }
+  shelvesList.forEach(sh => {
+    try {
+      const inst = new GlassCase(THREE, sh);
+      // 应用可见性（默认true）
+      inst.root.visible = sh.visible !== false;
+      glassCasesGroup.add(inst.root);
+      glassCases[sh.id] = inst;
+    } catch (e) {
+      console.warn('GlassCase 创建失败:', sh.id, e);
+    }
+  });
+  console.log(`🛒 已创建 ${Object.keys(glassCases).length} 个玻璃展柜`);
+}
+
+const textureLoader = new THREE.TextureLoader();
+
+function buildScene(cfg) {
+  // 清除旧内容
+  while(shelfGroup.children.length) shelfGroup.remove(shelfGroup.children[0]);
+  
+  // 清除之前的GLTF模型
+  if (window.currentGLTFScene) {
+    scene.remove(window.currentGLTFScene);
+    window.currentGLTFScene = null;
+  }
+
+  // 如果是GLTF场景，加载3D模型
+  if (cfg.isGLTF && cfg.environment) {
+    loadGLTFScene(cfg.environment);
+    return;
+  }
+  // 非GLTF场景，立即通知NPC可加载
+  _resolveSceneReady();
+
+  // 地板
+  const floorGeo = new THREE.PlaneGeometry(cfg.floor.width, cfg.floor.depth);
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: cfg.floor.color, roughness: 0.85, metalness: 0.05
+  });
+  // 棋盘格花纹
+  const floorCanvas = document.createElement('canvas');
+  floorCanvas.width = floorCanvas.height = 256;
+  const fc = floorCanvas.getContext('2d');
+  fc.fillStyle = '#3a2a1a'; fc.fillRect(0,0,256,256);
+  fc.fillStyle = '#2e2010';
+  for(let i=0;i<8;i++) for(let j=0;j<8;j++) if((i+j)%2===0) fc.fillRect(i*32,j*32,32,32);
+  const floorTex = new THREE.CanvasTexture(floorCanvas);
+  floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping;
+  floorTex.repeat.set(8, 5);
+  floorMat.map = floorTex;
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // 后墙
+  const wallMat = new THREE.MeshStandardMaterial({ color: cfg.walls.color, roughness: 0.9 });
+  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(cfg.floor.width, cfg.walls.height), wallMat);
+  backWall.position.set(0, cfg.walls.height / 2, -cfg.floor.depth / 2);
+  scene.add(backWall);
+  const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(cfg.floor.depth, cfg.walls.height), wallMat);
+  leftWall.rotation.y = Math.PI / 2;
+  leftWall.position.set(-cfg.floor.width / 2, cfg.walls.height / 2, 0);
+  scene.add(leftWall);
+  const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(cfg.floor.depth, cfg.walls.height), wallMat);
+  rightWall.rotation.y = -Math.PI / 2;
+  rightWall.position.set(cfg.floor.width / 2, cfg.walls.height / 2, 0);
+  scene.add(rightWall);
+
+  // 天花板灯条
+  const ceilLightGeo = new THREE.BoxGeometry(cfg.floor.width * 0.8, 0.08, 0.3);
+  const ceilLightMat = new THREE.MeshStandardMaterial({ color: 0xfffaee, emissive: 0xfffaee, emissiveIntensity: 0.8 });
+  const ceilLight = new THREE.Mesh(ceilLightGeo, ceilLightMat);
+  ceilLight.position.set(0, cfg.walls.height - 0.1, -3);
+  scene.add(ceilLight);
+
+  // 前台柜（NPC站在后面）
+  const counterGeo = new THREE.BoxGeometry(6, 1, 1.5);
+  const counterMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.6, metalness: 0.1 });
+  const counter = new THREE.Mesh(counterGeo, counterMat);
+  counter.position.set(0, 0.5, 6);
+  counter.castShadow = true; counter.receiveShadow = true;
+  scene.add(counter);
+  // 柜台台面
+  const counterTop = new THREE.Mesh(
+    new THREE.BoxGeometry(6.1, 0.1, 1.6),
+    new THREE.MeshStandardMaterial({ color: 0x8a6030, roughness: 0.3, metalness: 0.3 })
+  );
+  counterTop.position.set(0, 1.05, 6);
+  scene.add(counterTop);
+
+  // 旧版货架（兼容）—— 仅当没有新版 glassShelves 时使用
+  if (!cfg.glassShelves || !cfg.glassShelves.length) {
+    cfg.shelves.forEach(sh => {
+      const g = buildShelf(sh);
+      shelfGroup.add(g);
+      shelfMeshes[sh.id] = g;
+    });
+  }
+
+  // 新版玻璃展柜
+  buildGlassCases(cfg.glassShelves);
+
+  // 装饰植物
+  addDecorPlant(-12, 0, 6);
+  addDecorPlant(12, 0, 6);
+
+  // 刷新货架按钮
+  buildShelfButtons(cfg.glassShelves?.length ? cfg.glassShelves : cfg.shelves);
+  setLoading(100);
+  setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
+}
+
+function buildShelf(sh) {
+  const group = new THREE.Group();
+  group.position.set(...sh.pos);
+  group.userData = { shelfId: sh.id, label: sh.label, products: sh.products };
+
+  // 货架框架
+  const frameMat = new THREE.MeshStandardMaterial({ color: 0x6b4c2a, roughness: 0.7, metalness: 0.1 });
+  // 立柱
+  [-0.9, 0.9].forEach(x => {
+    const col = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.8, 0.08), frameMat);
+    col.position.set(x, 1.4, 0); col.castShadow = true;
+    group.add(col);
+  });
+  // 横板 (3层)
+  [0.4, 1.2, 2.0].forEach(y => {
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.06, 0.5), frameMat);
+    shelf.position.set(0, y, 0); shelf.castShadow = true; shelf.receiveShadow = true;
+    group.add(shelf);
+  });
+  // 背板
+  const backMat = new THREE.MeshStandardMaterial({ color: sh.color, roughness: 0.8 });
+  const back = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.8, 0.04), backMat);
+  back.position.set(0, 1.4, -0.28);
+  group.add(back);
+
+  // 货架标牌
+  addShelfLabel(group, sh.label, sh.color);
+
+  // 商品占位（如果有商品配置）
+  sh.products.forEach((pid, i) => {
+    const prod = PRODUCTS[pid];
+    addProductToShelf(group, prod, i, sh.products.length);
+  });
+
+  // 聚焦光晕（默认不可见）
+  const haloGeo = new THREE.PlaneGeometry(3, 0.1);
+  const haloMat = new THREE.MeshStandardMaterial({ color: 0xffd080, emissive: 0xffd080, emissiveIntensity: 0, transparent: true, opacity: 0.7 });
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  halo.rotation.x = -Math.PI / 2;
+  halo.position.set(0, 0.01, 0);
+  halo.name = 'halo';
+  group.add(halo);
+
+  return group;
+}
+
+function addShelfLabel(group, text, color) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 48;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = `#${color.toString(16).padStart(6,'0')}`;
+  ctx.fillRect(0, 0, 256, 48);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 24);
+  const tex = new THREE.CanvasTexture(c);
+  const label = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.8, 0.28),
+    new THREE.MeshStandardMaterial({ map: tex, transparent: false })
+  );
+  label.position.set(0, 2.7, -0.24);
+  group.add(label);
+}
+
+function addProductToShelf(group, prod, idx, total) {
+  const spacing = total > 0 ? 1.6 / Math.max(total, 1) : 0;
+  const startX = total > 1 ? -(spacing * (total-1)) / 2 : 0;
+  const x = startX + idx * spacing;
+  const boxColor = prod ? parseInt((prod.color || '0xaa7733').replace('#','0x')) : 0x888888;
+
+  // 商品箱体
+  const prodMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(0.35, 0.45, 0.28),
+    new THREE.MeshStandardMaterial({ color: boxColor, roughness: 0.6 })
+  );
+  prodMesh.position.set(x, 0.65, 0.1);
+  prodMesh.castShadow = true;
+  prodMesh.userData.productId = prod?.id;
+  group.add(prodMesh);
+
+  if (prod?.name) {
+    // 商品小标签
+    const lc = document.createElement('canvas');
+    lc.width = 128; lc.height = 80;
+    const lctx = lc.getContext('2d');
+    lctx.fillStyle = '#fff';
+    lctx.fillRect(0,0,128,80);
+    lctx.fillStyle = '#222';
+    lctx.font = 'bold 16px sans-serif';
+    lctx.textAlign = 'center';
+    lctx.fillText(prod.name.substring(0,5), 64, 30);
+    lctx.fillStyle = '#c84';
+    lctx.font = '14px sans-serif';
+    lctx.fillText(prod.price || '', 64, 55);
+    const lTex = new THREE.CanvasTexture(lc);
+    const labelMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.33, 0.2),
+      new THREE.MeshStandardMaterial({ map: lTex, transparent: false })
+    );
+    labelMesh.position.set(x, 0.65, 0.252);
+    group.add(labelMesh);
+  }
+}
+
+function addDecorPlant(x, y, z) {
+  const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a3020 });
+  const leafMat = new THREE.MeshStandardMaterial({ color: 0x2a6a2a, roughness: 0.8 });
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.18, 0.4, 8), stemMat);
+  pot.position.set(x, 0.2, z);
+  scene.add(pot);
+  for (let i = 0; i < 5; i++) {
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.3 + Math.random()*0.2, 6, 5), leafMat);
+    const a = (i / 5) * Math.PI * 2;
+    leaf.position.set(x + Math.cos(a)*0.25, 0.6 + Math.random()*0.4, z + Math.sin(a)*0.25);
+    scene.add(leaf);
+  }
+}
+
+function loadGLTFScene(environment) {
+  const gltfPath = `/assets/scenes/${environment}/scene.gltf`;
+  const loader = new THREE.GLTFLoader();
+  
+  setLoading(60);
+  
+  loader.load(
+    gltfPath,
+    (gltf) => {
+      // 清除之前的GLTF模型
+      if (window.currentGLTFScene) {
+        scene.remove(window.currentGLTFScene);
+      }
+      
+      // 添加新模型
+      window.currentGLTFScene = gltf.scene;
+      scene.add(gltf.scene);
+      
+      // 启用阴影
+      gltf.scene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      
+      // 计算模型实际包围盒
+      const box = new THREE.Box3().setFromObject(gltf.scene);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+
+      // 目标：场景高度约10单位（方便NPC按1.7单位站立）
+      const targetSize = 10;
+      const sceneScale = maxDim > 0 ? targetSize / maxDim : 1;
+      gltf.scene.scale.multiplyScalar(sceneScale);
+
+      // 重新计算缩放后的包围盒，把场景底部贴地
+      const box2 = new THREE.Box3().setFromObject(gltf.scene);
+      const center2 = box2.getCenter(new THREE.Vector3());
+      gltf.scene.position.set(-center2.x, -box2.min.y, -center2.z);
+
+      // 记录场景缩放后的实际尺寸，供NPC缩放参考
+      const scaledSize = size.clone().multiplyScalar(sceneScale);
+      sceneActualHeight = scaledSize.y;
+      console.log(`🎨 场景缩放: 原始=${maxDim.toFixed(1)} 缩放=${sceneScale.toFixed(4)} 结果=${scaledSize.x.toFixed(1)}x${scaledSize.y.toFixed(1)}x${scaledSize.z.toFixed(1)}`);
+      _resolveSceneReady(); // 通知NPC可以开始加载
+      // 以NPC为拍摄主体计算机位。距离=NPC高度的2.5倍，镜头水平望去
+      const npcH = scaledSize.y * 0.55; // NPC预期高度（与loadNPCCharacter中保持一致）
+      const eyeH = npcH * 0.85;
+      const dist = npcH * 2.8;
+      SCENE_CONFIG.camera = {
+        tour: [
+          { pos: [0,         eyeH,       dist],         target: [0, npcH*0.5, 0] },
+          { pos: [-dist*0.7, eyeH,       dist*0.7],     target: [0, npcH*0.5, 0] },
+          { pos: [ dist*0.7, eyeH,       dist*0.7],     target: [0, npcH*0.5, 0] },
+          { pos: [0,         eyeH*1.3,   dist*0.9],     target: [0, npcH*0.4, 0] },
+        ]
+      };
+      // 立即把相机摇到首个tour位，避免初始位贴脸
+      const p0 = SCENE_CONFIG.camera.tour[0];
+      camera.position.set(p0.pos[0], p0.pos[1], p0.pos[2]);
+      controls.target.set(p0.target[0], p0.target[1], p0.target[2]);
+      controls.update();
+      
+      // 添加基础地板（如果需要）
+      const floorGeo = new THREE.PlaneGeometry(50, 50);
+      const floorMat = new THREE.MeshStandardMaterial({ 
+        color: 0x2a2a2a, 
+        roughness: 0.8,
+        metalness: 0.1
+      });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.01;
+      floor.receiveShadow = true;
+      scene.add(floor);
+      
+      // 优先使用新版玻璃展柜
+      if (SCENE_CONFIG.glassShelves && SCENE_CONFIG.glassShelves.length) {
+        buildGlassCases(SCENE_CONFIG.glassShelves);
+        buildShelfButtons(SCENE_CONFIG.glassShelves);
+      } else if (SCENE_CONFIG.shelves) {
+        SCENE_CONFIG.shelves.forEach(sh => {
+          const g = buildShelf(sh);
+          shelfGroup.add(g);
+          shelfMeshes[sh.id] = g;
+        });
+        buildShelfButtons(SCENE_CONFIG.shelves);
+      }
+      
+      setLoading(100);
+      setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
+      
+      console.log(`Loaded GLTF scene: ${environment}`);
+    },
+    (progress) => {
+      const pct = 60 + (progress.loaded / progress.total * 30);
+      setLoading(pct);
+    },
+    (error) => {
+      console.error('Error loading GLTF scene:', error);
+      _resolveSceneReady(); // 即使失败也通知NPC加载
+      createFallbackScene();
+    }
+  );
+}
+
+function createFallbackScene() {
+  // 创建一个简单的 fallback 场景
+  const floorGeo = new THREE.PlaneGeometry(30, 20);
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: 0x2a2a2a,
+    roughness: 0.8,
+    metalness: 0.1
+  });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+  
+  // 添加一些基础装饰
+  const boxGeo = new THREE.BoxGeometry(2, 2, 2);
+  const boxMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+  const box = new THREE.Mesh(boxGeo, boxMat);
+  box.position.set(0, 1, -5);
+  box.castShadow = true;
+  scene.add(box);
+  
+  setLoading(100);
+  setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
+  
+  console.log('Created fallback scene due to GLTF loading failure');
+}
+
+// ═══════════════════════════════════════════════
+//  摄像机动画系统
+// ═══════════════════════════════════════════════
+let autoTour = true;
+let tourIdx = 0;
+let tourTimer = null;
+let camAnim = null;  // { startPos, startTarget, endPos, endTarget, t, dur, onDone }
+
+function setCameraAnim(endPos, endTarget, dur = 2.0, onDone = null) {
+  camAnim = {
+    startPos: camera.position.clone(),
+    startTarget: controls.target.clone(),
+    endPos: new THREE.Vector3(...endPos),
+    endTarget: new THREE.Vector3(...endTarget),
+    t: 0, dur, onDone
+  };
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+}
+
+function tickCamAnim(dt) {
+  if (!camAnim) return;
+  camAnim.t = Math.min(1, camAnim.t + dt / camAnim.dur);
+  const e = easeInOutCubic(camAnim.t);
+  camera.position.lerpVectors(camAnim.startPos, camAnim.endPos, e);
+  controls.target.lerpVectors(camAnim.startTarget, camAnim.endTarget, e);
+  if (camAnim.t >= 1) {
+    const cb = camAnim.onDone;
+    camAnim = null;
+    if (cb) cb();
+  }
+}
+
+function startAutoTour() {
+  clearTimeout(tourTimer);
+  if (!autoTour) return;
+  const tour = SCENE_CONFIG?.camera?.tour;
+  if (!tour || tour.length === 0) return;
+  const pt = tour[tourIdx % tour.length];
+  setCameraAnim(pt.pos, pt.target, 3.5, () => {
+    tourTimer = setTimeout(() => {
+      tourIdx++;
+      startAutoTour();
+    }, 4000);
+  });
+}
+
+function toggleAutoTour() {
+  autoTour = !autoTour;
+  if (autoTour) {
+    const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = '🔄 自动巡游中';
+    startAutoTour();
+  } else {
+    clearTimeout(tourTimer);
+    camAnim = null;
+    const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = '🖱️ 手动控制';
+  }
+}
+window.toggleAutoTour = toggleAutoTour;
+
+function resetCamera() {
+  autoTour = false;
+  clearTimeout(tourTimer);
+  const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = '🏠 归位中';
+  setCameraAnim([0, 4, 14], [0, 1.5, 0], 2.0, () => {
+    const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = '🖱️ 手动控制';
+  });
+}
+window.resetCamera = resetCamera;
+
+// ── 相机预设跳转（由控制台 camera_preset 指令触发）──
+let _camPathAnim = null; // 运镜路径播放状态
+
+function applyCameraPreset(presetKey) {
+  if (!presetKey) return;
+  autoTour = false;
+  clearTimeout(tourTimer);
+  controls.autoRotate = false;
+  camAnim = null;
+
+  // 1. 自定义机位/运镜：格式 "custom:cam_xxx"
+  if (presetKey.startsWith('custom:')) {
+    const id = presetKey.slice(7);
+    const preset = (SCENE_CONFIG.camera_presets || []).find(p => p.id === id);
+    if (!preset) { console.warn('[CamPreset] 找不到自定义机位:', id); return; }
+    if (preset.path && preset.path.length > 1) {
+      // 运镜路径播放
+      _playCamPath(preset.path, preset.label || preset.name);
+    } else {
+      // 静态机位跳转（兼容 pos/lookAt 数组 和 position/target 对象两种格式）
+      let posArr, tgtArr;
+      if (preset.pos) {
+        posArr = preset.pos;
+        tgtArr = preset.lookAt || [0, 1, 0];
+      } else if (preset.position) {
+        const p = preset.position, t = preset.target || { x: 0, y: 1, z: 0 };
+        posArr = [p.x, p.y, p.z];
+        tgtArr = [t.x, t.y, t.z];
+      } else {
+        console.warn('[CamPreset] 机位配置缺少坐标:', preset.id); return;
+      }
+      setCameraAnim(posArr, tgtArr, 2.0);
+      const _hm = document.getElementById('hud-mode');
+      if (_hm) _hm.textContent = `🎬 ${preset.label || preset.name || preset.id}`;
+    }
+    return;
+  }
+
+  // 2. 系统固定视角：character / product / overview
+  // 优先读场景配置里保存的坐标，没有则用默认偏移量
+  const sysPresets = SCENE_CONFIG.sys_camera_presets || {};
+  if (sysPresets[presetKey]) {
+    const { position: p, target: t } = sysPresets[presetKey];
+    setCameraAnim([p.x, p.y, p.z], [t.x, t.y, t.z], 1.8);
+    const labels = { character: '👤 角色视角', product: '📦 商品视角', overview: '🌐 全景视角' };
+    const _hm = document.getElementById('hud-mode');
+    if (_hm) _hm.textContent = labels[presetKey] || presetKey;
+    return;
+  }
+
+  // 3. 没有保存的坐标，用相对NPC位置的默认偏移量
+  const npcObj = window.npcObject;
+  const nx = npcObj?.position.x || 0, nz = npcObj?.position.z || 0;
+  const defaults = {
+    character: { pos: [nx, 1.4, nz + 3.0], target: [nx, 1.0, nz] },
+    product:   { pos: [nx + 2, 1.5, nz + 2], target: [nx, 0.8, nz] },
+    overview:  { pos: [0, 6, 10], target: [0, 0, 0] },
+  };
+  const def = defaults[presetKey];
+  if (def) {
+    setCameraAnim(def.pos, def.target, 1.8);
+    const labels = { character: '👤 角色视角', product: '📦 商品视角', overview: '🌐 全景视角' };
+    const _hm = document.getElementById('hud-mode');
+    if (_hm) _hm.textContent = labels[presetKey] || presetKey;
+  }
+}
+window.applyCameraPreset = applyCameraPreset;
+
+// ── 运镜路径回放 ──
+function _playCamPath(path, name) {
+  if (!path || path.length < 2) return;
+  _camPathAnim = { path, idx: 0, name };
+  const _hm = document.getElementById('hud-mode');
+  if (_hm) _hm.textContent = `🎬 ${name || '运镜'}`;
+  _stepCamPath();
+}
+
+function _stepCamPath() {
+  if (!_camPathAnim) return;
+  const { path, idx, name } = _camPathAnim;
+  if (idx >= path.length - 1) {
+    _camPathAnim = null;
+    const _hm = document.getElementById('hud-mode');
+    if (_hm) _hm.textContent = `⏹ ${name || '运镜'}结束`;
+    return;
+  }
+  const cur = path[idx];
+  const nxt = path[idx + 1];
+  // 用相邻关键帧的时间差作为动画时长（毫秒→秒）
+  const dur = nxt.time && cur.time ? Math.max((nxt.time - cur.time) / 1000, 0.08) : 0.1;
+  setCameraAnim(
+    [nxt.position.x, nxt.position.y, nxt.position.z],
+    [nxt.target.x,   nxt.target.y,   nxt.target.z],
+    dur,
+    () => {
+      if (_camPathAnim) {
+        _camPathAnim.idx++;
+        _stepCamPath();
+      }
+    }
+  );
+}
+
+function orbitCam() {
+  autoTour = false;
+  clearTimeout(tourTimer);
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 1.5;
+  const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = '🔄 环绕旋转';
+}
+window.orbitCam = orbitCam;
+
+// ── 停止旋转 ──
+function stopRotation() {
+  autoTour = false;
+  controls.autoRotate = false;
+  clearTimeout(tourTimer);
+  camAnim = null;
+  const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = '⏹ 已停止';
+  showSubtitle('好的，场景已暂停～');
+}
+window.stopRotation = stopRotation;
+
+// ═══════════════════════════════════════════════
+//  货架聚焦系统
+// ═══════════════════════════════════════════════
+let focusedShelfId = null;
+const HALO_ANIM = {};  // shelfId → { mesh, intensity, dir }
+
+function focusShelf(shelfId) {
+  // 优先用新版玻璃展柜
+  const glass = glassCases[shelfId];
+  if (glass) {
+    focusedShelfId = shelfId;
+    autoTour = false;
+    clearTimeout(tourTimer);
+    controls.autoRotate = false;
+
+    const sp = glass.root.position;
+    const camPos = [sp.x, sp.y + 1.4, sp.z + 2.2];
+    const camTarget = [sp.x, sp.y + 0.8, sp.z];
+    setCameraAnim(camPos, camTarget, 2.0, () => {
+      const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = `🎯 聚焦：${glass.config.label}`;
+    });
+    // 商品信息
+    const sku = glass.config.product?.sku_id;
+    if (sku && PRODUCTS[sku]) showProductCard(PRODUCTS[sku]);
+    return;
+  }
+
+  // 旧版兼容
+  const shelfObj = shelfMeshes[shelfId];
+  if (!shelfObj) return;
+  focusedShelfId = shelfId;
+  autoTour = false;
+  clearTimeout(tourTimer);
+  controls.autoRotate = false;
+  const sp = shelfObj.position;
+  const camPos = [sp.x, sp.y + 2.5, sp.z + 6];
+  const camTarget = [sp.x, sp.y + 1.2, sp.z];
+  Object.values(shelfMeshes).forEach(s => {
+    const h = s.getObjectByName('halo');
+    if (h) h.material.emissiveIntensity = 0;
+  });
+  const halo = shelfObj.getObjectByName('halo');
+  if (halo) { halo.material.emissiveIntensity = 1.5; }
+  setCameraAnim(camPos, camTarget, 2.2, () => {
+    const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = `🎯 聚焦：${shelfObj.userData.label}`;
+  });
+  const prodId = shelfObj.userData.products?.[0];
+  if (prodId && PRODUCTS[prodId]) showProductCard(PRODUCTS[prodId]);
+}
+window.focusShelf = focusShelf;
+
+function buildShelfButtons(shelves) {
+  // 货架按钮已移至控制台，此处仅保留接口兼容
+}
+
+// ═══════════════════════════════════════════════
+//  商品卡片
+// ═══════════════════════════════════════════════
+function showProductCard(prod) {
+  document.getElementById('pc-name').textContent = prod.name || '';
+  document.getElementById('pc-price').textContent = prod.price ? '¥' + prod.price : '';
+  document.getElementById('pc-desc').textContent = prod.description || prod.intro_script || '';
+  const img = document.getElementById('pc-img');
+  img.src = prod.image || '';
+  img.style.display = prod.image ? '' : 'none';
+  document.getElementById('product-card').style.display = '';
+}
+function closeProductCard() {
+  document.getElementById('product-card').style.display = 'none';
+}
+window.closeProductCard = closeProductCard;
+
+// ═══════════════════════════════════════════════
+//  弹幕 & 特效
+// ═══════════════════════════════════════════════
+let _dmRow = 0;
+function flyDanmu(text, cls = '') {
+  const layer = document.getElementById('danmu-layer');
+  const el = document.createElement('div');
+  el.className = 'dm ' + cls;
+  el.textContent = text;
+  const rows = 12;
+  el.style.top = (((_dmRow++) % rows) * (100 / rows)) + '%';
+  layer.appendChild(el);
+  setTimeout(() => el.remove(), 8500);
+}
+
+function coinRain() {
+  const layer = document.getElementById('fx-layer');
+  for (let i = 0; i < 30; i++) {
+    const c = document.createElement('div');
+    c.className = 'coin-fx';
+    c.textContent = ['🪙','💰','✨'][i % 3];
+    c.style.left = Math.random() * 100 + '%';
+    c.style.animationDelay = Math.random() * 1.5 + 's';
+    c.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    layer.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+function sparkBurst(n = 12) {
+  const layer = document.getElementById('fx-layer');
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div');
+    s.className = 'spark-fx';
+    s.textContent = ['✨','⭐','💫','🌟'][i % 4];
+    s.style.left = 20 + Math.random() * 60 + '%';
+    s.style.top = 20 + Math.random() * 50 + '%';
+    s.style.animationDelay = Math.random() * 0.6 + 's';
+    layer.appendChild(s);
+    setTimeout(() => s.remove(), 1700);
+  }
+}
+
+let subTimer = null;
+function showSubtitle(text, dur = 4000) {
+  const el = document.getElementById('subtitle');
+  el.textContent = text;
+  el.className = 'show';
+  clearTimeout(subTimer);
+  subTimer = setTimeout(() => { el.className = ''; }, dur);
+}
+window.showSubtitle = showSubtitle;
+
+// ═══════════════════════════════════════════════
+//  TTS音频播放 + 字幕联动
+// ═══════════════════════════════════════════════
+const ttsAudio = new Audio();
+ttsAudio.volume = 0.8;
+
+function handleSpeak(data) {
+  const text = data.text || '';
+  const audioUrl = data.audio_url;
+  const rate = data.rate || 1.0;
+  const volume = data.volume || 0.8;
+  const muted = data.muted || false;
+  const emotion = data.emotion || 'neutral';  // AI情绪标签
+
+  // VRM表情：根据情绪标签设置表情
+  if (npcExpression && emotion !== 'neutral') {
+    npcExpression.setEmotion(emotion);
+    console.log('[表情] AI情绪:', emotion);
+  }
+
+  // 显示字幕（估算持续时间）
+  const dur = Math.max((text.length / 3.8) * 1000 + 800, 2000);
+  if (text) showSubtitle(text, dur);
+
+  // 触发NPC说话动作
+  playNPCAction('idle');  // 说话时播放idle或talk（根据事件映射）
+
+  // VRM口型同步：如果有viseme时间轴数据
+  if (npcLipSync && data.viseme_timeline) {
+    const { timeline, duration } = npcLipSync.parseVolcengineViseme({ 
+      viseme: data.viseme_timeline,
+      duration: data.audio_duration || dur 
+    });
+    npcLipSync.setVisemeTimeline(timeline, duration);
+    console.log('[口型] 设置Viseme时间轴:', timeline.length, '个点');
+  } else if (npcLipSync) {
+    // 无viseme数据时，从文本生成简易口型序列（备选方案）
+    const phonemes = text.split('').filter(c => /[a-zA-Z\u4e00-\u9fa5]/.test(c)).join('-');
+    npcLipSync.generateFromPhonemes(phonemes, dur);
+  }
+
+  if (muted) return;
+
+  // 播放音频
+  if (audioUrl) {
+    ttsAudio.src = audioUrl;
+    ttsAudio.playbackRate = rate;
+    ttsAudio.volume = volume;
+    
+    // 音频播放结束时恢复neutral表情
+    ttsAudio.onended = () => {
+      if (npcExpression) {
+        npcExpression.setEmotion('neutral');
+      }
+      if (npcLipSync) {
+        npcLipSync.stop();
+      }
+    };
+    
+    if (!_isMuted) ttsAudio.play().catch(() => {});
+  } else if (data.browser_tts_config && window.speechSynthesis && !_isMuted) {
+    // 浏览器TTS降级
+    const cfg = data.browser_tts_config;
+    const utt = new SpeechSynthesisUtterance(data.tts_text || text);
+    utt.lang = cfg.lang || 'zh-CN';
+    utt.rate = cfg.rate || rate;
+    utt.pitch = cfg.pitch || 1.0;
+    utt.volume = cfg.volume || volume;
+    if (cfg.voice) {
+      const voices = speechSynthesis.getVoices();
+      const v = voices.find(x => x.name.includes(cfg.voice));
+      if (v) utt.voice = v;
+    }
+    
+    // TTS结束时恢复neutral表情
+    utt.onend = () => {
+      if (npcExpression) {
+        npcExpression.setEmotion('neutral');
+      }
+      if (npcLipSync) {
+        npcLipSync.stop();
+      }
+    };
+    
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utt);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  意图识别（本地关键词映射 + WebSocket事件）
+// ═══════════════════════════════════════════════
+const KEYWORD_SHELF = {};  // 关键词 → shelfId，动态从配置生成
+
+function buildKeywordMap() {
+  SCENE_CONFIG.shelves.forEach(sh => {
+    KEYWORD_SHELF[sh.label] = sh.id;
+    sh.products.forEach(pid => {
+      const prod = PRODUCTS[pid];
+      if (prod) {
+        (prod.keywords || [prod.name]).forEach(kw => { KEYWORD_SHELF[kw] = sh.id; });
+      }
+    });
+  });
+}
+
+function handleDanmuText(user, text) {
+  flyDanmu(`${user}: ${text}`);
+
+  const t = text.toLowerCase();
+  // 停止
+  if (/停|暂停|别转|不要转/.test(t)) { stopRotation(); return; }
+  // 继续巡游
+  if (/继续|转起来|开始转|巡游/.test(t)) {
+    autoTour = true;
+    const _hm = document.getElementById('hud-mode'); if(_hm) _hm.textContent = '🔄 自动巡游中';
+    startAutoTour();
+    return;
+  }
+  // 商品/货架匹配
+  for (const [kw, shid] of Object.entries(KEYWORD_SHELF)) {
+    if (t.includes(kw)) {
+      showSubtitle(`客官想看「${kw}」，马上带您过去～`);
+      focusShelf(shid);
+      return;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  WebSocket 接入（监听后端事件）
+// ═══════════════════════════════════════════════
+let ws = null;
+function connectWS() {
+  ws = new WebSocket('ws://' + location.hostname + ':8765');
+  ws.onopen = () => {
+    console.log('[LiveScene] WS connected');
+    // 初始化 ActionFlowExecutor
+    if (!actionFlowExecutor && window.ActionFlowExecutor) {
+      // highlightShelf: 高亮货架位（调用focusShelf实现）
+      const highlightShelf = (shelfId) => {
+        console.log('[LiveScene] highlightShelf:', shelfId);
+        if (window.focusShelf) {
+          focusShelf(shelfId);
+        } else {
+          console.warn('[LiveScene] focusShelf not available');
+        }
+      };
+      actionFlowExecutor = new ActionFlowExecutor(
+        { camera, highlightShelf },  // scene3d 对象简化版
+        {                          // WebSocket 包装器
+          on: (event, handler) => {
+            ws.addEventListener('message', (e) => {
+              try {
+                const msg = JSON.parse(e.data);
+                if (msg.action === event || msg.type === event) {
+                  handler(msg);
+                }
+              } catch {}
+            });
+          },
+          send: (data) => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify(data));
+            }
+          }
+        }
+      );
+      // 设置角色和动画混合器（如果已加载）
+      if (npcObject && npcMixer) {
+        actionFlowExecutor.setCharacter(npcObject, npcMixer);
+      }
+      console.log('[ActionFlow] Executor initialized');
+    }
+  };
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      handleWSMessage(msg);
+    } catch {}
+  };
+  ws.onclose = () => setTimeout(connectWS, 3000);
+}
+
+function handleWSMessage(msg) {
+  const action = msg.action;
+  const data = msg.data || msg.params || {};
+  if (!action) return;
+
+  switch(action) {
+    case 'danmaku':
+      handleDanmuText(data.username || '客官', data.content || '');
+      playNPCAction('danmaku');
+      break;
+    case 'user_enter':
+      flyDanmu(`👋 ${data.username || '新用户'} 进入直播间`, 'enter');
+      playNPCAction('user_enter');
+      break;
+    case 'gift':
+      flyDanmu(`🎁 ${data.username} 送出 ${data.gift_name} x${data.count || 1}`, 'gift');
+      if ((data.amount || 0) >= 100) { coinRain(); sparkBurst(); playNPCAction('gift'); }
+      else { sparkBurst(6); playNPCAction('greeting'); }
+      break;
+    case 'order':
+      flyDanmu(`🛒 ${data.username} 下单 ${data.sku_name || '商品'}`, 'order');
+      sparkBurst();
+      playNPCAction('order');
+      break;
+    case 'motion_capture':
+      // 实时动捕数据（来自其他主播端）
+      if (data.skeleton) {
+        applyMotionCaptureData(data.skeleton);
+      }
+      break;
+      break;
+    case 'play_effect':
+      if (msg.effect === 'gift_celebration_big') { coinRain(); sparkBurst(20); }
+      else if (msg.effect === 'gift_celebration_small') { sparkBurst(8); }
+      else if (msg.effect === 'order_celebration') { sparkBurst(15); }
+      break;
+    case 'play_video':
+      // 兼容旧协议，忽略视频
+      break;
+    case 'play_product_video': {
+      const { video_url, shelf_id, operation } = msg;
+      if (operation === 'hide' || !video_url) {
+        _hideProductVideo(shelf_id);
+      } else {
+        _playProductVideo(video_url, shelf_id);
+      }
+      break;
+    }
+    case 'play_action': {
+      const fp = msg.file_path || data.file_path;
+      const ak = msg.action_key || data.action_key;
+      if (fp) playNPCActionByPath(fp, msg.loop || data.loop || false);
+      else if (ak) playNPCAction(ak);
+      break;
+    }
+    case 'reset_npc_position': {
+      const pos = msg.position || {};
+      const x = pos.x || 0, y = pos.y || 0, z = pos.z || 0;
+      const obj = window.npcObject || window.defaultCharacterObject;
+      if (obj) {
+        obj.position.set(x, y, z);
+        console.log(`[LiveScene] NPC reset to position (${x}, ${y}, ${z})`);
+      }
+      showSubtitle(`📍 NPC已归位`, 1500);
+      break;
+    }
+    case 'show_product':
+      if (data.sku_id) {
+        const sh = findShelfBySku(data.sku_id);
+        if (sh) focusShelf(sh);
+        const prod = PRODUCTS[data.sku_id];
+        if (prod) showProductCard(prod);
+      }
+      break;
+    case 'focus_shelf':
+      if (data.shelf_id) focusShelf(data.shelf_id);
+      break;
+    case 'reset_camera':
+      resetCamera();
+      break;
+    case 'speak':
+      handleSpeak(msg);
+      break;
+    case 'subtitle':
+      showSubtitle(data.text, data.dur || 4000);
+      break;
+    case 'scene_switch':
+      if (data.scene_id) loadScene(data.scene_id);
+      break;
+    case 'scene_changed':
+      if (msg.scene_id) loadScene(msg.scene_id);
+      break;
+
+    case 'set_aspect':
+      if (msg.ratio && ASPECT_PRESETS.hasOwnProperty(msg.ratio)) {
+        applyAspectRatio(msg.ratio);
+      }
+      break;
+
+    case 'scene_command':
+      switch(msg.command) {
+        case 'set_aspect':
+          if (msg.ratio && ASPECT_PRESETS.hasOwnProperty(msg.ratio)) {
+            applyAspectRatio(msg.ratio);
+          }
+          break;
+        case 'reset_camera': resetCamera(); break;
+        case 'auto_tour':    autoTour = true; startAutoTour(); break;
+        case 'stop':         stopRotation(); break;
+        case 'orbit':        orbitCam(); break;
+        case 'focus_shelf': {
+          const sid = msg.params?.shelf_id || msg.shelf_id;
+          if (sid) focusShelf(sid);
+          break;
+        }
+        case 'camera_preset':
+          applyCameraPreset(msg.params?.preset || msg.preset);
+          break;
+      }
+      break;
+
+    case 'switch_character':
+      if (msg.character_id) {
+        console.log('[LiveScene] 切换角色:', msg.character_id);
+        loadCharacterById(msg.character_id).catch(e => console.error('[CharSwitch] 失败:', e));
+      }
+      break;
+    
+    // === Action Flow 消息处理 ===
+    case 'action_flow_start':
+      console.log('[ActionFlow] Received start:', msg);
+      break;
+    case 'execute_action_flow':
+      console.log('[ActionFlow] Received execution:', msg);
+      if (actionFlowExecutor && msg.plan) {
+        actionFlowExecutor.executePlan(msg.plan, msg.audio_url);
+      }
+      break;
+    case 'action_flow_interrupted':
+      console.log('[ActionFlow] Received interrupt:', msg);
+      if (actionFlowExecutor) {
+        actionFlowExecutor.interruptCurrent(msg.reason || 'backend');
+      }
+      break;
+    case 'switch_camera': {
+      const cm = window.CameraManager;
+      if (!cm) break;
+      const mode = msg.mode || 'fixed';
+      const preset = msg.preset || 'facing_screen';
+      if (mode === 'fixed') {
+        cm.switchToFixed(preset, true);
+      } else if (mode === 'third_person') {
+        cm.switchToThirdPerson('bao_qing_host', msg.offset || 'default');
+      } else if (mode === 'first_person') {
+        cm.switchToFirstPerson('bao_qing_host');
+      } else if (mode === 'free') {
+        // 恢复 OrbitControls 自由操作
+        if (cm.controls) { cm.controls.enabled = true; }
+        cm.currentMode = 'free';
+      }
+      console.log('[Camera] Switch:', mode, preset);
+      break;
+    }
+  }
+
+}
+
+// ═══════════════════════════════════════════════
+//  🎥 实时动捕控制（Phase 5）
+// ═══════════════════════════════════════════════
+
+async function toggleMotionCapture() {
+  if (!motionCapture) {
+    motionCapture = new WebcamMotionCapture();
+    motionCapture.onError = (e) => console.error('[MC] 错误:', e);
+  }
+  
+  if (mcIsRunning) {
+    motionCapture.stop();
+    mcIsRunning = false;
+    document.getElementById('mc-toggle-btn').textContent = '🎥 动捕: 关';
+    document.getElementById('mc-preview').style.display = 'none';
+    console.log('[MC] 动捕已停止');
+  } else {
+    const ok = await motionCapture.start(null, document.getElementById('mc-preview'));
+    if (ok) {
+      mcIsRunning = true;
+      document.getElementById('mc-toggle-btn').textContent = '🎥 动捕: 开';
+      document.getElementById('mc-preview').style.display = 'inline-block';
+      console.log('[MC] 动捕已启动');
+      initMCWebSocket();
+    } else {
+      alert('摄像头启动失败，请检查权限设置');
+    }
+  }
+}
+window.toggleMotionCapture = toggleMotionCapture;
+
+function initMCWebSocket() {
+  const wsUrl = `ws://${location.hostname}:8766`;
+  mcWebSocket = new WebSocket(wsUrl);
+  
+  mcWebSocket.onopen = () => {
+    console.log('[MC] WebSocket 已连接');
+    mcWebSocket.send(JSON.stringify({ type: 'consumer', consumer_id: 'live-scene' }));
+  };
+  
+  mcWebSocket.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.type === 'motion_frame' && data.skeleton) {
+        mcFrameData = data.skeleton;
+        applyMotionCaptureData(data.skeleton);
+      }
+    } catch (err) {
+      console.error('[MC] 数据解析错误:', err);
+    }
+  };
+  
+  mcWebSocket.onclose = () => {
+    console.log('[MC] WebSocket 断开，3秒后重连...');
+    setTimeout(initMCWebSocket, 3000);
+  };
+}
+
+function applyMotionCaptureData(skeleton) {
+  if (!npcVRM || !skeleton) return;
+  try {
+    const humanoid = npcVRM.humanoid;
+    if (!humanoid) return;
+    
+    const boneMap = {
+      'hips': 'hips', 'spine': 'spine',
+      'leftUpperArm': 'leftUpperArm', 'leftLowerArm': 'leftLowerArm',
+      'rightUpperArm': 'rightUpperArm', 'rightLowerArm': 'rightLowerArm',
+      'leftUpperLeg': 'leftUpperLeg', 'leftLowerLeg': 'leftLowerLeg',
+      'rightUpperLeg': 'rightUpperLeg', 'rightLowerLeg': 'rightLowerLeg',
+    };
+    
+    for (const [mcName, vrmName] of Object.entries(boneMap)) {
+      const boneData = skeleton[mcName];
+      if (boneData?.rotation) {
+        const node = humanoid.getNormalizedBoneNode(vrmName);
+        if (node) {
+          node.rotation.x = boneData.rotation.x * 0.5;
+          node.rotation.y = boneData.rotation.y * 0.5;
+          node.rotation.z = boneData.rotation.z * 0.5;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[MC] 应用骨骼数据失败:', e);
+  }
+}
+
+async function initMotionCapture() {
+  try {
+    const res = await fetch('/api/motion-capture/config');
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('hud-motion-capture').style.display = 'flex';
+      console.log('[MC] 动捕已启用:', data.ws_url);
+    }
+  } catch (e) {
+    console.log('[MC] 动捕未启用');
+  }
+}
+
+function findShelfBySku(skuId) {
+  for (const sh of SCENE_CONFIG.shelves) {
+    if (sh.products.includes(skuId)) return sh.id;
+  }
+  return null;
+}
+
+// ─── NPC 骨骼动画控制 ───
+async function loadNPCCharacter() {
+  await sceneReadyPromise; // 等待GLTF场景加载完成，确保sceneActualHeight已赋值
+  console.log(`🧑 开始加载NPC，sceneActualHeight=${sceneActualHeight.toFixed(2)}`);
+
+  // 先加载角色列表
+  await loadCharacterList();
+
+  // 获取场景配置中的默认角色
+  const defaultCharId = await getSceneDefaultCharacter();
+  if (defaultCharId && _characterSkeletons[defaultCharId]) {
+    await loadCharacterById(defaultCharId);
+  } else {
+    // 回退：加载第一个可用角色
+    const firstId = Object.keys(_characterSkeletons)[0];
+    if (firstId) await loadCharacterById(firstId);
+  }
+}
+
+// 加载角色骨架列表
+async function loadCharacterList() {
+  try {
+    const res = await fetch('/api/character-skeletons');
+    const data = await res.json();
+    if (data.ok && data.characters) {
+      _characterSkeletons = data.characters;
+      populateHudCharacterSelect();
+    }
+  } catch (e) {
+    console.error('加载角色列表失败:', e);
+  }
+}
+
+// 填充HUD角色选择下拉菜单（HUD已移除，函数保留兼容性）
+function populateHudCharacterSelect() {
+  const select = document.getElementById('hud-character-select');
+  if (!select) return;
+
+  select.innerHTML = '';
+  Object.entries(_characterSkeletons).forEach(([id, char]) => {
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = char.display_name || id;
+    select.appendChild(option);
+  });
+
+  // 设置当前选中的角色
+  if (_currentCharacterId && _characterSkeletons[_currentCharacterId]) {
+    select.value = _currentCharacterId;
+  }
+}
+
+// HUD角色选择变化
+async function onHudCharacterChange(characterId) {
+  if (!characterId || !_characterSkeletons[characterId]) return;
+  await loadCharacterById(characterId);
+}
+
+// 从场景配置获取默认角色
+async function getSceneDefaultCharacter() {
+  try {
+    const res = await fetch('/api/scenes').then(r => r.json());
+    const scenes = res.scenes || {};
+    const currentId = currentSceneId || res.current_scene;
+    if (currentId && scenes[currentId]) {
+      return scenes[currentId].default_character;
+    }
+  } catch (e) {
+    console.error('获取场景默认角色失败:', e);
+  }
+  return null;
+}
+
+// 加载指定角色（支持VRM和GLB）
+async function loadCharacterById(characterId) {
+  const char = _characterSkeletons[characterId];
+  if (!char) {
+    console.warn('角色不存在:', characterId);
+    return;
+  }
+
+  _currentCharacterId = characterId;
+
+  // 清理当前角色
+  if (npcObject) {
+    scene.remove(npcObject);
+    npcObject = null;
+  }
+  if (npcMixer) {
+    npcMixer.stopAllAction();
+    npcMixer = null;
+  }
+  npcVRM = null;
+  npcIsVRM = false;
+
+  // HUD已移除，保留注释
+
+  const charPath = '/' + char.file;
+  const isVRM = charPath.toLowerCase().endsWith('.vrm');
+
+  if (isVRM && window.THREE_VRM) {
+    await loadVRMCharacter(charPath, char);
+  } else {
+    await loadGLBCharacter(charPath, char);
+  }
+}
+
+// 加载VRM角色
+async function loadVRMCharacter(charPath, charConfig) {
+  const { VRMLoaderPlugin, VRMUtils } = window.THREE_VRM;
+  const loader = new THREE.GLTFLoader();
+  loader.register(parser => new VRMLoaderPlugin(parser));
+
+  loader.load(charPath, (gltf) => {
+    const vrm = gltf.userData.vrm;
+    if (!vrm) {
+      console.warn('[VRM] 文件加载成功但未找到VRM元数据');
+      return;
+    }
+
+    // VRM标准：Y轴向上，旋转修正
+    VRMUtils.rotateVRM0(vrm);
+
+    npcObject = vrm.scene;
+    npcObject.traverse(o => {
+      if (o.isMesh || o.isSkinnedMesh) {
+        o.frustumCulled = false;
+        o.castShadow = true;
+      }
+    });
+    npcObject.updateMatrixWorld(true);
+
+    // 缩放和定位
+    scaleAndPositionNPC(charConfig);
+
+    scene.add(npcObject);
+    npcVRM = vrm;
+    npcIsVRM = true;
+    npcMixer = new THREE.AnimationMixer(npcObject);
+    
+    // 初始化口型同步管理器
+    npcLipSync = new LipSyncManager(vrm);
+    console.log('[LipSync] 口型同步管理器已初始化');
+    
+    // 初始化表情管理器
+    npcExpression = new ExpressionManager(vrm);
+    console.log('[Expression] 表情管理器已初始化');
+    console.log('  - 支持表情:', npcExpression.getSupportedExpressions().join(', '));
+
+    console.log('✅ VRM角色加载成功:', charConfig.display_name);
+    console.log('  - 表情:', Object.keys(vrm.expressionManager?.expressionMap || {}).join(', ') || '无');
+    console.log('  - Spring Bone:', vrm.springBoneManager ? '✅' : '❌');
+
+    // 设置到 ActionFlowExecutor
+    if (actionFlowExecutor) {
+      actionFlowExecutor.setCharacter(npcObject, npcMixer);
+    }
+    playNPCAction('idle');
+  }, undefined, (err) => {
+    console.error('[VRM] 加载失败:', err);
+  });
+}
+
+// 加载GLB角色
+async function loadGLBCharacter(charPath, charConfig) {
+  const loader = new THREE.GLTFLoader();
+  loader.load(charPath, (gltf) => {
+    npcObject = gltf.scene;
+    npcObject.traverse(o => {
+      if (o.isMesh || o.isSkinnedMesh) {
+        o.frustumCulled = false;
+        o.castShadow = true;
+      }
+    });
+    npcObject.updateMatrixWorld(true);
+
+    // 缩放和定位
+    scaleAndPositionNPC(charConfig);
+
+    scene.add(npcObject);
+    npcIsVRM = false;
+    npcMixer = new THREE.AnimationMixer(npcObject);
+
+    console.log('✅ GLB角色加载成功:', charConfig.display_name);
+
+    // 设置到 ActionFlowExecutor
+    if (actionFlowExecutor) {
+      actionFlowExecutor.setCharacter(npcObject, npcMixer);
+    }
+    playNPCAction('idle');
+  }, undefined, (err) => console.warn('NPC加载失败:', err.message));
+}
+
+// NPC缩放和定位（通用）
+function scaleAndPositionNPC(charConfig) {
+  // SkinnedMesh的Box3不准确，改用骨骼世界坐标测真实身高
+  let bMin = Infinity, bMax = -Infinity;
+  npcObject.traverse(o => {
+    if (o.isBone) {
+      const wp = new THREE.Vector3();
+      o.getWorldPosition(wp);
+      if (wp.y < bMin) bMin = wp.y;
+      if (wp.y > bMax) bMax = wp.y;
+    }
+  });
+
+  const skeletonH = isFinite(bMax - bMin) && (bMax > bMin) ? (bMax - bMin) : 0;
+  const realH = skeletonH * 1.12; // 补偿到全身真实身高
+  const targetH = sceneActualHeight * 0.55;
+
+  if (realH > 0) {
+    npcObject.scale.multiplyScalar(targetH / realH);
+  } else {
+    // 兜底：用Box3
+    const box = new THREE.Box3().setFromObject(npcObject);
+    const sz = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(sz.x, sz.y, sz.z);
+    if (maxDim > 0) npcObject.scale.multiplyScalar(targetH / maxDim);
+  }
+
+  console.log(`🧑 NPC缩放: 骨骼测量高=${skeletonH.toFixed(3)} 修正后真高=${realH.toFixed(3)} 目标高=${targetH.toFixed(2)} 最终scale=${npcObject.scale.x.toFixed(4)}`);
+
+  // 缩放后重新测骨骼最低点，把脚贴地
+  npcObject.updateMatrixWorld(true);
+  let footY = Infinity;
+  npcObject.traverse(o => {
+    if (o.isBone) {
+      const wp = new THREE.Vector3();
+      o.getWorldPosition(wp);
+      if (wp.y < footY) footY = wp.y;
+    }
+  });
+  if (!isFinite(footY)) footY = 0;
+  npcObject.position.set(0, -footY, 0);
+}
+
+function playNPCAction(eventKey) {
+  const val = EVENT_ACTION_MAP[eventKey];
+  if (!val) return;
+  // 支持数组（随机池）或字符串（单个）
+  const relPath = Array.isArray(val) ? val[Math.floor(Math.random() * val.length)] : val;
+  if (!relPath) return;
+  playNPCActionByPath(relPath, eventKey !== 'idle');
+}
+
+function playNPCActionByPath(relPath, returnToIdle = true) {
+  if (!npcObject || !npcMixer) return;
+  const url = '/assets/动作库/' + relPath;
+
+  function applyClip(clip) {
+    npcMixer.stopAllAction();
+    const action = npcMixer.clipAction(clip);
+    action.setLoop(returnToIdle ? THREE.LoopOnce : THREE.LoopRepeat);
+    action.clampWhenFinished = true;
+    action.reset().play();
+    npcCurrentAction = action;
+
+    if (returnToIdle) {
+      // 动作播完后回到idle
+      npcMixer.addEventListener('finished', function onFinish() {
+        npcMixer.removeEventListener('finished', onFinish);
+        playNPCAction('idle');
+      });
+    }
+  }
+
+  if (npcAnimCache[relPath]) {
+    applyClip(npcAnimCache[relPath]);
+    return;
+  }
+
+  const loader = new THREE.GLTFLoader();
+  loader.load(url, (gltf) => {
+    if (!gltf.animations || gltf.animations.length === 0) return;
+    let clip = gltf.animations[0];
+    for (const c of gltf.animations) { if (c.duration > clip.duration) clip = c; }
+    
+    // VRM角色：自动进行Mixamo→VRM骨骼重定向
+    if (npcIsVRM && npcVRM && window.boneRetargeter?.loaded) {
+      const isMixamoClip = clip.tracks.some(t => t.name.includes('mixamorig'));
+      if (isMixamoClip) {
+        console.log('[直播] Mixamo动画→VRM重定向:', relPath);
+        clip = window.boneRetargeter.retargetClip(clip, npcObject);
+      }
+    }
+    
+    npcAnimCache[relPath] = clip;
+    applyClip(clip);
+  }, undefined, (err) => console.warn('动画加载失败:', relPath, err.message));
+}
+
+// ═══════════════════════════════════════════════
+//  模拟事件（调试控制栏）
+// ═══════════════════════════════════════════════
+const FAKE_USERS = ['茶友阿明','路人甲','宝宝来了','客官','老铁666','大佬驾到'];
+const FAKE_CHATS = ['想看西湖龙井','这个茶叶怎么卖','停','主播好漂亮','普洱茶能存多久','继续转','有礼盒吗','铁观音怎么泡'];
+function rnd(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+
+// ═══════════════════════════════════════════════
+//  加载场景数据
+// ═══════════════════════════════════════════════
+async function loadScene(sceneId) {
+  setLoading(10);
+  try {
+    const [scenesRes, skusRes, templatesRes] = await Promise.all([
+      fetch('/api/scenes').then(r => r.json()),
+      fetch('/api/skus').then(r => r.json()),
+      fetch('/api/scene-templates').then(r => r.json()).catch(() => ({ templates: [] })),
+    ]);
+
+    // 缓存场景模板列表，供 convertSceneConfig 判断环境类型
+    window._sceneTemplates = (templatesRes && templatesRes.templates) || [];
+
+    // 商品库
+    PRODUCTS = skusRes || {};
+    // 规范化product字段
+    Object.entries(PRODUCTS).forEach(([id, p]) => {
+      p.id = id;
+      p.price = p.price_tiers?.single?.price || p.price || '';
+    });
+
+    setLoading(50);
+
+    // 场景 - 优先使用配置文件中的 current_scene，确保与场景编辑器同步
+    const sid = sceneId || scenesRes.current_scene || skusRes?.meta?.current_scene || Object.keys(scenesRes.scenes || {})[0];
+    const sceneData = scenesRes.scenes?.[sid];
+    console.log('[LiveScene] 加载场景:', sid, '来自 current_scene:', scenesRes.current_scene);
+    if (sceneData) {
+      currentSceneId = sid;
+      // 转换 scenes.json 格式 → SCENE_CONFIG
+      SCENE_CONFIG = convertSceneConfig(sceneData, scenesRes.scenes, sid);
+    }
+    setLoading(80);
+    buildKeywordMap();
+    buildScene(SCENE_CONFIG);
+  } catch(e) {
+    console.error('Load scene error:', e);
+    buildKeywordMap();
+    buildScene(SCENE_CONFIG);
+    setLoading(100);
+    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
+  }
+}
+
+function convertSceneConfig(sceneData, allScenes, sid) {
+  // 只有在场景模板列表中找到该环境（后端确认有 scene.gltf）才视为 GLTF 场景
+  const env = sceneData.environment;
+  const tpl = (window._sceneTemplates || []).find(t => t.id === env);
+  const isGLTFScene = !!env && !!tpl;
+
+  // 玻璃展柜：完全以编辑器配置为准，不再使用任何硬编码兜底数据
+  const glassShelves = Array.isArray(sceneData.shelves) ? sceneData.shelves : [];
+
+  if (isGLTFScene) {
+    return {
+      name: sceneData.name || sid,
+      environment: sceneData.environment,
+      isGLTF: true,
+      shelves: (sceneData.slots || []).map((slot, i) => ({
+        id: slot.id || 'shelf_' + i,
+        label: slot.label || '货架' + (i+1),
+        pos: [
+          ((slot.x / 100) * 24) - 12,
+          0,
+          ((slot.y / 100) * 16) - 10
+        ],
+        color: 0x5c8a3a,
+        products: slot.sku_id ? [slot.sku_id] : []
+      })),
+      glassShelves,
+      camera: (sceneData.camera?.tour ? sceneData.camera : SCENE_CONFIG.camera),
+      sys_camera_presets: sceneData.sys_camera_presets || {},
+      camera_presets: sceneData.camera_presets || [],
+    };
+  }
+
+  return {
+    name: sceneData.name || sid,
+    floor: { color: 0x3a2a1a, width: 30, depth: 20 },
+    walls: { color: 0x2a1f14, height: 5 },
+    ambientLight: { color: 0xfff5e0, intensity: 0.6 },
+    dirLight: { color: 0xfff0c0, intensity: 1.2, pos: [8, 10, 5] },
+    shelves: (sceneData.slots || []).map((slot, i) => ({
+      id: slot.id || 'shelf_' + i,
+      label: slot.label || '货架' + (i+1),
+      pos: [
+        ((slot.x / 100) * 24) - 12,
+        0,
+        ((slot.y / 100) * 16) - 10
+      ],
+      color: 0x5c8a3a,
+      products: slot.sku_id ? [slot.sku_id] : []
+    })),
+    glassShelves,
+    camera: SCENE_CONFIG.camera,
+    sys_camera_presets: sceneData.sys_camera_presets || {},
+    camera_presets: sceneData.camera_presets || [],
+  };
+}
+
+/** 没有配置时的演示用玻璃展柜，3个一字排开 */
+function defaultDemoShelves() {
+  return [
+    {
+      id: 'shelf_01', label: '1号位',
+      position: [-2.2, 0, -2.5], rotation_y: 15,
+      case_size: { width: 0.7, height: 1.0, depth: 0.7 },
+      spin: { enabled: true, speed_deg_per_sec: 25, axis: [0, 1, 0] },
+      product: null,
+      npc_stop_point: { position: [-2.2, 0, -1.3], look_at: [-2.2, 0.8, -2.5] }
+    },
+    {
+      id: 'shelf_02', label: '2号位',
+      position: [0, 0, -2.8], rotation_y: 0,
+      case_size: { width: 0.8, height: 1.1, depth: 0.8 },
+      spin: { enabled: true, speed_deg_per_sec: 30, axis: [0, 1, 0] },
+      product: null,
+      npc_stop_point: { position: [0, 0, -1.5], look_at: [0, 0.9, -2.8] }
+    },
+    {
+      id: 'shelf_03', label: '3号位',
+      position: [2.2, 0, -2.5], rotation_y: -15,
+      case_size: { width: 0.7, height: 1.0, depth: 0.7 },
+      spin: { enabled: true, speed_deg_per_sec: 35, axis: [0, 1, 0] },
+      product: null,
+      npc_stop_point: { position: [2.2, 0, -1.3], look_at: [2.2, 0.8, -2.5] }
+    }
+  ];
+}
+
+function setLoading(pct) {
+  document.getElementById('loading-fill').style.width = pct + '%';
+}
+
+// ═══════════════════════════════════════════════
+//  渲染循环
+// ═══════════════════════════════════════════════
+let lastTime = performance.now();
+// 暖光脉动
+let warmPulse = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  const dt = Math.min((now - lastTime) / 1000, 0.1);
+  lastTime = now;
+
+  tickCamAnim(dt);
+  // CameraManager 优先接管相机更新（跟随/第一人称模式时接管 controls）
+  if (window.CameraManager?.camera) {
+    window.CameraManager.update(dt);
+  } else {
+    controls.update();
+  }
+
+  // 暖光脉动
+  warmPulse += dt * 0.8;
+  warmLight1.intensity = 0.7 + Math.sin(warmPulse) * 0.15;
+  warmLight2.intensity = 0.45 + Math.sin(warmPulse * 1.3) * 0.1;
+
+  // 货架光晕脉动（聚焦时）
+  if (focusedShelfId) {
+    const sh = shelfMeshes[focusedShelfId];
+    const h = sh?.getObjectByName('halo');
+    if (h) h.material.emissiveIntensity = 1.2 + Math.sin(warmPulse * 3) * 0.6;
+  }
+
+  // 更新NPC动画混合器
+  const npcDelta = npcClock.getDelta();
+  if (npcMixer) npcMixer.update(npcDelta);
+  // 更新辅助角色（机器人助手等）的动画混合器
+  if (window._actorMixers?.length) {
+    for (const m of window._actorMixers) m.update(npcDelta);
+  }
+
+  // 更新VRM Spring Bone物理
+  if (npcVRM && npcVRM.springBoneManager) {
+    npcVRM.springBoneManager.update(npcDelta);
+  }
+
+  // 更新VRM口型同步
+  if (npcLipSync) {
+    npcLipSync.update(npcDelta);
+  }
+
+  // 更新VRM表情
+  if (npcExpression) {
+    npcExpression.update(npcDelta);
+  }
+
+  // 更新玻璃展柜（商品自转、淡入淡出）
+  for (const id in glassCases) {
+    glassCases[id].update(dt);
+  }
+
+  renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════════
+//  🎬 产品视频播放（VideoTexture 接入货架）
+// ═══════════════════════════════════════════════
+const _videoScreens = new Map(); // shelf_id → { mesh, video, texture }
+
+function _playProductVideo(videoUrl, shelfId) {
+  // 若已存在则复用
+  if (_videoScreens.has(shelfId)) {
+    const existing = _videoScreens.get(shelfId);
+    existing.video.src = videoUrl;
+    existing.video.play().catch(() => {});
+    existing.mesh.visible = true;
+    return;
+  }
+
+  // 创建 HTML video 元素
+  const video = document.createElement('video');
+  video.src = videoUrl;
+  video.crossOrigin = 'anonymous';
+  video.loop = true;
+  video.muted = false;
+  video.playsInline = true;
+  video.autoplay = true;
+  video.play().catch(() => {});
+
+  // 创建 VideoTexture
+  const texture = new THREE.VideoTexture(video);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.format = THREE.RGBFormat;
+
+  // 创建屏幕平面（宽1.6:高0.9的16:9）
+  const geo = new THREE.PlaneGeometry(1.6, 0.9);
+  const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geo, mat);
+
+  // 定位：放在对应货架上方偏后
+  let pos = { x: 0, y: 1.5, z: -2.5 };
+  if (shelfId && glassCases[shelfId]) {
+    const gc = glassCases[shelfId];
+    const sp = gc.root?.position || new THREE.Vector3();
+    pos = { x: sp.x, y: sp.y + 1.2, z: sp.z - 0.05 };
+  } else {
+    // 从 SCENE_CONFIG.glassShelves 找坐标
+    const shelf = (SCENE_CONFIG.glassShelves || []).find(s => s.id === shelfId);
+    if (shelf?.position) {
+      pos = { x: shelf.position[0], y: (shelf.position[1] || 0) + 1.2, z: (shelf.position[2] || -2.5) - 0.05 };
+    }
+  }
+  mesh.position.set(pos.x, pos.y, pos.z);
+  scene.add(mesh);
+
+  _videoScreens.set(shelfId || '_default', { mesh, video, texture });
+  console.log(`[VideoTexture] 播放产品视频: ${videoUrl} 货架=${shelfId}`);
+}
+
+function _hideProductVideo(shelfId) {
+  const key = shelfId || '_default';
+  const entry = _videoScreens.get(key);
+  if (!entry) return;
+  entry.video.pause();
+  entry.mesh.visible = false;
+  console.log(`[VideoTexture] 隐藏产品视频: 货架=${shelfId}`);
+}
+
+// ── 比例配置 ──
+const ASPECT_PRESETS = {
+  '16:9':  { w: 16, h: 9  },
+  '9:16':  { w: 9,  h: 16 },
+  '4:3':   { w: 4,  h: 3  },
+  '1:1':   { w: 1,  h: 1  },
+  'free':  null,
+};
+let _currentAspect = 'free';
+// 基准FOV：自适应模式下使用，比例切换时以此为基准做补偿
+const _BASE_FOV = camera.fov || 45;
+
+function applyAspectRatio(key) {
+  _currentAspect = key;
+  const preset = ASPECT_PRESETS[key];
+  const winW = window.innerWidth;
+  const winH = window.innerHeight;
+  let canvasW, canvasH;
+
+  if (!preset) {
+    // free：撑满窗口
+    canvasW = winW;
+    canvasH = winH;
+  } else {
+    // letter-box：在窗口内按比例居中，不超出
+    const targetAspect = preset.w / preset.h;
+    const winAspect    = winW / winH;
+    if (targetAspect > winAspect) {
+      canvasW = winW;
+      canvasH = Math.round(winW / targetAspect);
+    } else {
+      canvasH = winH;
+      canvasW = Math.round(winH * targetAspect);
+    }
+  }
+
+  renderer.setSize(canvasW, canvasH);
+  camera.aspect = canvasW / canvasH;
+
+  // FOV补偿：画布变窄（aspect变小）时自动扩大FOV，
+  // 保证场景垂直可见范围与自适应模式一致，内容不被裁切
+  const freeAspect = winW / winH;          // 自适应时的宽高比（基准）
+  const newAspect  = canvasW / canvasH;
+  if (newAspect < freeAspect - 0.01) {
+    // 变窄了：用透视公式补偿垂直FOV
+    const baseRad = _BASE_FOV * Math.PI / 180;
+    const newRad  = 2 * Math.atan(Math.tan(baseRad / 2) * (freeAspect / newAspect));
+    camera.fov = Math.min(newRad * 180 / Math.PI, 120); // 最大不超过120°
+  } else {
+    camera.fov = _BASE_FOV;
+  }
+
+  camera.updateProjectionMatrix();
+  console.log(`[Aspect] ${key} → ${canvasW}×${canvasH}, fov=${camera.fov.toFixed(1)}`);
+}
+
+// ── 响应窗口大小 ──
+window.addEventListener('resize', () => applyAspectRatio(_currentAspect));
+
+
+// ═══════════════════════════════════════════════
+//  启动
+// ═══════════════════════════════════════════════
+// ── 预览模式 & 静音模式检测 ──
+const _urlParams = new URLSearchParams(window.location.search);
+const _isPreviewMode = _urlParams.get('preview') === '1';
+const _previewAction = _urlParams.get('action');
+// mute=1 时静音所有TTS输出（控制台预览iframe用此参数避免双重声音）
+let _isMuted = _urlParams.get('mute') === '1';
+if (_isMuted) {
+  ttsAudio.volume = 0;
+  console.log('[LiveScene] 静音模式：TTS音频已禁用');
+}
+
+if (_isPreviewMode) {
+  // 预览模式：隐藏HUD和非必要UI
+  const hud = document.getElementById('hud');
+  if (hud) hud.style.display = 'none';
+  const subtitle = document.getElementById('subtitle');
+  if (subtitle) subtitle.style.display = 'none';
+  console.log('[LiveScene] 预览模式，动作:', _previewAction);
+}
+
+loadScene(null).then(async () => {
+  await refreshEventActionMap();
+  
+  // 初始化骨骼动画重定向器
+  window.boneRetargeter = new BoneRetargeter();
+  await window.boneRetargeter.loadConfig();
+  console.log('[BoneRetargeter] 初始化完成');
+  
+  // 初始化实时动捕（Phase 5）
+  initMotionCapture();
+  
+  // 把已有的 camera 和 controls 注入 CameraManager 单例
+  if (window.CameraManager) {
+    window.CameraManager.init(renderer, renderer.domElement, camera, controls);
+    // 注入场景自定义机位预设
+    window.SCENE_CAMERA_PRESETS = SCENE_CONFIG.camera_presets || [];
+    console.log(`[CameraManager] 已接管相机，${window.SCENE_CAMERA_PRESETS.length}个自定义机位`);
+  }
+
+  loadNPCCharacter(); // async，内部等sceneReadyPromise
+  animate();
+
+  // ── 道具挂载事件（prop_attach ActionType）──
+  const _attachedProps = new Map(); // prop_id → THREE.Object3D
+  window.addEventListener('npc_prop_attach', async (e) => {
+    const { prop_id, attach_bone, offset, model_file, detach } = e.detail;
+    if (detach) {
+      const mesh = _attachedProps.get(prop_id);
+      if (mesh) { mesh.parent?.remove(mesh); _attachedProps.delete(prop_id); }
+      console.log('[PropAttach] Detached:', prop_id);
+      return;
+    }
+    if (!model_file || !npcObject) return;
+    try {
+      const gltf = await new Promise((res, rej) => {
+        new THREE.GLTFLoader().load('/' + model_file, res, undefined, rej);
+      });
+      const propMesh = gltf.scene;
+      if (offset) propMesh.position.set(offset.x || 0, offset.y || 0, offset.z || 0);
+      // 查找目标骨骼节点
+      let boneNode = null;
+      if (attach_bone) {
+        npcObject.traverse(n => {
+          if (!boneNode && n.isBone && n.name.toLowerCase().includes(attach_bone.toLowerCase())) {
+            boneNode = n;
+          }
+        });
+      }
+      (boneNode || npcObject).add(propMesh);
+      _attachedProps.set(prop_id, propMesh);
+      console.log('[PropAttach] Attached:', prop_id, '→', boneNode?.name || 'root');
+    } catch (err) {
+      console.warn('[PropAttach] Failed to load prop model:', model_file, err.message);
+    }
+  });
+
+  // ── 辅助角色召唤事件（actor_spawn ActionType）──
+  const _spawnedActors = new Map(); // actor_id → THREE.Object3D
+  window.addEventListener('npc_actor_spawn', async (e) => {
+    const { actor_id, model_file, position, animation } = e.detail;
+    if (!model_file) return;
+    // 若已加载则复用
+    if (_spawnedActors.has(actor_id)) {
+      const existing = _spawnedActors.get(actor_id);
+      existing.visible = true;
+      if (position) existing.position.set(position.x || 0, position.y || 0, position.z || 0);
+      return;
+    }
+    try {
+      const gltf = await new Promise((res, rej) => {
+        new THREE.GLTFLoader().load('/' + model_file, res, undefined, rej);
+      });
+      const actorMesh = gltf.scene;
+      if (position) actorMesh.position.set(position.x || 1.0, position.y || 0, position.z || 0);
+      scene.add(actorMesh);
+      _spawnedActors.set(actor_id, actorMesh);
+      // 创建AnimationMixer并注册到ActionFlowExecutor
+      const actorMixer = new THREE.AnimationMixer(actorMesh);
+      window._actorMixers = window._actorMixers || [];
+      window._actorMixers.push(actorMixer);
+      if (actionFlowExecutor) {
+        actionFlowExecutor.registerActor(actor_id, actorMesh, actorMixer);
+      }
+      // 若有初始动画则播放
+      if (gltf.animations?.length && animation) {
+        const clip = THREE.AnimationClip.findByName(gltf.animations, animation) || gltf.animations[0];
+        actorMixer.clipAction(clip).setLoop(THREE.LoopRepeat, Infinity).play();
+      }
+      console.log('[ActorSpawn] Spawned:', actor_id, 'at', position);
+    } catch (err) {
+      console.warn('[ActorSpawn] Failed to load actor model:', model_file, err.message);
+    }
+  });
+
+  if (_isPreviewMode) {
+    // 预览模式：不连接WS，加载完角色后直接播放指定动作
+    if (_previewAction) {
+      setTimeout(() => {
+        console.log('[Preview] 播放预览动作:', _previewAction);
+        playNPCAction(_previewAction);
+      }, 1500);
+    }
+  } else {
+    connectWS();
+    setTimeout(startAutoTour, 2000);
+  }
+});
+
+</script>
+</body>
+</html>

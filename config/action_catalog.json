@@ -1,0 +1,517 @@
+{
+  "_comment": "动作库注册表 — 每个条目对应一个GLB文件。triggers字段是检索的核心，描述该动作在什么场景下被调用。",
+  "version": "1.2",
+  "embedding_model": "keyword_fallback",
+  "supported_skeleton_types": [
+    "humanoid",
+    "quadruped",
+    "avian",
+    "mechanical",
+    "custom"
+  ],
+  "_action_type_reference": {
+    "animation": "普通骨骼动画（绝大多数动作）",
+    "transformation": "变身序列：触发形态切换+特效+音效，不是单纯骨骼动画",
+    "expression_gesture": "表情手势：肢体动作+同步表情（如撒娇摇头+娇嗔表情）",
+    "special_skill": "特殊技能：含道具挂载/粒子特效/骨骼绑定特效的复合动作",
+    "locomotion": "移动类：配合路径点使用的循环动作",
+    "gaze": "视线控制：头部/眼球朝向目标"
+  },
+  "_sound_field_reference": {
+    "on_start": "动作第一帧时触发",
+    "on_keyframe_N": "第N帧时触发（用于精确同步，如响指第3帧）",
+    "on_complete": "动作最后一帧完成时触发",
+    "loop_during": "动作进行中持续循环播放（如变身过程的狐火声）"
+  },
+  "actions": [
+    {
+      "id": "idle_stand",
+      "file": "基础姿态/直立站立/Standing Arguing.glb",
+      "skeleton_type": "humanoid",
+      "description": "自然直立站立，轻微摆动，待机状态",
+      "triggers": [
+        "待机",
+        "什么都不做",
+        "站立等待",
+        "默认姿态",
+        "空闲",
+        "听观众说话"
+      ],
+      "category": "基础姿态",
+      "duration": 99.0,
+      "loop": true,
+      "tags": [
+        "idle",
+        "stand",
+        "default",
+        "neutral"
+      ],
+      "emotion": "neutral",
+      "priority": 0
+    },
+    {
+      "id": "crouch_gather",
+      "file": "基础姿态/蹲下/Gathering Objects.glb",
+      "skeleton_type": "humanoid",
+      "description": "蹲下捡拾地面物品",
+      "triggers": [
+        "蹲下",
+        "捡东西",
+        "从地上拿",
+        "捡起地面物品",
+        "俯身拾取"
+      ],
+      "category": "基础姿态",
+      "duration": 2.5,
+      "loop": false,
+      "tags": [
+        "crouch",
+        "pickup",
+        "low"
+      ],
+      "emotion": "neutral",
+      "priority": 1
+    },
+    {
+      "id": "bend_kettlebell",
+      "file": "基础姿态/弯腰/Kettlebell Swing.glb",
+      "skeleton_type": "humanoid",
+      "description": "弯腰取低处物品",
+      "triggers": [
+        "弯腰",
+        "低处取物",
+        "取底层货架",
+        "弯下腰拿"
+      ],
+      "category": "基础姿态",
+      "duration": 2.0,
+      "loop": false,
+      "tags": [
+        "bend",
+        "low",
+        "fetch"
+      ],
+      "emotion": "neutral",
+      "priority": 1
+    },
+    {
+      "id": "walk_normal",
+      "file": "移动动作/走路/正常走路/Walking.glb",
+      "skeleton_type": "humanoid",
+      "description": "正常速度行走，循环",
+      "triggers": [
+        "走路",
+        "走向货架",
+        "走过去",
+        "移动",
+        "向前走",
+        "去拿东西",
+        "走回来"
+      ],
+      "category": "移动动作",
+      "duration": 99.0,
+      "loop": true,
+      "tags": [
+        "walk",
+        "move",
+        "locomotion"
+      ],
+      "emotion": "neutral",
+      "priority": 1
+    },
+    {
+      "id": "reach_high",
+      "file": "交互动作/取物动作/取高处/Pick Fruit (1).glb",
+      "skeleton_type": "humanoid",
+      "description": "抬手伸臂取高层货架上的物品",
+      "triggers": [
+        "取高处",
+        "高层货架",
+        "伸手向上",
+        "拿高处商品",
+        "头顶位置取物",
+        "顶层取货"
+      ],
+      "category": "交互动作/取物",
+      "duration": 2.0,
+      "loop": false,
+      "tags": [
+        "reach",
+        "high",
+        "fetch",
+        "shelf"
+      ],
+      "shelf_height": "high",
+      "emotion": "neutral",
+      "priority": 2
+    },
+    {
+      "id": "reach_mid",
+      "file": "交互动作/取物动作/取中间/Pick Fruit (2).glb",
+      "skeleton_type": "humanoid",
+      "description": "平伸手臂取中层货架商品",
+      "triggers": [
+        "取中层",
+        "中间高度取物",
+        "平行取货",
+        "中层货架",
+        "正常高度拿商品"
+      ],
+      "category": "交互动作/取物",
+      "duration": 2.0,
+      "loop": false,
+      "tags": [
+        "reach",
+        "mid",
+        "fetch",
+        "shelf"
+      ],
+      "shelf_height": "mid",
+      "emotion": "neutral",
+      "priority": 2
+    },
+    {
+      "id": "reach_low",
+      "file": "交互动作/取物动作/取低处/Pick Fruit.glb",
+      "skeleton_type": "humanoid",
+      "description": "俯身取低层货架商品",
+      "triggers": [
+        "取低处",
+        "低层货架",
+        "俯身取货",
+        "弯腰取低处",
+        "底层商品"
+      ],
+      "category": "交互动作/取物",
+      "duration": 2.0,
+      "loop": false,
+      "tags": [
+        "reach",
+        "low",
+        "fetch",
+        "shelf"
+      ],
+      "shelf_height": "low",
+      "emotion": "neutral",
+      "priority": 2
+    },
+    {
+      "id": "reach_crouch_deep",
+      "file": "交互动作/取物动作/弯腰取/Kettlebell Swing.glb",
+      "skeleton_type": "humanoid",
+      "description": "深度弯腰取地面或最低层物品",
+      "triggers": [
+        "弯腰深取",
+        "最底层",
+        "地面物品",
+        "深蹲取货",
+        "地板上的东西"
+      ],
+      "category": "交互动作/取物",
+      "duration": 2.5,
+      "loop": false,
+      "tags": [
+        "reach",
+        "crouch",
+        "low",
+        "fetch"
+      ],
+      "shelf_height": "floor",
+      "emotion": "neutral",
+      "priority": 2
+    },
+    {
+      "id": "present_twohand",
+      "file": "交互动作/递接动作/放下物品/Standing Greeting.glb",
+      "skeleton_type": "humanoid",
+      "description": "双手托举展示商品给观众",
+      "triggers": [
+        "展示商品",
+        "双手展示",
+        "给观众看",
+        "拿给大家看",
+        "介绍商品",
+        "展示给镜头",
+        "让大家看看",
+        "商品展示"
+      ],
+      "category": "交互动作/展示",
+      "duration": 3.0,
+      "loop": true,
+      "tags": [
+        "present",
+        "show",
+        "product",
+        "twohand"
+      ],
+      "emotion": "happy",
+      "priority": 3
+    },
+    {
+      "id": "handover_onehand",
+      "file": "交互动作/递接动作/放下物品/Shaking Hands 1.glb",
+      "skeleton_type": "humanoid",
+      "description": "单手递出物品，像递给顾客",
+      "triggers": [
+        "递给顾客",
+        "单手递出",
+        "交给你",
+        "送给你",
+        "递过去"
+      ],
+      "category": "交互动作/递接",
+      "duration": 2.0,
+      "loop": false,
+      "tags": [
+        "handover",
+        "give",
+        "onehand"
+      ],
+      "emotion": "friendly",
+      "priority": 3
+    },
+    {
+      "id": "greeting_wave",
+      "file": "情绪反应/打招呼/Standing Greeting (1).glb",
+      "skeleton_type": "humanoid",
+      "description": "热情挥手打招呼",
+      "triggers": [
+        "打招呼",
+        "挥手",
+        "欢迎观众",
+        "你好",
+        "大家好",
+        "欢迎来到直播间",
+        "观众进来了",
+        "开场问候",
+        "感谢关注",
+        "谢谢大家"
+      ],
+      "category": "情绪反应",
+      "duration": 2.5,
+      "loop": false,
+      "tags": [
+        "greeting",
+        "wave",
+        "welcome",
+        "happy"
+      ],
+      "emotion": "happy",
+      "priority": 2
+    },
+    {
+      "id": "transform_fox_partial",
+      "action_type": "transformation",
+      "file": null,
+      "skeleton_type": "humanoid",
+      "description": "触发半狐变身序列：狐火爆发→挂载耳朵+尾巴道具→切换表情集",
+      "triggers": [
+        "变成狐狸",
+        "化为狐狸",
+        "狐狸形态",
+        "生气变身",
+        "半狐变身",
+        "露出狐狸本相",
+        "显露真身"
+      ],
+      "category": "特殊技能/变身",
+      "duration": 1.2,
+      "loop": false,
+      "tags": [
+        "transform",
+        "fox",
+        "angry",
+        "special"
+      ],
+      "emotion": "angry",
+      "priority": 8,
+      "target_form": "fox_partial",
+      "transition_effect": "fx_fox_fire_burst",
+      "sounds": {
+        "on_start": "assets/sounds/transform/fox_fire_ignite.mp3",
+        "loop_during": "assets/sounds/ambient/fox_fire_loop.mp3",
+        "on_complete": "assets/sounds/transform/fox_roar.mp3"
+      }
+    },
+    {
+      "id": "transform_human_restore",
+      "action_type": "transformation",
+      "file": null,
+      "skeleton_type": "humanoid",
+      "description": "从狐狸形态恢复人形：特效消散→移除道具→切换回人形表情集",
+      "triggers": [
+        "变回人",
+        "恢复人形",
+        "收回狐狸尾巴",
+        "平静下来",
+        "冷静了"
+      ],
+      "category": "特殊技能/变身",
+      "duration": 0.8,
+      "loop": false,
+      "tags": [
+        "transform",
+        "restore",
+        "human"
+      ],
+      "emotion": "neutral",
+      "priority": 8,
+      "target_form": "human",
+      "transition_effect": "fx_human_restore",
+      "sounds": {
+        "on_start": "assets/sounds/transform/human_restore.mp3",
+        "on_complete": null
+      }
+    },
+    {
+      "id": "snap_fingers_fire",
+      "action_type": "special_skill",
+      "file": "特殊技能/响指/Finger Snap.glb",
+      "skeleton_type": "humanoid",
+      "description": "打一个响指，右手掌心召唤出小火苗（骨骼绑定粒子特效）",
+      "triggers": [
+        "打响指",
+        "弹指",
+        "响指",
+        "变出火苗",
+        "召唤小火",
+        "手上的火"
+      ],
+      "category": "特殊技能/召唤",
+      "duration": 1.5,
+      "loop": false,
+      "tags": [
+        "snap",
+        "fire",
+        "magic",
+        "special"
+      ],
+      "emotion": "mysterious",
+      "priority": 5,
+      "bone_effects": [
+        {
+          "effect_id": "fx_palm_fire",
+          "attach_bone": "rightHand",
+          "offset": {
+            "x": 0.0,
+            "y": 0.05,
+            "z": 0.0
+          },
+          "start_frame": 8,
+          "duration_s": 3.0,
+          "auto_remove": false
+        }
+      ],
+      "sounds": {
+        "on_keyframe_8": "assets/sounds/action/finger_snap.mp3",
+        "on_complete": "assets/sounds/effect/fire_whoosh.mp3"
+      }
+    },
+    {
+      "id": "summon_robot_gesture",
+      "action_type": "special_skill",
+      "file": "特殊技能/召唤/Summoning Gesture.glb",
+      "skeleton_type": "humanoid",
+      "description": "向侧方伸手召唤，用于呼叫机器人助手出场",
+      "triggers": [
+        "召唤机器人",
+        "呼叫助手",
+        "叫机器人来",
+        "派个机器人",
+        "帮我叫一个"
+      ],
+      "category": "特殊技能/召唤",
+      "duration": 2.0,
+      "loop": false,
+      "tags": [
+        "summon",
+        "robot",
+        "gesture",
+        "special"
+      ],
+      "emotion": "neutral",
+      "priority": 5,
+      "spawns_actor": "robot_helper_01",
+      "sounds": {
+        "on_start": null,
+        "on_complete": "assets/sounds/effect/robot_summon.mp3"
+      }
+    },
+    {
+      "id": "Shaking Hands 1",
+      "name": "交互动作_递接动作_放下物品",
+      "file": "交互动作/递接动作/放下物品/Shaking Hands 1.glb",
+      "description": "放下物品后握手",
+      "triggers": [
+        "当NPC完成递送物品后，与用户握手致意",
+        "当NPC放下手中物品后，向用户表示友好",
+        "当NPC结束交易或服务后，与用户握手告别",
+        "当NPC收到用户感谢后，握手回应",
+        "当NPC与用户初次见面时，放下物品握手",
+        "当NPC完成合作任务后，握手庆祝",
+        "当NPC向用户展示完商品后，握手建立信任",
+        "当NPC在互动结束时，握手表示礼貌"
+      ],
+      "category": "交互动作/递接动作/放下物品",
+      "skeleton_type": "humanoid",
+      "emotion": "friendly",
+      "enabled": true,
+      "_draft": false,
+      "committed_at": "2026-06-02T03:19:59.511117Z"
+    },
+    {
+      "id": "Gathering Objects",
+      "name": "crouch_gather",
+      "file": "基础姿态/蹲下/Gathering Objects.glb",
+      "description": "蹲下捡拾地面物品",
+      "triggers": [
+        "蹲下",
+        "捡东西",
+        "从地上拿",
+        "捡起地面物品",
+        "俯身拾取"
+      ],
+      "category": "未分类",
+      "skeleton_type": "humanoid",
+      "emotion": "neutral",
+      "enabled": true,
+      "_draft": false,
+      "committed_at": "2026-06-02T03:11:10.729063Z"
+    },
+    {
+      "id": "Kettlebell Swing",
+      "name": "基础姿态_弯腰",
+      "file": "基础姿态/弯腰/Kettlebell Swing.glb",
+      "description": "",
+      "triggers": [],
+      "category": "未分类",
+      "skeleton_type": "humanoid",
+      "emotion": "neutral",
+      "enabled": true,
+      "_draft": false,
+      "committed_at": "2026-06-02T03:11:08.441042Z"
+    },
+    {
+      "id": "Standing Greeting",
+      "name": "present_twohand",
+      "file": "交互动作/递接动作/放下物品/Standing Greeting.glb",
+      "description": "双手托举展示商品给观众",
+      "triggers": [
+        "展示商品",
+        "双手展示",
+        "给观众看",
+        "拿给大家看",
+        "介绍商品",
+        "展示给镜头",
+        "让大家看看",
+        "商品展示"
+      ],
+      "category": "未分类",
+      "skeleton_type": "humanoid",
+      "emotion": "neutral",
+      "enabled": true,
+      "_draft": false,
+      "committed_at": "2026-06-02T02:56:10.364050Z"
+    }
+  ]
+}

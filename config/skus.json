@@ -1,0 +1,181 @@
+{
+  "_comment": "商品库 - 多商品映射格式（以sku_id为key）",
+  "tea_001": {
+    "id": "tea_001",
+    "name": "西湖龙井明前茶",
+    "category": "tea",
+    "price": 168,
+    "original_price": 298,
+    "stock": 999,
+    "status": "active",
+    "keywords": ["绿茶", "龙井", "西湖", "明前"],
+    "description": "产自杭州西湖核心产区，清明前采摘，色泽翠绿，香气清幽",
+    "image": "https://example.com/tea_001.jpg",
+    "model": "",
+    "video": "",
+    "shelf_id": "A1",
+    "platform_id": "123456",
+    "platform": "douyin",
+    "detail_url": "https://example.com/detail/tea_001",
+    "assets": {
+      "shelf": "assets/products/tea_001/shelf.png",
+      "hand": "assets/products/tea_001/hand.png",
+      "table": "assets/products/tea_001/table.png",
+      "video": "assets/products/tea_001/intro.mp4"
+    },
+    "price_tiers": {
+      "single": { "qty": 1, "price": 168, "desc": "尝鲜价" },
+      "double": { "qty": 2, "price": 300, "desc": "两盒优惠" },
+      "triple": { "qty": 3, "price": 420, "desc": "囤货装" }
+    },
+    "popup_data": {
+      "basic_info": {
+        "origin": "浙江杭州西湖",
+        "spec": "150g/盒",
+        "shelf_life": "18个月",
+        "brand": "宝青坊严选"
+      },
+      "selling_points": ["明前采摘", "西湖产区", "回甘持久"],
+      "policy": {
+        "shipping": "48小时内发货",
+        "return": "支持7天无理由"
+      }
+    },
+    "platforms": {
+      "douyin": { "cart_position": 1 }
+    }
+  },
+  "tea_002": {
+    "id": "tea_002",
+    "name": "铁观音礼盒装",
+    "category": "tea",
+    "price": 128,
+    "original_price": 198,
+    "stock": 500,
+    "status": "active",
+    "keywords": ["乌龙茶", "铁观音", "礼盒", "福建"],
+    "description": "安溪铁观音，传统工艺制作，兰花香韵，回甘持久",
+    "image": "https://example.com/tea_002.jpg",
+    "model": "",
+    "video": "",
+    "shelf_id": "A2",
+    "platform_id": "789012",
+    "platform": "douyin",
+    "detail_url": "https://example.com/detail/tea_002",
+    "assets": {
+      "shelf": "assets/products/tea_002/shelf.png",
+      "hand": "assets/products/tea_002/hand.png",
+      "table": "assets/products/tea_002/table.png",
+      "video": "assets/products/tea_002/intro.mp4"
+    },
+    "price_tiers": {
+      "single": { "qty": 1, "price": 128, "desc": "单盒装" },
+      "double": { "qty": 2, "price": 228, "desc": "双盒礼袋" },
+      "gift": { "qty": 1, "price": 168, "desc": "礼盒版" }
+    },
+    "popup_data": {
+      "basic_info": {
+        "origin": "福建安溪",
+        "spec": "250g/盒",
+        "shelf_life": "24个月",
+        "brand": "宝青坊严选"
+      },
+      "selling_points": ["安溪核心产区", "传统炭焙", "七泡有余香"],
+      "policy": {
+        "shipping": "48小时内发货",
+        "return": "支持7天无理由"
+      }
+    },
+    "platforms": {
+      "douyin": { "cart_position": 2 }
+    }
+  },
+  "tea_003": {
+    "id": "tea_003",
+    "name": "普洱熟茶饼",
+    "category": "tea",
+    "price": 258,
+    "original_price": 358,
+    "stock": 200,
+    "status": "active",
+    "keywords": ["普洱茶", "熟茶", "茶饼", "云南"],
+    "description": "云南勐海产区，五年陈化，汤色红浓，口感醇厚",
+    "image": "https://example.com/tea_003.jpg",
+    "model": "",
+    "video": "",
+    "shelf_id": "A3",
+    "platform_id": "345678",
+    "platform": "douyin",
+    "detail_url": "https://example.com/detail/tea_003",
+    "assets": {
+      "shelf": "assets/products/tea_003/shelf.png",
+      "hand": "assets/products/tea_003/hand.png",
+      "table": "assets/products/tea_003/table.png",
+      "video": "assets/products/tea_003/intro.mp4"
+    },
+    "price_tiers": {
+      "single": { "qty": 1, "price": 258, "desc": "单饼357g" },
+      "double": { "qty": 2, "price": 458, "desc": "双饼提装" }
+    },
+    "popup_data": {
+      "basic_info": {
+        "origin": "云南勐海",
+        "spec": "357g/饼",
+        "shelf_life": "长期保存",
+        "brand": "宝青坊严选"
+      },
+      "selling_points": ["五年陈化", "勐海古树", "汤色红浓透亮"],
+      "policy": {
+        "shipping": "48小时内发货",
+        "return": "支持7天无理由"
+      }
+    },
+    "platforms": {
+      "douyin": { "cart_position": 3 }
+    }
+  },
+  "gift_001": {
+    "id": "gift_001",
+    "name": "茶具礼盒套装",
+    "category": "teaware",
+    "price": 388,
+    "original_price": 588,
+    "stock": 100,
+    "status": "active",
+    "keywords": ["茶具", "礼盒", "套装", "送礼"],
+    "description": "紫砂茶壶+品茗杯+茶盘精美礼盒，送礼佳品",
+    "image": "https://example.com/gift_001.jpg",
+    "model": "",
+    "video": "",
+    "shelf_id": "B1",
+    "platform_id": "999999",
+    "platform": "douyin",
+    "detail_url": "https://example.com/detail/gift_001",
+    "assets": {
+      "shelf": "assets/products/gift_001/shelf.png",
+      "hand": "assets/products/gift_001/hand.png",
+      "table": "assets/products/gift_001/table.png",
+      "video": "assets/products/gift_001/intro.mp4"
+    },
+    "price_tiers": {
+      "single": { "qty": 1, "price": 388, "desc": "标准礼盒" },
+      "premium": { "qty": 1, "price": 588, "desc": "至尊礼盒" }
+    },
+    "popup_data": {
+      "basic_info": {
+        "origin": "江苏宜兴",
+        "spec": "1壶+4杯+茶盘",
+        "shelf_life": "长期保存",
+        "brand": "宝青坊严选"
+      },
+      "selling_points": ["宜兴紫砂", "手工制作", "送礼首选"],
+      "policy": {
+        "shipping": "48小时内发货",
+        "return": "支持7天无理由"
+      }
+    },
+    "platforms": {
+      "douyin": { "cart_position": 4 }
+    }
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "_comment": "多直播平台接入配置，enable开启后需配置对应平台的认证信息",
+  "douyin": {
+    "enabled": true,
+    "name": "抖音直播",
+    "webhook_url": "/webhook/douyin",
+    "webhook_secret": "",
+    "app_id": "",
+    "app_secret": "",
+    "access_token": "",
+    "room_id": "",
+    "room_url": "",
+    "crawler_enabled": true,
+    "features": [
+      "chat",
+      "gift",
+      "enter",
+      "like",
+      "follow",
+      "order"
+    ]
+  },
+  "douyin_minigame": {
+    "_comment": "抖音直播玩法（小程序），用于语音互动",
+    "enabled": false,
+    "name": "抖音直播玩法",
+    "app_id": "你的直播玩法AppID",
+    "app_secret": "你的直播玩法AppSecret",
+    "access_token": "",
+    "features": [
+      "voice_chat",
+      "barrage",
+      "gift"
+    ],
+    "voice_session_ttl": 300
+  },
+  "wechat": {
+    "enabled": false,
+    "name": "微信视频号",
+    "webhook_url": "/webhook/wechat",
+    "token": "",
+    "encoding_aes_key": "",
+    "app_id": "",
+    "app_secret": "",
+    "room_id": "",
+    "features": [
+      "chat",
+      "gift",
+      "enter",
+      "like",
+      "follow",
+      "order"
+    ]
+  },
+  "xiaohongshu": {
+    "enabled": false,
+    "name": "小红书直播",
+    "webhook_url": "/webhook/xiaohongshu",
+    "api_key": "",
+    "api_secret": "",
+    "room_id": "",
+    "features": [
+      "chat",
+      "gift",
+      "enter",
+      "like",
+      "follow"
+    ]
+  },
+  "taobao": {
+    "enabled": false,
+    "name": "淘宝直播",
+    "webhook_url": "/webhook/taobao",
+    "app_key": "",
+    "app_secret": "",
+    "session_key": "",
+    "room_id": "",
+    "features": [
+      "chat",
+      "gift",
+      "enter",
+      "like",
+      "follow",
+      "order"
+    ]
+  },
+  "kuaishou": {
+    "enabled": false,
+    "name": "快手直播",
+    "webhook_url": "/webhook/kuaishou",
+    "app_id": "",
+    "app_secret": "",
+    "secret": "",
+    "room_id": "",
+    "features": [
+      "chat",
+      "gift",
+      "enter",
+      "like",
+      "follow",
+      "order"
+    ]
+  },
+  "huoshan": {
+    "enabled": false,
+    "name": "火山引擎/火山版",
+    "webhook_url": "/webhook/huoshan",
+    "webhook_secret": "",
+    "app_id": "",
+    "app_secret": "",
+    "room_id": "",
+    "features": [
+      "chat",
+      "gift",
+      "enter",
+      "like",
+      "follow",
+      "order"
+    ]
+  },
+  "_doc": {
+    "setup_guide": {
+      "douyin": "抖音开放平台 -> 直播间Webhook -> 配置服务器URL和Secret",
+      "wechat": "微信视频号助手 -> 直播管理 -> 开发者设置 -> 开启消息推送",
+      "xiaohongshu": "小红书专业号后台 -> 直播中心 -> 开发者设置 -> 申请API权限",
+      "taobao": "淘宝开放平台 -> 创建应用 -> 申请直播消息订阅权限 -> 配置消息推送",
+      "kuaishou": "快手开放平台 -> 直播SDK -> 配置推送地址和签名密钥",
+      "huoshan": "火山引擎控制台 -> 直播服务 -> 消息推送设置"
+    }
+  }
+}
