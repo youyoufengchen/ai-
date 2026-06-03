@@ -1,0 +1,242 @@
+{
+  "_comment": "3D场景资源注册表 — 可用的场景、道具、环境模型",
+  "version": "2.0",
+  "scenes": [
+    {
+      "id": "sponza_interior",
+      "display_name": "Sponza 建筑室内",
+      "description": "经典建筑室内场景，常用于光照测试，PBR材质，含庭院和柱廊",
+      "directory": "assets/场景/Sponza_建筑室内",
+      "entry_file": "Sponza.gltf",
+      "format": "glTF",
+      "size_mb": 51,
+      "license": "Public Domain (modified Crytek Sponza)",
+      "source": "KhronosGroup/glTF-Sample-Assets",
+      "tags": ["interior", "building", "architecture", "lighting", "PBR"],
+      "suitable_for": ["直播间背景", "光照测试", "建筑展示"]
+    },
+    {
+      "id": "kenney_market",
+      "display_name": "Kenney 超市场景",
+      "description": "20个低多边形超市/商店模型组件：货架、购物车、收银台、冰柜等，可自由组合",
+      "directory": "assets/场景/Kenney_超市",
+      "format": "GLB",
+      "size_mb": 0.8,
+      "model_count": 20,
+      "license": "CC0",
+      "source": "Kenney.nl (via OpenGameArt)",
+      "tags": ["shop", "market", "store", "low-poly", "modular"],
+      "suitable_for": ["商品展示场景", "购物直播", "超市背景"],
+      "models": [
+        "bottle-return.glb", "cash-register.glb", "character-employee.glb",
+        "column.glb", "display-bread.glb", "display-fruit.glb",
+        "fence-door-rotate.glb", "fence.glb", "floor.glb", "freezer.glb",
+        "freezers-standing.glb", "shelf-bags.glb", "shelf-boxes.glb",
+        "shelf-end.glb", "shopping-basket.glb", "shopping-cart.glb",
+        "wall-corner.glb", "wall-door-rotate.glb", "wall-window.glb", "wall.glb"
+      ]
+    },
+    {
+      "id": "momus_park",
+      "display_name": "MomusPark 公园",
+      "description": "希腊风格公园场景组件：喷泉、雕像、圆形剧场、柱子、树木、岩石等",
+      "directory": "assets/场景/MomusPark_公园",
+      "format": "GLB",
+      "size_mb": 8.8,
+      "model_count": 10,
+      "license": "CC0",
+      "source": "Polygonal Mind (ToxSam/cc0-models-Polygonal-Mind)",
+      "tags": ["park", "outdoor", "greek", "fountain", "statue", "nature"],
+      "suitable_for": ["户外直播", "古典风格场景", "公园环境"],
+      "models": [
+        "Rock_01_Art.glb", "Rock_02_Art.glb", "Skydoor_Art.glb",
+        "Statue_greek_01_Art.glb", "Statue_greek_02_Art.glb",
+        "Str_Amphitheater_01_Art.glb", "Str_Column_04_Art.glb",
+        "Str_Fountain_01_Art.glb", "Tree_01_Art.glb", "Tree_02_Art.glb"
+      ]
+    },
+    {
+      "id": "lunar_year_palace",
+      "display_name": "春节宫殿",
+      "description": "中国春节/新年主题宫殿场景：龙雕、灯笼、牌楼、祭坛、地板、屋顶、门等52个模块化组件，可组合成完整的中式殿堂",
+      "directory": "assets/场景/春节宫殿_LunarYear",
+      "format": "GLB",
+      "size_mb": 38,
+      "model_count": 52,
+      "license": "CC0",
+      "source": "Polygonal Mind (ToxSam/cc0-models-Polygonal-Mind)",
+      "tags": ["chinese", "lunar-year", "palace", "temple", "dragon", "lantern", "traditional", "modular"],
+      "suitable_for": ["中国风直播", "春节主题", "宝青坊店铺", "古风场景"],
+      "key_models": [
+        "Dragon.glb", "MainAltar.glb", "Portal.glb", "Bell.glb",
+        "BellStructure.glb", "Column.glb", "Door.glb", "Table01.glb",
+        "Table02.glb", "Lamp01.glb", "Lamp02.glb", "Banner.glb",
+        "RoomWall01.glb", "RoomRoof.glb", "RoomFloor.glb", "RoomDoor.glb",
+        "EntranceStairs.glb", "Carpet01.glb", "Cushion.glb", "Drum.glb"
+      ]
+    },
+    {
+      "id": "medieval_fair",
+      "display_name": "中世纪集市",
+      "description": "完整的中世纪集市场景：食物摊位、服装摊位、舞台、酒馆、入口门楼等35个组件。适合热闹的直播卖货场景",
+      "directory": "assets/场景/中世纪集市_MedievalFair",
+      "format": "GLB",
+      "size_mb": 53,
+      "model_count": 35,
+      "license": "CC0",
+      "source": "Polygonal Mind (ToxSam/cc0-models-Polygonal-Mind)",
+      "tags": ["medieval", "fair", "market", "booth", "tavern", "stage", "shopping"],
+      "suitable_for": ["集市直播", "商品展销", "热闹场景", "节日氛围"],
+      "key_models": [
+        "Booth_Food01.glb", "Booth_Food02.glb", "Booth_Wearables.glb",
+        "Booth_Pretzelgame.glb", "Tabern.glb", "StageBackground.glb",
+        "CenterPlatform.glb", "Fair_Entry.glb", "WoodPlatform.glb",
+        "SignPost.glb", "Signbook.glb", "Cart.glb", "Table_Dessert.glb"
+      ]
+    },
+    {
+      "id": "avatar_show_stage",
+      "display_name": "直播舞台",
+      "description": "专业直播/录影舞台场景：完整舞台结构、摄影灯、摄像机、幕布、观众席、沙发等20个组件，直接可用于虚拟直播间",
+      "directory": "assets/场景/直播舞台_AvatarShow",
+      "format": "GLB",
+      "size_mb": 122,
+      "model_count": 20,
+      "license": "CC0",
+      "source": "Polygonal Mind (ToxSam/cc0-models-Polygonal-Mind)",
+      "tags": ["stage", "studio", "livestream", "camera", "lighting", "professional"],
+      "suitable_for": ["虚拟直播间", "产品展示", "访谈节目", "综艺舞台"],
+      "key_models": [
+        "Stage_Full_Structure.glb", "Stage_Floor.glb", "Stage_Platform.glb",
+        "Stage_Wall.glb", "Stage_Curtain_Invite.glb", "Stage_Decor.glb",
+        "Studio_Lamp.glb", "StudioLight_Armature.glb", "Camera.glb",
+        "Platea.glb", "Spectator_Chair.glb", "Arm_Chair.glb",
+        "Long_Chair.glb", "Sofa.glb", "Carpet.glb", "Table.glb"
+      ]
+    },
+    {
+      "id": "cyberpunk_vaporwave",
+      "display_name": "赛博朋克/蒸汽波",
+      "description": "复古未来主义场景组件：霓虹灯框架、复古电脑、蒸汽波柱子、大卫雕像、维纳斯等50个模型。适合科技感/潮流直播",
+      "directory": "assets/场景/赛博朋克_ChromaticChaos",
+      "format": "GLB",
+      "size_mb": 35,
+      "model_count": 50,
+      "license": "CC0",
+      "source": "Polygonal Mind (ToxSam/cc0-models-Polygonal-Mind)",
+      "tags": ["cyberpunk", "vaporwave", "retro", "neon", "futuristic", "tech"],
+      "suitable_for": ["科技直播", "潮流场景", "电竞风格", "赛博朋克氛围"],
+      "key_models": [
+        "David_Retro.glb", "Venus_01_Floating.glb", "Venus_Retro.glb",
+        "Column_Vapor_01.glb", "Column_Vapor_02.glb", "Floor_Vapor_01.glb",
+        "Frame_Neon_Vapor_01.glb", "Frame_Neon_Vapor_03.glb",
+        "Computer_Retro.glb", "ComputerScreen_Open_Retro.glb",
+        "Screen_Retro_01.glb", "Keyboard_Retro.glb", "Terrain.glb"
+      ]
+    }
+  ],
+  "furniture": [
+    {
+      "id": "chinese_cabinet",
+      "display_name": "中式橱柜",
+      "directory": "assets/场景/中式家具",
+      "entry_file": "chinese_cabinet.gltf",
+      "format": "glTF",
+      "description": "高品质中式传统橱柜，PBR材质，适合古风场景",
+      "license": "CC0",
+      "source": "Poly Haven",
+      "tags": ["chinese", "cabinet", "furniture", "traditional", "wood"]
+    },
+    {
+      "id": "chinese_armchair",
+      "display_name": "中式扶手椅",
+      "directory": "assets/场景/中式家具",
+      "entry_file": "chinese_armchair.gltf",
+      "format": "glTF",
+      "description": "中式传统扶手椅，雕花木质，PBR材质",
+      "license": "CC0",
+      "source": "Poly Haven",
+      "tags": ["chinese", "chair", "furniture", "traditional", "wood"]
+    },
+    {
+      "id": "antique_lantern",
+      "display_name": "古董灯笼",
+      "directory": "assets/场景/中式家具",
+      "entry_file": "Lantern_01.gltf",
+      "format": "glTF",
+      "description": "金属古董提灯，黄铜质感",
+      "license": "CC0",
+      "source": "Poly Haven",
+      "tags": ["lantern", "antique", "lighting", "metal", "brass"]
+    },
+    {
+      "id": "gothic_armchair",
+      "display_name": "复古扶手椅",
+      "directory": "assets/场景/中式家具",
+      "entry_file": "ArmChair_01.gltf",
+      "format": "glTF",
+      "description": "哥特式复古扶手椅，皮质+木质",
+      "license": "CC0",
+      "source": "Poly Haven",
+      "tags": ["chair", "gothic", "furniture", "vintage", "leather"]
+    }
+  ],
+  "props": [
+    {
+      "id": "glam_velvet_sofa",
+      "display_name": "丝绒沙发",
+      "file": "assets/场景/精品道具/GlamVelvetSofa.glb",
+      "description": "高品质丝绒沙发，PBR Sheen材质",
+      "license": "KhronosGroup glTF Sample (Public Domain)",
+      "tags": ["furniture", "sofa", "interior", "luxury"]
+    },
+    {
+      "id": "sheen_chair",
+      "display_name": "丝光椅子",
+      "file": "assets/场景/精品道具/SheenChair.glb",
+      "description": "带丝光效果的精致椅子",
+      "license": "KhronosGroup glTF Sample (Public Domain)",
+      "tags": ["furniture", "chair", "interior"]
+    },
+    {
+      "id": "iridescent_dish",
+      "display_name": "虹彩餐盘与橄榄",
+      "file": "assets/场景/精品道具/IridescentDishWithOlives.glb",
+      "description": "虹彩材质餐盘配橄榄，展示高级材质效果",
+      "license": "KhronosGroup glTF Sample (Public Domain)",
+      "tags": ["food", "dish", "iridescent", "tableware"]
+    },
+    {
+      "id": "dragon_attenuation",
+      "display_name": "水晶龙",
+      "file": "assets/场景/精品道具/DragonAttenuation.glb",
+      "description": "半透明水晶龙模型，展示体积衰减效果",
+      "license": "KhronosGroup glTF Sample (Public Domain)",
+      "tags": ["dragon", "crystal", "fantasy", "decoration"]
+    },
+    {
+      "id": "toy_car",
+      "display_name": "玩具车",
+      "file": "assets/场景/精品道具/ToyCar.glb",
+      "description": "精致玩具汽车模型",
+      "license": "KhronosGroup glTF Sample (Public Domain)",
+      "tags": ["car", "toy", "vehicle"]
+    },
+    {
+      "id": "chess_set",
+      "display_name": "国际象棋套装",
+      "file": "assets/场景/精品道具/ABeautifulGame.glb",
+      "description": "高精度国际象棋套装，含棋盘和全部棋子",
+      "license": "KhronosGroup glTF Sample (Public Domain)",
+      "tags": ["chess", "game", "board", "luxury"]
+    }
+  ],
+  "_stats": {
+    "total_scenes": 7,
+    "total_furniture": 4,
+    "total_props": 6,
+    "total_models": 198,
+    "total_size_mb": 373,
+    "all_licenses": ["CC0", "Public Domain"]
+  }
+}
