@@ -127,10 +127,82 @@
           "path": "移动动作/走路/正常走路/Walking.glb"
         }
       ]
+    },
+    "情绪反应_庆祝": {
+      "display_name": "庆祝",
+      "category": "情绪反应/庆祝",
+      "variants": [
+        {
+          "id": "Celebrate1",
+          "file_path": "情绪反应/庆祝/Celebrate1.glb",
+          "description": "双手举起庆祝动作",
+          "path": "情绪反应/庆祝/Celebrate1.glb"
+        },
+        {
+          "id": "Celebrate2",
+          "file_path": "情绪反应/庆祝/Celebrate2.glb",
+          "description": "兴奋跳跃庆祝",
+          "path": "情绪反应/庆祝/Celebrate2.glb"
+        },
+        {
+          "id": "Celebrate3",
+          "file_path": "情绪反应/庆祝/Celebrate3.glb",
+          "description": "双拳握紧庆祝",
+          "path": "情绪反应/庆祝/Celebrate3.glb"
+        }
+      ]
+    },
+    "情绪反应_点头": {
+      "display_name": "点头",
+      "category": "情绪反应/点头",
+      "variants": [
+        {
+          "id": "NodYes",
+          "file_path": "情绪反应/点头/NodYes.glb",
+          "description": "点头表示同意",
+          "path": "情绪反应/点头/NodYes.glb"
+        }
+      ]
+    },
+    "情绪反应_摇头": {
+      "display_name": "摇头",
+      "category": "情绪反应/摇头",
+      "variants": [
+        {
+          "id": "ShakeHeadNo",
+          "file_path": "情绪反应/摇头/ShakeHeadNo.glb",
+          "description": "摇头表示不同意",
+          "path": "情绪反应/摇头/ShakeHeadNo.glb"
+        }
+      ]
+    },
+    "情绪反应_竖大拇指": {
+      "display_name": "竖大拇指",
+      "category": "情绪反应/竖大拇指",
+      "variants": [
+        {
+          "id": "ThumbsUp",
+          "file_path": "情绪反应/竖大拇指/ThumbsUp.glb",
+          "description": "竖大拇指赞扬",
+          "path": "情绪反应/竖大拇指/ThumbsUp.glb"
+        }
+      ]
+    },
+    "情绪反应_招手": {
+      "display_name": "招手",
+      "category": "情绪反应/招手",
+      "variants": [
+        {
+          "id": "ComeHere",
+          "file_path": "情绪反应/招手/ComeHere.glb",
+          "description": "招手示意过来",
+          "path": "情绪反应/招手/ComeHere.glb"
+        }
+      ]
     }
   },
   "stats": {
-    "total_actions": 10,
-    "total_variants": 11
+    "total_actions": 17,
+    "total_variants": 18
   }
 }
