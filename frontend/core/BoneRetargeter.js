@@ -12,6 +12,7 @@ class BoneRetargeter {
     this.boneMap = null;        // Mixamo → VRM 骨骼名映射
     this.inverseMap = null;     // VRM → Mixamo 反向映射
     this.loaded = false;
+    this._boneNodeCache = null; // 预建的骨骼名→节点 Map（性能优化）
   }
 
   /**
@@ -59,6 +60,9 @@ class BoneRetargeter {
       return clip;
     }
 
+    // 预建骨骼名→节点索引（避免每个track都traverse）
+    this._buildBoneNodeCache(vrmScene);
+
     // 克隆clip以免修改原始数据
     const newClip = clip.clone();
     
@@ -68,6 +72,18 @@ class BoneRetargeter {
     }).filter(Boolean); // 过滤掉null
 
     return newClip;
+  }
+
+  /**
+   * 预建骨骼名→节点索引 Map（性能优化：O(n) 一次遍历替代每track的O(n)遍历）
+   */
+  _buildBoneNodeCache(vrmScene) {
+    this._boneNodeCache = new Map();
+    vrmScene.traverse(node => {
+      if (node.isBone || node.isObject3D) {
+        this._boneNodeCache.set(node.name, node);
+      }
+    });
   }
 
   /**
@@ -104,13 +120,8 @@ class BoneRetargeter {
     // 非hips骨骼的position track也跳过：Mixamo存的是绝对坐标，直接用会拉飞VRM局部骨骼
     if (property === 'position' && vrmName !== 'Normalized_J_Bip_C_Hips') return null;
 
-    // 在VRM场景中查找对应骨骼节点（VRM骨骼可能是Object3D而非Bone）
-    let targetBone = null;
-    vrmScene.traverse(node => {
-      if ((node.isBone || node.isObject3D) && node.name === vrmName) {
-        targetBone = node;
-      }
-    });
+    // 在预建索引中查找对应骨骼节点（O(1) 查找）
+    const targetBone = this._boneNodeCache ? this._boneNodeCache.get(vrmName) : null;
 
     if (!targetBone) {
       console.warn(`[BoneRetargeter] VRM中未找到骨骼: ${vrmName}`);
@@ -143,28 +154,31 @@ class BoneRetargeter {
    * 转换 hips 位置（关键：Mixamo hips高度 vs VRM hips高度）
    * Mixamo: hips在腰部，动画记录的是相对位移
    * VRM: hips通常在地面(0,0,0)，需要把动画位移映射到正确的高度
+   *
+   * 修复：使用第0帧作为基准位置（而非全帧平均值），
+   * 避免位移动画（如走路）的平均值偏差导致角色抖动。
    */
   _convertHipsPosition(track, vrmScene) {
-    // 获取VRM hips节点的 local rest position（骨骼层级里的局部坐标）
+    // 从预建索引中获取 VRM hips rest position
     let vrmHipsRestLocal = new THREE.Vector3();
-    vrmScene.traverse(node => {
-      if ((node.isBone || node.isObject3D) && (node.name === 'Normalized_J_Bip_C_Hips' || node.name === 'J_Bip_C_Hips')) {
-        vrmHipsRestLocal.copy(node.position);
-      }
-    });
+    const hipsNode = this._boneNodeCache
+      ? (this._boneNodeCache.get('Normalized_J_Bip_C_Hips') || this._boneNodeCache.get('J_Bip_C_Hips'))
+      : null;
+    if (hipsNode) {
+      vrmHipsRestLocal.copy(hipsNode.position);
+    }
 
     const newTrack = track.clone();
     const values = newTrack.values;
-    const frameCount = values.length / 3;
 
-    // 计算Mixamo hips动画的平均（基准）位置，用于去除绝对偏置
-    let baseX = 0, baseY = 0, baseZ = 0;
-    for (let i = 0; i < values.length; i += 3) {
-      baseX += values[i]; baseY += values[i+1]; baseZ += values[i+2];
-    }
-    baseX /= frameCount; baseY /= frameCount; baseZ /= frameCount;
+    if (values.length < 3) return newTrack;
 
-    // 只保留相对于基准的位移变化，叠加VRM的rest local position
+    // 用第0帧作为基准位置（Mixamo动画起始帧的hips位置）
+    const baseX = values[0];
+    const baseY = values[1];
+    const baseZ = values[2];
+
+    // 只保留相对于第0帧的位移变化，叠加VRM的rest local position
     for (let i = 0; i < values.length; i += 3) {
       values[i]   = vrmHipsRestLocal.x + (values[i]   - baseX);
       values[i+1] = vrmHipsRestLocal.y + (values[i+1] - baseY);
@@ -252,7 +266,38 @@ class BoneRetargeter {
       'mixamorigRightUpLeg':    'Normalized_J_Bip_R_UpperLeg',
       'mixamorigRightLeg':      'Normalized_J_Bip_R_LowerLeg',
       'mixamorigRightFoot':     'Normalized_J_Bip_R_Foot',
-      'mixamorigRightToeBase':  'Normalized_J_Bip_R_ToeBase'
+      'mixamorigRightToeBase':  'Normalized_J_Bip_R_ToeBase',
+      // 手指骨骼
+      'mixamorigLeftHandThumb1':   'Normalized_J_Bip_L_Thumb1',
+      'mixamorigLeftHandThumb2':   'Normalized_J_Bip_L_Thumb2',
+      'mixamorigLeftHandThumb3':   'Normalized_J_Bip_L_Thumb3',
+      'mixamorigLeftHandIndex1':   'Normalized_J_Bip_L_Index1',
+      'mixamorigLeftHandIndex2':   'Normalized_J_Bip_L_Index2',
+      'mixamorigLeftHandIndex3':   'Normalized_J_Bip_L_Index3',
+      'mixamorigLeftHandMiddle1':  'Normalized_J_Bip_L_Middle1',
+      'mixamorigLeftHandMiddle2':  'Normalized_J_Bip_L_Middle2',
+      'mixamorigLeftHandMiddle3':  'Normalized_J_Bip_L_Middle3',
+      'mixamorigLeftHandRing1':    'Normalized_J_Bip_L_Ring1',
+      'mixamorigLeftHandRing2':    'Normalized_J_Bip_L_Ring2',
+      'mixamorigLeftHandRing3':    'Normalized_J_Bip_L_Ring3',
+      'mixamorigLeftHandPinky1':   'Normalized_J_Bip_L_Little1',
+      'mixamorigLeftHandPinky2':   'Normalized_J_Bip_L_Little2',
+      'mixamorigLeftHandPinky3':   'Normalized_J_Bip_L_Little3',
+      'mixamorigRightHandThumb1':  'Normalized_J_Bip_R_Thumb1',
+      'mixamorigRightHandThumb2':  'Normalized_J_Bip_R_Thumb2',
+      'mixamorigRightHandThumb3':  'Normalized_J_Bip_R_Thumb3',
+      'mixamorigRightHandIndex1':  'Normalized_J_Bip_R_Index1',
+      'mixamorigRightHandIndex2':  'Normalized_J_Bip_R_Index2',
+      'mixamorigRightHandIndex3':  'Normalized_J_Bip_R_Index3',
+      'mixamorigRightHandMiddle1': 'Normalized_J_Bip_R_Middle1',
+      'mixamorigRightHandMiddle2': 'Normalized_J_Bip_R_Middle2',
+      'mixamorigRightHandMiddle3': 'Normalized_J_Bip_R_Middle3',
+      'mixamorigRightHandRing1':   'Normalized_J_Bip_R_Ring1',
+      'mixamorigRightHandRing2':   'Normalized_J_Bip_R_Ring2',
+      'mixamorigRightHandRing3':   'Normalized_J_Bip_R_Ring3',
+      'mixamorigRightHandPinky1':  'Normalized_J_Bip_R_Little1',
+      'mixamorigRightHandPinky2':  'Normalized_J_Bip_R_Little2',
+      'mixamorigRightHandPinky3':  'Normalized_J_Bip_R_Little3'
     };
   }
 

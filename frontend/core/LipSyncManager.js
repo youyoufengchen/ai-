@@ -21,8 +21,10 @@ class LipSyncManager {
     
     // 口型状态
     this.currentViseme = null;    // 当前激活的口型
+    this.nextViseme = null;       // 下一个口型（交叉淡入淡出用）
     this.targetWeight = 0;        // 目标权重
     this.currentWeight = 0;       // 当前权重
+    this.nextWeight = 0;          // 下一个口型的权重
     this.transitionSpeed = 0.3;   // 过渡速度 (0-1)
     
     // Viseme时间轴
@@ -189,30 +191,35 @@ class LipSyncManager {
       }
     }
     
-    // 平滑过渡
+    // 交叉淡入淡出（crossfade）：新旧口型同时过渡，避免空白帧
     if (targetViseme !== this.currentViseme) {
-      // 切换到新口型，先归零旧的
-      if (this.currentViseme) {
+      if (this.currentViseme && this.currentViseme !== targetViseme) {
+        // 旧口型淡出
         this.currentWeight = Math.max(0, this.currentWeight - this.transitionSpeed);
-        if (this.currentWeight < 0.01) {
+        this.expressionManager.setValue(this.currentViseme, this.currentWeight);
+      }
+      // 新口型同时淡入
+      this.nextWeight = Math.min(targetWeight, this.nextWeight + this.transitionSpeed);
+      if (targetViseme) {
+        this.expressionManager.setValue(targetViseme, this.nextWeight);
+      }
+      // 旧口型完全消失后，完成切换
+      if (this.currentWeight <= 0.01) {
+        if (this.currentViseme) {
           this.expressionManager.setValue(this.currentViseme, 0);
-          this.currentViseme = null;
-          this.currentWeight = 0;
-        } else {
-          this.expressionManager.setValue(this.currentViseme, this.currentWeight);
         }
-      } else {
         this.currentViseme = targetViseme;
-        this.targetWeight = targetWeight;
+        this.currentWeight = this.nextWeight;
+        this.nextWeight = 0;
       }
     } else {
       // 保持当前口型，平滑接近目标权重
       if (this.currentViseme) {
-        const diff = this.targetWeight - this.currentWeight;
+        const diff = targetWeight - this.currentWeight;
         if (Math.abs(diff) > 0.01) {
           this.currentWeight += diff * this.transitionSpeed;
         } else {
-          this.currentWeight = this.targetWeight;
+          this.currentWeight = targetWeight;
         }
         this.expressionManager.setValue(this.currentViseme, this.currentWeight);
       }
@@ -233,7 +240,9 @@ class LipSyncManager {
     }
     
     this.currentViseme = null;
+    this.nextViseme = null;
     this.currentWeight = 0;
+    this.nextWeight = 0;
     this.visemeTimeline = [];
     
     console.log('[LipSync] 停止');

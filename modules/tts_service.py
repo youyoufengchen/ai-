@@ -102,10 +102,19 @@ class TTSService:
         voice = self.voice_map.get(style_id, "zh_female_qingxin")
         cache_path = self._get_cache_path(text, voice)
         
-        # 检查缓存（缓存命中时无 viseme，需调用方降级处理）
+        # 检查缓存（同时检查 viseme 缓存）
+        viseme_cache_path = cache_path.with_suffix('.viseme.json')
         if use_cache and cache_path.exists():
             logger.debug(f"TTS cache hit: {cache_path}")
-            return {"url": f"/cache/tts/{cache_path.name}", "viseme_timeline": None}
+            cached_viseme = None
+            if viseme_cache_path.exists():
+                try:
+                    import json as _json
+                    cached_viseme = _json.loads(viseme_cache_path.read_text(encoding='utf-8'))
+                    logger.debug(f"TTS viseme cache hit: {len(cached_viseme)} frames")
+                except Exception:
+                    pass
+            return {"url": f"/cache/tts/{cache_path.name}", "viseme_timeline": cached_viseme}
         
         # 调用API合成
         vs = voice_settings or {}
@@ -165,14 +174,7 @@ class TTSService:
                     # 保存到缓存
                     cache_path.write_bytes(audio_bytes)
                     
-                    # LRU 缓存清理（异步触发，不阻塞）
-                    try:
-                        from modules.cache_manager import get_cache_manager
-                        get_cache_manager().cleanup()
-                    except Exception:
-                        pass
-                    
-                    # 提取 viseme 时间轴（火山引擎 unitTson 格式）
+                    # 提取 viseme 时间轴（火山引擎 unitTson 格式）— 提前提取以便缓存
                     viseme_timeline = None
                     try:
                         addition = result.get("addition") or {}
@@ -182,8 +184,20 @@ class TTSService:
                             raw = frontend_data if isinstance(frontend_data, list) else _json.loads(frontend_data)
                             viseme_timeline = raw
                             logger.debug(f"TTS viseme: {len(viseme_timeline)} frames")
+                            # 缓存 viseme 数据到独立 JSON 文件
+                            viseme_cache_path.write_text(
+                                _json.dumps(viseme_timeline, ensure_ascii=False),
+                                encoding='utf-8'
+                            )
                     except Exception as e_v:
                         logger.debug(f"TTS viseme parse skip: {e_v}")
+                    
+                    # LRU 缓存清理（异步触发，不阻塞）
+                    try:
+                        from modules.cache_manager import get_cache_manager
+                        get_cache_manager().cleanup()
+                    except Exception:
+                        pass
                     
                     logger.info(f"TTS synthesized: {len(audio_bytes)} bytes, viseme={'yes' if viseme_timeline else 'no'}")
                     return {"url": f"/cache/tts/{cache_path.name}", "viseme_timeline": viseme_timeline}

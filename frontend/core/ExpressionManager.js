@@ -124,7 +124,7 @@ class ExpressionManager {
    * @returns {string} 情绪名称
    */
   parseEmotionFromText(text) {
-    // 匹配 [e:emotion] 或 [emotion] 格式
+    // 匹配 [e:emotion] 或 [emotion] 格式（优先级最高）
     const match = text.match(/\[e:(\w+)\]|\[(happy|sad|angry|surprised|relaxed|neutral)\]/i);
     if (match) {
       const emotion = match[1] || match[2];
@@ -132,11 +132,25 @@ class ExpressionManager {
     }
     
     // 无标签时，根据关键词判断
+    // 先尝试排除型匹配：含否定前缀的词不应触发对应情绪
+    // 如"不开心"不应匹配"开心"→happy
+    const negPrefixes = ['不', '没有', '别', '非', '未', '无'];
     const lowerText = text.toLowerCase();
-    for (const [keyword, emotion] of Object.entries(this.emotionMap)) {
-      if (lowerText.includes(keyword)) {
-        return emotion;
-      }
+    
+    // 按关键词长度降序排列，优先匹配更长的关键词（更精确）
+    const sortedEntries = Object.entries(this.emotionMap)
+      .sort((a, b) => b[0].length - a[0].length);
+    
+    for (const [keyword, emotion] of sortedEntries) {
+      const idx = lowerText.indexOf(keyword);
+      if (idx < 0) continue;
+      
+      // 检查关键词前面是否有否定前缀
+      const prefix = lowerText.substring(Math.max(0, idx - 3), idx);
+      const hasNeg = negPrefixes.some(neg => prefix.endsWith(neg));
+      if (hasNeg) continue;
+      
+      return emotion;
     }
     
     return 'neutral';

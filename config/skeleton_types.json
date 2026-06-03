@@ -83,7 +83,7 @@
 
   "retarget_maps": {
     "mixamo_to_vrm": {
-      "_comment": "Mixamo骨骼节点名 → VRM实际节点名(J_Bip_*)，适用于标准VRM0模型如npc_01.vrm",
+      "_comment": "Mixamo骨骼节点名 → VRM Normalized层节点名，适用于标准VRM0模型如npc_01.vrm",
       "mixamorigHips":             "Normalized_J_Bip_C_Hips",
       "mixamorigSpine":            "Normalized_J_Bip_C_Spine",
       "mixamorigSpine1":           "Normalized_J_Bip_C_Chest",
@@ -105,7 +105,39 @@
       "mixamorigRightUpLeg":       "Normalized_J_Bip_R_UpperLeg",
       "mixamorigRightLeg":         "Normalized_J_Bip_R_LowerLeg",
       "mixamorigRightFoot":        "Normalized_J_Bip_R_Foot",
-      "mixamorigRightToeBase":     "Normalized_J_Bip_R_ToeBase"
+      "mixamorigRightToeBase":     "Normalized_J_Bip_R_ToeBase",
+
+      "_comment_fingers": "手指骨骼映射（Mixamo → VRM Normalized层）",
+      "mixamorigLeftHandThumb1":   "Normalized_J_Bip_L_Thumb1",
+      "mixamorigLeftHandThumb2":   "Normalized_J_Bip_L_Thumb2",
+      "mixamorigLeftHandThumb3":   "Normalized_J_Bip_L_Thumb3",
+      "mixamorigLeftHandIndex1":   "Normalized_J_Bip_L_Index1",
+      "mixamorigLeftHandIndex2":   "Normalized_J_Bip_L_Index2",
+      "mixamorigLeftHandIndex3":   "Normalized_J_Bip_L_Index3",
+      "mixamorigLeftHandMiddle1":  "Normalized_J_Bip_L_Middle1",
+      "mixamorigLeftHandMiddle2":  "Normalized_J_Bip_L_Middle2",
+      "mixamorigLeftHandMiddle3":  "Normalized_J_Bip_L_Middle3",
+      "mixamorigLeftHandRing1":    "Normalized_J_Bip_L_Ring1",
+      "mixamorigLeftHandRing2":    "Normalized_J_Bip_L_Ring2",
+      "mixamorigLeftHandRing3":    "Normalized_J_Bip_L_Ring3",
+      "mixamorigLeftHandPinky1":   "Normalized_J_Bip_L_Little1",
+      "mixamorigLeftHandPinky2":   "Normalized_J_Bip_L_Little2",
+      "mixamorigLeftHandPinky3":   "Normalized_J_Bip_L_Little3",
+      "mixamorigRightHandThumb1":  "Normalized_J_Bip_R_Thumb1",
+      "mixamorigRightHandThumb2":  "Normalized_J_Bip_R_Thumb2",
+      "mixamorigRightHandThumb3":  "Normalized_J_Bip_R_Thumb3",
+      "mixamorigRightHandIndex1":  "Normalized_J_Bip_R_Index1",
+      "mixamorigRightHandIndex2":  "Normalized_J_Bip_R_Index2",
+      "mixamorigRightHandIndex3":  "Normalized_J_Bip_R_Index3",
+      "mixamorigRightHandMiddle1": "Normalized_J_Bip_R_Middle1",
+      "mixamorigRightHandMiddle2": "Normalized_J_Bip_R_Middle2",
+      "mixamorigRightHandMiddle3": "Normalized_J_Bip_R_Middle3",
+      "mixamorigRightHandRing1":   "Normalized_J_Bip_R_Ring1",
+      "mixamorigRightHandRing2":   "Normalized_J_Bip_R_Ring2",
+      "mixamorigRightHandRing3":   "Normalized_J_Bip_R_Ring3",
+      "mixamorigRightHandPinky1":  "Normalized_J_Bip_R_Little1",
+      "mixamorigRightHandPinky2":  "Normalized_J_Bip_R_Little2",
+      "mixamorigRightHandPinky3":  "Normalized_J_Bip_R_Little3"
     }
   }
 }
