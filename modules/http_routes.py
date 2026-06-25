@@ -470,13 +470,20 @@ def build_http_app(
             return web.json_response({"ok": False, "error": str(e)}, status=500)
     
     async def get_scene_templates(request):
-        """扫描 assets/scenes/ 目录，返回所有3D场景模型清单。
-        只包含有 manifest.json + scene.gltf 的真正3D场景，不包含HDRi全景背景图。
+        """扫描 assets/scenes/ 和 assets/场景/ 目录，返回所有3D场景模型清单。
+        只包含有 manifest.json + scene.gltf/scene.glb 的真正3D场景，不包含HDRi全景背景图。
         """
         try:
-            scenes_root = Path(__file__).parent.parent / "assets" / "scenes"
+            project_root = Path(__file__).parent.parent
+            scenes_dirs = [
+                project_root / "assets" / "scenes",
+                project_root / "assets" / "场景",
+            ]
             templates = []
-            if scenes_root.exists():
+            seen_ids = set()
+            for scenes_root in scenes_dirs:
+                if not scenes_root.exists():
+                    continue
                 for sub in sorted(scenes_root.iterdir()):
                     if not sub.is_dir():
                         continue
@@ -486,9 +493,10 @@ def build_http_app(
                     if not manifest_path.exists():
                         continue
                     
-                    # 必须包含 scene.gltf 才是真正的3D场景（不是HDRi）
+                    # 必须包含 scene.gltf 或 scene.glb 才是真正的3D场景（不是HDRi）
                     gltf_path = sub / "scene.gltf"
-                    if not gltf_path.exists():
+                    glb_path = sub / "scene.glb"
+                    if not gltf_path.exists() and not glb_path.exists():
                         continue
                     
                     try:
@@ -496,10 +504,14 @@ def build_http_app(
                             data = json.load(f)
                         # 强制 id 与目录名一致
                         data["id"] = sub.name
+                        if data["id"] in seen_ids:
+                            continue
+                        seen_ids.add(data["id"])
                         # 缩略图相对路径（如果存在）
                         thumb_path = sub / "thumb.png"
                         if thumb_path.exists():
-                            data.setdefault("thumbnail", f"/assets/scenes/{sub.name}/thumb.png")
+                            rel_path = sub.relative_to(project_root)
+                            data.setdefault("thumbnail", f"/{rel_path.as_posix()}/thumb.png")
                         templates.append(data)
                     except Exception as e:
                         logger.warning(f"Skip invalid manifest {manifest_path}: {e}")

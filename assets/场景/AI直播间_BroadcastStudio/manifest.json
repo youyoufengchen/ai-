@@ -1,0 +1,8 @@
+{
+  "id": "AI直播间_BroadcastStudio",
+  "name": "AI专业直播间",
+  "description": "AI生成的专业直播演播室，配备LED屏幕墙、播报台、摄像机、霓虹灯光效果",
+  "icon": "📺",
+  "type": "gltf",
+  "gltf_url": "/assets/场景/AI直播间_BroadcastStudio/scene.glb"
+}

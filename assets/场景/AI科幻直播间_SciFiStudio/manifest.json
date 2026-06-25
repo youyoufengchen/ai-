@@ -1,0 +1,8 @@
+{
+  "id": "AI科幻直播间_SciFiStudio",
+  "name": "AI科幻直播间",
+  "description": "AI生成的赛博朋克风格控制站，全息显示屏、弧形墙壁、霓虹灯光效果",
+  "icon": "🚀",
+  "type": "gltf",
+  "gltf_url": "/assets/场景/AI科幻直播间_SciFiStudio/scene.glb"
+}
