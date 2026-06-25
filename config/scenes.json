@@ -689,6 +689,51 @@
         }
       },
       "actions": []
+    },
+    "ai_broadcast_studio": {
+      "group": "AI_scenes",
+      "order": 10,
+      "name": "AI专业直播间",
+      "description": "AI生成的专业直播演播室，LED屏幕墙+播报台+摄像机",
+      "environment": "AI直播间_BroadcastStudio",
+      "host_position": { "x": 50, "y": 75, "scale": 1 },
+      "host_position_3d": { "x": 0, "y": 0, "z": 0 },
+      "slots": [],
+      "objects": [],
+      "camera": {
+        "position": { "x": 0, "y": 1.8, "z": 4 },
+        "target": { "x": 0, "y": 1, "z": 0 }
+      }
+    },
+    "ai_scifi_studio": {
+      "group": "AI_scenes",
+      "order": 11,
+      "name": "AI科幻直播间",
+      "description": "AI生成的赛博朋克控制站，全息显示屏+霓虹灯光",
+      "environment": "AI科幻直播间_SciFiStudio",
+      "host_position": { "x": 50, "y": 75, "scale": 1 },
+      "host_position_3d": { "x": 0, "y": 0, "z": 0 },
+      "slots": [],
+      "objects": [],
+      "camera": {
+        "position": { "x": 0, "y": 1.8, "z": 4 },
+        "target": { "x": 0, "y": 1, "z": 0 }
+      }
+    },
+    "ai_minimalist_studio": {
+      "group": "AI_scenes",
+      "order": 12,
+      "name": "AI简约直播间",
+      "description": "AI生成的简约现代直播间，白色墙壁+木质装饰+暖光",
+      "environment": "AI简约直播间_MinimalistStudio",
+      "host_position": { "x": 50, "y": 75, "scale": 1 },
+      "host_position_3d": { "x": 0, "y": 0, "z": 0 },
+      "slots": [],
+      "objects": [],
+      "camera": {
+        "position": { "x": 0, "y": 1.8, "z": 4 },
+        "target": { "x": 0, "y": 1, "z": 0 }
+      }
     }
   },
   "groups": [
@@ -700,6 +745,17 @@
       "scenes": [
         "default_tea_shop",
         "festive_scene"
+      ]
+    },
+    {
+      "id": "group_ai_scenes",
+      "name": "AI生成场景",
+      "order": 2,
+      "collapsed": false,
+      "scenes": [
+        "ai_broadcast_studio",
+        "ai_scifi_studio",
+        "ai_minimalist_studio"
       ]
     }
   ],
